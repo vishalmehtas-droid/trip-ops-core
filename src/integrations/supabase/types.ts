@@ -264,6 +264,57 @@ export type Database = {
           },
         ]
       }
+      sales_items: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          item_type: Database["public"]["Enums"]["sale_item_type"]
+          quantity: number
+          sale_id: string
+          sort_order: number
+          updated_at: string
+          vendor_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          id?: string
+          item_type: Database["public"]["Enums"]["sale_item_type"]
+          quantity?: number
+          sale_id: string
+          sort_order?: number
+          updated_at?: string
+          vendor_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          item_type?: Database["public"]["Enums"]["sale_item_type"]
+          quantity?: number
+          sale_id?: string
+          sort_order?: number
+          updated_at?: string
+          vendor_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_items_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "sales"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_items_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -366,6 +417,13 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "sales" | "operations" | "accounts" | "viewer"
+      sale_item_type:
+        | "hotel"
+        | "flight"
+        | "visa"
+        | "activity"
+        | "transport"
+        | "other"
       sale_status: "pending" | "confirmed" | "completed" | "cancelled"
       vendor_type:
         | "hotel"
@@ -502,6 +560,14 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "sales", "operations", "accounts", "viewer"],
+      sale_item_type: [
+        "hotel",
+        "flight",
+        "visa",
+        "activity",
+        "transport",
+        "other",
+      ],
       sale_status: ["pending", "confirmed", "completed", "cancelled"],
       vendor_type: [
         "hotel",
