@@ -137,26 +137,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signOut = useCallback(async () => {
+    // Stop in-flight protected queries and drop their cache BEFORE the session
+    // is cleared, so no protected data can flash after sign-out.
+    await queryClient.cancelQueries();
+    queryClient.clear();
     await supabase.auth.signOut();
     setProfile(null);
     setRoles([]);
     setPermissions([]);
-  }, []);
+  }, [queryClient]);
 
   const value = useMemo<AuthState>(() => {
-    const isAdmin = roles.includes("admin");
+    const isActive = profile?.is_active ?? false;
+    const isAdmin = isActive && roles.includes("admin");
     return {
       loading,
       session,
       user: session?.user ?? null,
       profile,
+      isActive,
       roles,
       permissions,
       primaryRole: ROLE_PRIORITY.find((role) => roles.includes(role)) ?? null,
       isAdmin,
-      hasRole: (role) => roles.includes(role),
-      hasAnyRole: (candidates) => candidates.some((role) => roles.includes(role)),
-      hasPermission: (permission) => isAdmin || permissions.includes(permission),
+      hasRole: (role) => isActive && roles.includes(role),
+      hasAnyRole: (candidates) => isActive && candidates.some((role) => roles.includes(role)),
+      hasPermission: (permission) =>
+        isActive && (isAdmin || permissions.includes(permission)),
       refresh,
       signIn,
       signOut,
