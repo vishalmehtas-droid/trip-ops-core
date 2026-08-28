@@ -7,6 +7,7 @@ import { toast } from "sonner";
 
 import { PageHeader } from "@/components/app/page-header";
 import { DetailRow, Field, formatDate, formatDateTime } from "@/components/app/master-data";
+import { BookingComponents } from "@/components/app/sales-items";
 import { RecordCombobox, SaleStatusBadge, type RecordOption } from "@/components/app/sales-ui";
 import { ErrorState, LoadingState, UnauthorizedState } from "@/components/app/states";
 import {
