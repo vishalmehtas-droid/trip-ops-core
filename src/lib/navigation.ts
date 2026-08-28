@@ -23,6 +23,8 @@ export type NavItem = {
   icon: LucideIcon;
   /** null = available in Phase 1 */
   phase: number | null;
+  /** When set, the item is only listed for users holding this permission. */
+  permission?: string;
 };
 
 export type NavGroup = {
@@ -70,9 +72,15 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     label: "Administration",
     items: [
-      { label: "Users", to: "/users", icon: ShieldCheck, phase: null },
+      { label: "Users", to: "/users", icon: ShieldCheck, phase: null, permission: "users.read" },
       { label: "Settings", to: "/settings", icon: Settings, phase: null },
-      { label: "Audit Log", to: "/audit-log", icon: ScrollText, phase: null },
+      {
+        label: "Audit Log",
+        to: "/audit-log",
+        icon: ScrollText,
+        phase: null,
+        permission: "audit.read",
+      },
     ],
   },
 ];
