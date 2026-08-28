@@ -78,8 +78,16 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
 }
 
 function initialsOf(value: string) {
-  const parts = value.trim().split(/[\s.@_-]+/).filter(Boolean);
-  return (parts.slice(0, 2).map((p) => p[0]).join("") || "U").toUpperCase();
+  const parts = value
+    .trim()
+    .split(/[\s.@_-]+/)
+    .filter(Boolean);
+  return (
+    parts
+      .slice(0, 2)
+      .map((p) => p[0])
+      .join("") || "U"
+  ).toUpperCase();
 }
 
 function UserMenu() {
@@ -184,7 +192,12 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div className="flex min-w-0 items-center gap-3">
             <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="lg:hidden" aria-label="Open navigation">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="lg:hidden"
+                  aria-label="Open navigation"
+                >
                   <Menu className="size-5" />
                 </Button>
               </SheetTrigger>

@@ -122,7 +122,10 @@ function AuthPage() {
           noValidate
         >
           <div className="space-y-1.5">
-            <Label htmlFor="email" className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+            <Label
+              htmlFor="email"
+              className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground"
+            >
               Work email
             </Label>
             <Input
@@ -139,7 +142,10 @@ function AuthPage() {
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="password" className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+            <Label
+              htmlFor="password"
+              className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground"
+            >
               Password
             </Label>
             <Input
@@ -176,8 +182,7 @@ function AuthPage() {
           </Button>
 
           <p className="text-center text-[11px] leading-relaxed text-muted-foreground">
-            Accounts are created and managed by an administrator. Public registration is
-            disabled.
+            Accounts are created and managed by an administrator. Public registration is disabled.
           </p>
         </form>
       </div>

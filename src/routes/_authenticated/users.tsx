@@ -300,7 +300,9 @@ function UsersPage() {
           <li>· You cannot change your own status or roles — another administrator must do it.</li>
           <li>· The last active administrator cannot be demoted or deactivated.</li>
           <li>· Every status and role change is written to the append-only audit log.</li>
-          <li>· Inviting users by email arrives with the administration module in a later phase.</li>
+          <li>
+            · Inviting users by email arrives with the administration module in a later phase.
+          </li>
         </ul>
       </div>
     </div>

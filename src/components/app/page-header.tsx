@@ -18,9 +18,7 @@ export function PageHeader({
           <h1 className="text-xl font-semibold tracking-tight text-foreground">{title}</h1>
           {badge}
         </div>
-        {description ? (
-          <p className="mt-1 text-sm text-muted-foreground">{description}</p>
-        ) : null}
+        {description ? <p className="mt-1 text-sm text-muted-foreground">{description}</p> : null}
       </div>
       {actions ? <div className="flex items-center gap-2">{actions}</div> : null}
     </div>

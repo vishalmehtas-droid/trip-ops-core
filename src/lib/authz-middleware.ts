@@ -48,7 +48,9 @@ export const requireActiveUser = createMiddleware({ type: "function" })
         .select("permission_key")
         .in("role", roles);
       permissions = Array.from(
-        new Set(((permissionRows ?? []) as { permission_key: string }[]).map((r) => r.permission_key)),
+        new Set(
+          ((permissionRows ?? []) as { permission_key: string }[]).map((r) => r.permission_key),
+        ),
       );
     }
 

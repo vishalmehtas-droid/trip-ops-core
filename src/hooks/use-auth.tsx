@@ -73,7 +73,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     setProfile(profileRow);
 
-
     const { data: roleRows } = await supabase
       .from("user_roles")
       .select("role")
@@ -89,7 +88,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .in("role", nextRoles);
       setPermissions(
         Array.from(
-          new Set(((permissionRows ?? []) as { permission_key: string }[]).map((p) => p.permission_key)),
+          new Set(
+            ((permissionRows ?? []) as { permission_key: string }[]).map((p) => p.permission_key),
+          ),
         ),
       );
     } else {
@@ -165,8 +166,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isAdmin,
       hasRole: (role) => isActive && roles.includes(role),
       hasAnyRole: (candidates) => isActive && candidates.some((role) => roles.includes(role)),
-      hasPermission: (permission) =>
-        isActive && (isAdmin || permissions.includes(permission)),
+      hasPermission: (permission) => isActive && (isAdmin || permissions.includes(permission)),
       refresh,
       signIn,
       signOut,

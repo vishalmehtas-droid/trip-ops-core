@@ -64,9 +64,7 @@ function AuditLogPage() {
   const rows = (auditQuery.data ?? []).filter((row) => {
     const term = filter.trim().toLowerCase();
     if (!term) return true;
-    return (
-      row.action.toLowerCase().includes(term) || row.entity_type.toLowerCase().includes(term)
-    );
+    return row.action.toLowerCase().includes(term) || row.entity_type.toLowerCase().includes(term);
   });
 
   if (!canRead) {
