@@ -196,6 +196,74 @@ export type Database = {
           },
         ]
       }
+      sales: {
+        Row: {
+          booking_date: string
+          client_id: string
+          created_at: string
+          created_by: string
+          destination_id: string | null
+          id: string
+          notes: string | null
+          status: Database["public"]["Enums"]["sale_status"]
+          travel_date: string | null
+          updated_at: string
+        }
+        Insert: {
+          booking_date?: string
+          client_id: string
+          created_at?: string
+          created_by?: string
+          destination_id?: string | null
+          id?: string
+          notes?: string | null
+          status?: Database["public"]["Enums"]["sale_status"]
+          travel_date?: string | null
+          updated_at?: string
+        }
+        Update: {
+          booking_date?: string
+          client_id?: string
+          created_at?: string
+          created_by?: string
+          destination_id?: string | null
+          id?: string
+          notes?: string | null
+          status?: Database["public"]["Enums"]["sale_status"]
+          travel_date?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "user_directory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_destination_id_fkey"
+            columns: ["destination_id"]
+            isOneToOne: false
+            referencedRelation: "destinations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -261,7 +329,21 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      user_directory: {
+        Row: {
+          id: string | null
+          name: string | null
+        }
+        Insert: {
+          id?: string | null
+          name?: string | null
+        }
+        Update: {
+          id?: string | null
+          name?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       ensure_own_profile: {
@@ -284,6 +366,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "sales" | "operations" | "accounts" | "viewer"
+      sale_status: "pending" | "confirmed" | "completed" | "cancelled"
       vendor_type:
         | "hotel"
         | "flight"
@@ -419,6 +502,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "sales", "operations", "accounts", "viewer"],
+      sale_status: ["pending", "confirmed", "completed", "cancelled"],
       vendor_type: [
         "hotel",
         "flight",

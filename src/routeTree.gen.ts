@@ -20,7 +20,6 @@ import { Route as AuthenticatedDestinationsRouteImport } from './routes/_authent
 import { Route as AuthenticatedPaymentsRouteImport } from './routes/_authenticated/payments'
 import { Route as AuthenticatedPurchasesRouteImport } from './routes/_authenticated/purchases'
 import { Route as AuthenticatedReceiptsRouteImport } from './routes/_authenticated/receipts'
-import { Route as AuthenticatedSalesRouteImport } from './routes/_authenticated/sales'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedUsersRouteImport } from './routes/_authenticated/users'
 import { Route as AuthenticatedVendorsRouteImport } from './routes/_authenticated/vendors'
@@ -29,6 +28,8 @@ import { Route as AuthenticatedReportsClientLedgerRouteImport } from './routes/_
 import { Route as AuthenticatedReportsGstRouteImport } from './routes/_authenticated/reports.gst'
 import { Route as AuthenticatedReportsProfitabilityRouteImport } from './routes/_authenticated/reports.profitability'
 import { Route as AuthenticatedReportsVendorLedgerRouteImport } from './routes/_authenticated/reports.vendor-ledger'
+import { Route as AuthenticatedSalesIndexRouteImport } from './routes/_authenticated/sales.index'
+import { Route as AuthenticatedSalesSaleIdRouteImport } from './routes/_authenticated/sales.$saleId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -85,11 +86,6 @@ const AuthenticatedReceiptsRoute = AuthenticatedReceiptsRouteImport.update({
   path: '/receipts',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedSalesRoute = AuthenticatedSalesRouteImport.update({
-  id: '/sales',
-  path: '/sales',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
 const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -134,6 +130,17 @@ const AuthenticatedReportsVendorLedgerRoute =
     path: '/reports/vendor-ledger',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedSalesIndexRoute = AuthenticatedSalesIndexRouteImport.update({
+  id: '/sales/',
+  path: '/sales/',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedSalesSaleIdRoute =
+  AuthenticatedSalesSaleIdRouteImport.update({
+    id: '/sales/$saleId',
+    path: '/sales/$saleId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -146,7 +153,6 @@ export interface FileRoutesByFullPath {
   '/payments': typeof AuthenticatedPaymentsRoute
   '/purchases': typeof AuthenticatedPurchasesRoute
   '/receipts': typeof AuthenticatedReceiptsRoute
-  '/sales': typeof AuthenticatedSalesRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/users': typeof AuthenticatedUsersRoute
   '/vendors': typeof AuthenticatedVendorsRoute
@@ -155,6 +161,8 @@ export interface FileRoutesByFullPath {
   '/reports/gst': typeof AuthenticatedReportsGstRoute
   '/reports/profitability': typeof AuthenticatedReportsProfitabilityRoute
   '/reports/vendor-ledger': typeof AuthenticatedReportsVendorLedgerRoute
+  '/sales/$saleId': typeof AuthenticatedSalesSaleIdRoute
+  '/sales/': typeof AuthenticatedSalesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -167,7 +175,6 @@ export interface FileRoutesByTo {
   '/payments': typeof AuthenticatedPaymentsRoute
   '/purchases': typeof AuthenticatedPurchasesRoute
   '/receipts': typeof AuthenticatedReceiptsRoute
-  '/sales': typeof AuthenticatedSalesRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/users': typeof AuthenticatedUsersRoute
   '/vendors': typeof AuthenticatedVendorsRoute
@@ -176,6 +183,8 @@ export interface FileRoutesByTo {
   '/reports/gst': typeof AuthenticatedReportsGstRoute
   '/reports/profitability': typeof AuthenticatedReportsProfitabilityRoute
   '/reports/vendor-ledger': typeof AuthenticatedReportsVendorLedgerRoute
+  '/sales/$saleId': typeof AuthenticatedSalesSaleIdRoute
+  '/sales': typeof AuthenticatedSalesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -190,7 +199,6 @@ export interface FileRoutesById {
   '/_authenticated/payments': typeof AuthenticatedPaymentsRoute
   '/_authenticated/purchases': typeof AuthenticatedPurchasesRoute
   '/_authenticated/receipts': typeof AuthenticatedReceiptsRoute
-  '/_authenticated/sales': typeof AuthenticatedSalesRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/users': typeof AuthenticatedUsersRoute
   '/_authenticated/vendors': typeof AuthenticatedVendorsRoute
@@ -199,6 +207,8 @@ export interface FileRoutesById {
   '/_authenticated/reports/gst': typeof AuthenticatedReportsGstRoute
   '/_authenticated/reports/profitability': typeof AuthenticatedReportsProfitabilityRoute
   '/_authenticated/reports/vendor-ledger': typeof AuthenticatedReportsVendorLedgerRoute
+  '/_authenticated/sales/$saleId': typeof AuthenticatedSalesSaleIdRoute
+  '/_authenticated/sales/': typeof AuthenticatedSalesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -213,7 +223,6 @@ export interface FileRouteTypes {
     | '/payments'
     | '/purchases'
     | '/receipts'
-    | '/sales'
     | '/settings'
     | '/users'
     | '/vendors'
@@ -222,6 +231,8 @@ export interface FileRouteTypes {
     | '/reports/gst'
     | '/reports/profitability'
     | '/reports/vendor-ledger'
+    | '/sales/$saleId'
+    | '/sales/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -234,7 +245,6 @@ export interface FileRouteTypes {
     | '/payments'
     | '/purchases'
     | '/receipts'
-    | '/sales'
     | '/settings'
     | '/users'
     | '/vendors'
@@ -243,6 +253,8 @@ export interface FileRouteTypes {
     | '/reports/gst'
     | '/reports/profitability'
     | '/reports/vendor-ledger'
+    | '/sales/$saleId'
+    | '/sales'
   id:
     | '__root__'
     | '/'
@@ -256,7 +268,6 @@ export interface FileRouteTypes {
     | '/_authenticated/payments'
     | '/_authenticated/purchases'
     | '/_authenticated/receipts'
-    | '/_authenticated/sales'
     | '/_authenticated/settings'
     | '/_authenticated/users'
     | '/_authenticated/vendors'
@@ -265,6 +276,8 @@ export interface FileRouteTypes {
     | '/_authenticated/reports/gst'
     | '/_authenticated/reports/profitability'
     | '/_authenticated/reports/vendor-ledger'
+    | '/_authenticated/sales/$saleId'
+    | '/_authenticated/sales/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -353,13 +366,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedReceiptsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/sales': {
-      id: '/_authenticated/sales'
-      path: '/sales'
-      fullPath: '/sales'
-      preLoaderRoute: typeof AuthenticatedSalesRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/_authenticated/settings': {
       id: '/_authenticated/settings'
       path: '/settings'
@@ -416,6 +422,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedReportsVendorLedgerRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/sales/': {
+      id: '/_authenticated/sales/'
+      path: '/sales'
+      fullPath: '/sales/'
+      preLoaderRoute: typeof AuthenticatedSalesIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/sales/$saleId': {
+      id: '/_authenticated/sales/$saleId'
+      path: '/sales/$saleId'
+      fullPath: '/sales/$saleId'
+      preLoaderRoute: typeof AuthenticatedSalesSaleIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
@@ -427,7 +447,6 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPaymentsRoute: typeof AuthenticatedPaymentsRoute
   AuthenticatedPurchasesRoute: typeof AuthenticatedPurchasesRoute
   AuthenticatedReceiptsRoute: typeof AuthenticatedReceiptsRoute
-  AuthenticatedSalesRoute: typeof AuthenticatedSalesRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedUsersRoute: typeof AuthenticatedUsersRoute
   AuthenticatedVendorsRoute: typeof AuthenticatedVendorsRoute
@@ -436,6 +455,8 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedReportsGstRoute: typeof AuthenticatedReportsGstRoute
   AuthenticatedReportsProfitabilityRoute: typeof AuthenticatedReportsProfitabilityRoute
   AuthenticatedReportsVendorLedgerRoute: typeof AuthenticatedReportsVendorLedgerRoute
+  AuthenticatedSalesSaleIdRoute: typeof AuthenticatedSalesSaleIdRoute
+  AuthenticatedSalesIndexRoute: typeof AuthenticatedSalesIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -446,7 +467,6 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPaymentsRoute: AuthenticatedPaymentsRoute,
   AuthenticatedPurchasesRoute: AuthenticatedPurchasesRoute,
   AuthenticatedReceiptsRoute: AuthenticatedReceiptsRoute,
-  AuthenticatedSalesRoute: AuthenticatedSalesRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedUsersRoute: AuthenticatedUsersRoute,
   AuthenticatedVendorsRoute: AuthenticatedVendorsRoute,
@@ -456,6 +476,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedReportsProfitabilityRoute:
     AuthenticatedReportsProfitabilityRoute,
   AuthenticatedReportsVendorLedgerRoute: AuthenticatedReportsVendorLedgerRoute,
+  AuthenticatedSalesSaleIdRoute: AuthenticatedSalesSaleIdRoute,
+  AuthenticatedSalesIndexRoute: AuthenticatedSalesIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
