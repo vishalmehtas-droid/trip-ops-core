@@ -265,7 +265,7 @@ function SalesPage() {
     <div className="space-y-6">
       <PageHeader
         title="Sales"
-        description="Booking headers linking a client to a destination. Booking components and pricing arrive in Phase 2B-2."
+        description="Booking headers linking a client to a destination, each with its own booking components."
         badge={
           <Badge variant="outline" className="text-[10px] font-bold uppercase tracking-wide">
             Bookings

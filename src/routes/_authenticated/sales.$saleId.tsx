@@ -7,6 +7,7 @@ import { toast } from "sonner";
 
 import { PageHeader } from "@/components/app/page-header";
 import { DetailRow, Field, formatDate, formatDateTime } from "@/components/app/master-data";
+import { BookingComponents } from "@/components/app/sales-items";
 import { RecordCombobox, SaleStatusBadge, type RecordOption } from "@/components/app/sales-ui";
 import { ErrorState, LoadingState, UnauthorizedState } from "@/components/app/states";
 import {
@@ -380,15 +381,7 @@ function SaleDetailPage() {
         </dl>
       </section>
 
-      <section className="rounded-lg border border-dashed border-border bg-surface px-6 py-10 text-center">
-        <h2 className="text-sm font-semibold text-foreground">
-          Booking Components — Coming in Phase 2B-2
-        </h2>
-        <p className="mx-auto mt-1 max-w-md text-xs leading-relaxed text-muted-foreground">
-          Hotels, flights, visas, activities and transport line items — together with vendor
-          allocation and pricing — are added in the next phase. No amounts exist on a booking yet.
-        </p>
-      </section>
+      <BookingComponents saleId={sale.id} canManage={canManage && !isLocked} />
 
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
