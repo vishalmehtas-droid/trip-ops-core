@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { Check, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { PageHeader } from "@/components/app/page-header";
@@ -18,6 +20,14 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   Table,
   TableBody,
   TableCell,
@@ -27,6 +37,7 @@ import {
 } from "@/components/ui/table";
 import { ROLE_LABELS, useAuth, type AppRole } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
+import { grantRole, revokeRole, setUserActive } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/_authenticated/users")({
   head: () => ({
@@ -49,11 +60,17 @@ type ProfileRow = {
   created_at: string;
 };
 
+const ALL_ROLES: AppRole[] = ["admin", "accounts", "operations", "sales", "viewer"];
+
 function UsersPage() {
   const { hasPermission, user } = useAuth();
   const queryClient = useQueryClient();
   const canRead = hasPermission("users.read");
   const canManage = hasPermission("users.manage");
+
+  const setActiveFn = useServerFn(setUserActive);
+  const grantFn = useServerFn(grantRole);
+  const revokeFn = useServerFn(revokeRole);
 
   const usersQuery = useQuery({
     queryKey: ["users"],
@@ -81,17 +98,38 @@ function UsersPage() {
     },
   });
 
+  const invalidate = async () => {
+    await queryClient.invalidateQueries({ queryKey: ["users"] });
+    await queryClient.invalidateQueries({ queryKey: ["audit-log"] });
+  };
+
   const toggleActive = useMutation({
-    mutationFn: async ({ id, isActive }: { id: string; isActive: boolean }) => {
-      const { error } = await supabase.from("profiles").update({ is_active: isActive }).eq("id", id);
-      if (error) throw error;
-    },
+    mutationFn: (variables: { userId: string; isActive: boolean }) =>
+      setActiveFn({ data: variables }),
     onSuccess: async (_data, variables) => {
-      await queryClient.invalidateQueries({ queryKey: ["users"] });
+      await invalidate();
       toast.success(variables.isActive ? "User activated" : "User deactivated");
     },
     onError: (error: Error) => {
-      toast.error("Update rejected by the database", { description: error.message });
+      toast.error("Request rejected", { description: error.message });
+    },
+  });
+
+  const changeRole = useMutation({
+    mutationFn: (variables: { userId: string; role: AppRole; grant: boolean }) =>
+      variables.grant
+        ? grantFn({ data: { userId: variables.userId, role: variables.role } })
+        : revokeFn({ data: { userId: variables.userId, role: variables.role } }),
+    onSuccess: async (_data, variables) => {
+      await invalidate();
+      toast.success(
+        variables.grant
+          ? `${ROLE_LABELS[variables.role]} role granted`
+          : `${ROLE_LABELS[variables.role]} role removed`,
+      );
+    },
+    onError: (error: Error) => {
+      toast.error("Role change rejected", { description: error.message });
     },
   });
 
@@ -104,14 +142,16 @@ function UsersPage() {
     );
   }
 
+  const busy = toggleActive.isPending || changeRole.isPending;
+
   return (
     <div className="space-y-6">
       <PageHeader
         title="Users"
-        description="Accounts are created by an administrator; roles and access are enforced by the database."
+        description="Accounts are created by an administrator. Status and role changes run through authorized server-side mutations and are written to the audit log."
         badge={
           <Badge variant="outline" className="text-[10px] font-bold uppercase tracking-wide">
-            Phase 1
+            Administration
           </Badge>
         }
       />
@@ -131,92 +171,137 @@ function UsersPage() {
                 <TableHead className="text-[10px] uppercase tracking-wider">Email</TableHead>
                 <TableHead className="text-[10px] uppercase tracking-wider">Roles</TableHead>
                 <TableHead className="text-[10px] uppercase tracking-wider">Status</TableHead>
-                {canManage ? <TableHead className="text-right text-[10px] uppercase">Action</TableHead> : null}
+                {canManage ? (
+                  <TableHead className="text-right text-[10px] uppercase">Actions</TableHead>
+                ) : null}
               </TableRow>
             </TableHeader>
             <TableBody>
-              {usersQuery.data.map((row) => (
-                <TableRow key={row.id}>
-                  <TableCell className="font-medium">{row.name || "—"}</TableCell>
-                  <TableCell className="text-muted-foreground">{row.email}</TableCell>
-                  <TableCell>
-                    <div className="flex flex-wrap gap-1">
-                      {row.roles.length === 0 ? (
-                        <span className="text-xs text-muted-foreground">No role</span>
-                      ) : (
-                        row.roles.map((role) => (
-                          <Badge key={role} variant="outline" className="text-[10px] uppercase">
-                            {ROLE_LABELS[role]}
-                          </Badge>
-                        ))
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <span
-                      className={
-                        row.is_active
-                          ? "inline-flex items-center gap-1.5 text-xs font-semibold text-foreground"
-                          : "inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground"
-                      }
-                    >
-                      <span
-                        className={`size-2 rounded-full ${row.is_active ? "bg-success" : "bg-muted-foreground"}`}
-                      />
-                      {row.is_active ? "Active" : "Inactive"}
-                    </span>
-                  </TableCell>
-                  {canManage ? (
-                    <TableCell className="text-right">
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            disabled={row.id === user?.id || toggleActive.isPending}
-                          >
-                            {row.is_active ? "Deactivate" : "Activate"}
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>
-                              {row.is_active ? "Deactivate this user?" : "Activate this user?"}
-                            </AlertDialogTitle>
-                            <AlertDialogDescription>
-                              {row.is_active
-                                ? `${row.email} will keep their login but lose permission-based access until reactivated.`
-                                : `${row.email} will regain permission-based access.`}
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() =>
-                                toggleActive.mutate({ id: row.id, isActive: !row.is_active })
-                              }
-                            >
-                              Confirm
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
+              {usersQuery.data.map((row) => {
+                const isSelf = row.id === user?.id;
+                return (
+                  <TableRow key={row.id}>
+                    <TableCell className="font-medium">{row.name || "—"}</TableCell>
+                    <TableCell className="text-muted-foreground">{row.email}</TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap gap-1">
+                        {row.roles.length === 0 ? (
+                          <span className="text-xs text-muted-foreground">No role</span>
+                        ) : (
+                          row.roles.map((role) => (
+                            <Badge key={role} variant="outline" className="text-[10px] uppercase">
+                              {ROLE_LABELS[role]}
+                            </Badge>
+                          ))
+                        )}
+                      </div>
                     </TableCell>
-                  ) : null}
-                </TableRow>
-              ))}
+                    <TableCell>
+                      <span
+                        className={
+                          row.is_active
+                            ? "inline-flex items-center gap-1.5 text-xs font-semibold text-foreground"
+                            : "inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground"
+                        }
+                      >
+                        <span
+                          className={`size-2 rounded-full ${row.is_active ? "bg-success" : "bg-muted-foreground"}`}
+                        />
+                        {row.is_active ? "Active" : "Inactive"}
+                      </span>
+                    </TableCell>
+                    {canManage ? (
+                      <TableCell>
+                        <div className="flex items-center justify-end gap-2">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="outline" size="sm" disabled={isSelf || busy}>
+                                {changeRole.isPending ? (
+                                  <Loader2 className="size-3.5 animate-spin" />
+                                ) : null}
+                                Roles
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-52">
+                              <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
+                                Toggle roles for {row.email}
+                              </DropdownMenuLabel>
+                              <DropdownMenuSeparator />
+                              {ALL_ROLES.map((role) => {
+                                const held = row.roles.includes(role);
+                                return (
+                                  <DropdownMenuItem
+                                    key={role}
+                                    onSelect={(event) => {
+                                      event.preventDefault();
+                                      changeRole.mutate({
+                                        userId: row.id,
+                                        role,
+                                        grant: !held,
+                                      });
+                                    }}
+                                  >
+                                    <span className="flex w-4 justify-center">
+                                      {held ? <Check className="size-3.5" /> : null}
+                                    </span>
+                                    {ROLE_LABELS[role]}
+                                  </DropdownMenuItem>
+                                );
+                              })}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="outline" size="sm" disabled={isSelf || busy}>
+                                {row.is_active ? "Deactivate" : "Activate"}
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>
+                                  {row.is_active ? "Deactivate this user?" : "Activate this user?"}
+                                </AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  {row.is_active
+                                    ? `${row.email} keeps their login but immediately loses all application access and privileges until reactivated.`
+                                    : `${row.email} will regain access based on their assigned roles.`}
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() =>
+                                    toggleActive.mutate({
+                                      userId: row.id,
+                                      isActive: !row.is_active,
+                                    })
+                                  }
+                                >
+                                  Confirm
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
+                      </TableCell>
+                    ) : null}
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         </div>
       )}
 
       <div className="rounded-lg border border-dashed border-border bg-surface p-5">
-        <h2 className="text-sm font-semibold text-foreground">Deferred to Phase 2</h2>
-        <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-          Inviting new users by email and editing role assignments from this screen will be added
-          with the administration module. Roles are stored in a dedicated table and every check is
-          enforced by database policies, not by the interface.
-        </p>
+        <h2 className="text-sm font-semibold text-foreground">How access is enforced</h2>
+        <ul className="mt-2 space-y-1 text-xs leading-relaxed text-muted-foreground">
+          <li>· You cannot change your own status or roles — another administrator must do it.</li>
+          <li>· The last active administrator cannot be demoted or deactivated.</li>
+          <li>· Every status and role change is written to the append-only audit log.</li>
+          <li>· Inviting users by email arrives with the administration module in a later phase.</li>
+        </ul>
       </div>
     </div>
   );
