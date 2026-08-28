@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/use-auth";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/auth")({
   ssr: false,
@@ -43,6 +44,26 @@ function AuthPage() {
   const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string }>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [sendingReset, setSendingReset] = useState(false);
+
+  async function handleForgotPassword() {
+    const parsedEmail = z.string().trim().email().safeParse(email);
+    if (!parsedEmail.success) {
+      setFieldErrors({ email: "Enter your work email first" });
+      return;
+    }
+
+    setSendingReset(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(parsedEmail.data, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    setSendingReset(false);
+
+    // The same confirmation is shown either way so the form cannot be used to
+    // discover which email addresses have accounts.
+    if (error) console.error(error);
+    toast.success("If that account exists, a reset link is on its way");
+  }
 
   useEffect(() => {
     if (!loading && session) navigate({ to: "/dashboard", replace: true });
@@ -101,7 +122,10 @@ function AuthPage() {
           noValidate
         >
           <div className="space-y-1.5">
-            <Label htmlFor="email" className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+            <Label
+              htmlFor="email"
+              className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground"
+            >
               Work email
             </Label>
             <Input
@@ -118,7 +142,10 @@ function AuthPage() {
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="password" className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+            <Label
+              htmlFor="password"
+              className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground"
+            >
               Password
             </Label>
             <Input
@@ -132,6 +159,14 @@ function AuthPage() {
             {fieldErrors.password ? (
               <p className="text-[11px] font-medium text-destructive">{fieldErrors.password}</p>
             ) : null}
+            <button
+              type="button"
+              onClick={handleForgotPassword}
+              disabled={sendingReset}
+              className="text-[11px] font-medium text-brand underline-offset-2 hover:underline disabled:opacity-60"
+            >
+              {sendingReset ? "Sending reset link…" : "Forgot your password?"}
+            </button>
           </div>
 
           {formError ? (
@@ -147,8 +182,7 @@ function AuthPage() {
           </Button>
 
           <p className="text-center text-[11px] leading-relaxed text-muted-foreground">
-            Accounts are created and managed by an administrator. Public registration is
-            disabled.
+            Accounts are created and managed by an administrator. Public registration is disabled.
           </p>
         </form>
       </div>

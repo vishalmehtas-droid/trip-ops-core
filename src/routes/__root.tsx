@@ -82,15 +82,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { title: "Triptastic Ops — Operations & Finance" },
       {
         name: "description",
-        content:
-          "Internal operations and finance management system for Triptastic Holidays LLP.",
+        content: "Internal operations and finance management system for Triptastic Holidays LLP.",
       },
       { name: "author", content: "Triptastic Holidays LLP" },
       { property: "og:title", content: "Triptastic Ops — Operations & Finance" },
       {
         property: "og:description",
-        content:
-          "Internal operations and finance management system for Triptastic Holidays LLP.",
+        content: "Internal operations and finance management system for Triptastic Holidays LLP.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

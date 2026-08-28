@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import type { Session, User } from "@supabase/supabase-js";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -19,6 +20,7 @@ type AuthState = {
   session: Session | null;
   user: User | null;
   profile: Profile | null;
+  isActive: boolean;
   roles: AppRole[];
   permissions: string[];
   primaryRole: AppRole | null;
@@ -41,6 +43,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [roles, setRoles] = useState<AppRole[]>([]);
   const [permissions, setPermissions] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
 
   const loadIdentity = useCallback(async (activeSession: Session | null) => {
     if (!activeSession?.user) {
@@ -52,8 +55,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const user = activeSession.user;
 
-    // The database is the source of truth. A profile row is created on first
-    // sign-in (RLS only allows the user's own id) and never holds credentials.
+    // The database is the source of truth. Provisioning happens through a
+    // trusted SECURITY DEFINER routine that derives identity from the verified
+    // auth token — the client cannot supply an arbitrary id or email.
     const { data: existing } = await supabase
       .from("profiles")
       .select("*")
@@ -63,19 +67,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     let profileRow = existing as Profile | null;
 
     if (!profileRow) {
-      const { data: inserted } = await supabase
-        .from("profiles")
-        .insert({
-          id: user.id,
-          email: user.email ?? "",
-          name:
-            (user.user_metadata?.["name"] as string | undefined) ??
-            user.email?.split("@")[0] ??
-            "",
-        })
-        .select("*")
-        .maybeSingle();
-      profileRow = (inserted as Profile | null) ?? null;
+      const { data: provisioned } = await supabase.rpc("ensure_own_profile");
+      profileRow = (provisioned as Profile | null) ?? null;
     }
 
     setProfile(profileRow);
@@ -95,7 +88,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .in("role", nextRoles);
       setPermissions(
         Array.from(
-          new Set(((permissionRows ?? []) as { permission_key: string }[]).map((p) => p.permission_key)),
+          new Set(
+            ((permissionRows ?? []) as { permission_key: string }[]).map((p) => p.permission_key),
+          ),
         ),
       );
     } else {
@@ -146,26 +141,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signOut = useCallback(async () => {
+    // Stop in-flight protected queries and drop their cache BEFORE the session
+    // is cleared, so no protected data can flash after sign-out.
+    await queryClient.cancelQueries();
+    queryClient.clear();
     await supabase.auth.signOut();
     setProfile(null);
     setRoles([]);
     setPermissions([]);
-  }, []);
+  }, [queryClient]);
 
   const value = useMemo<AuthState>(() => {
-    const isAdmin = roles.includes("admin");
+    const isActive = profile?.is_active ?? false;
+    const isAdmin = isActive && roles.includes("admin");
     return {
       loading,
       session,
       user: session?.user ?? null,
       profile,
+      isActive,
       roles,
       permissions,
       primaryRole: ROLE_PRIORITY.find((role) => roles.includes(role)) ?? null,
       isAdmin,
-      hasRole: (role) => roles.includes(role),
-      hasAnyRole: (candidates) => candidates.some((role) => roles.includes(role)),
-      hasPermission: (permission) => isAdmin || permissions.includes(permission),
+      hasRole: (role) => isActive && roles.includes(role),
+      hasAnyRole: (candidates) => isActive && candidates.some((role) => roles.includes(role)),
+      hasPermission: (permission) => isActive && (isAdmin || permissions.includes(permission)),
       refresh,
       signIn,
       signOut,

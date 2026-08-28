@@ -1,5 +1,5 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { ChevronDown, LogOut, Menu, Settings, UserRound } from "lucide-react";
+import { ChevronDown, LogOut, Menu, Settings, ShieldAlert, UserRound } from "lucide-react";
 import { useState } from "react";
 import type { ReactNode } from "react";
 
@@ -33,9 +33,18 @@ function Logo() {
 }
 
 function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
+  const { hasPermission } = useAuth();
+
+  // Navigation visibility is a convenience only — every protected page verifies
+  // authorization independently, and the database enforces it regardless.
+  const groups = NAV_GROUPS.map((group) => ({
+    ...group,
+    items: group.items.filter((item) => !item.permission || hasPermission(item.permission)),
+  })).filter((group) => group.items.length > 0);
+
   return (
     <nav className="space-y-6 px-3 pb-8">
-      {NAV_GROUPS.map((group) => (
+      {groups.map((group) => (
         <div key={group.label}>
           <p className="px-2 pb-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
             {group.label}
@@ -69,8 +78,16 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
 }
 
 function initialsOf(value: string) {
-  const parts = value.trim().split(/[\s.@_-]+/).filter(Boolean);
-  return (parts.slice(0, 2).map((p) => p[0]).join("") || "U").toUpperCase();
+  const parts = value
+    .trim()
+    .split(/[\s.@_-]+/)
+    .filter(Boolean);
+  return (
+    parts
+      .slice(0, 2)
+      .map((p) => p[0])
+      .join("") || "U"
+  ).toUpperCase();
 }
 
 function UserMenu() {
@@ -119,10 +136,42 @@ function UserMenu() {
   );
 }
 
+function DeactivatedScreen() {
+  const { profile, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-background px-4 font-sans">
+      <div className="w-full max-w-md rounded-lg border border-border bg-surface p-6 text-center shadow-panel">
+        <div className="mx-auto grid size-11 place-items-center rounded-full border border-destructive/30 text-destructive">
+          <ShieldAlert className="size-5" />
+        </div>
+        <h1 className="mt-4 text-base font-semibold text-foreground">Account deactivated</h1>
+        <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+          {profile?.email ?? "This account"} no longer has access to Triptastic Ops. Your login
+          still exists — contact an administrator to have access restored.
+        </p>
+        <Button
+          className="mt-5 w-full"
+          onClick={async () => {
+            await signOut();
+            navigate({ to: "/auth", replace: true });
+          }}
+        >
+          Sign out
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 export function AppShell({ children }: { children: ReactNode }) {
+  const { loading, profile } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const current = ALL_NAV_ITEMS.find((item) => item.to === pathname);
+
+  if (!loading && profile && !profile.is_active) return <DeactivatedScreen />;
 
   return (
     <div className="min-h-screen bg-background font-sans text-foreground">
@@ -143,7 +192,12 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div className="flex min-w-0 items-center gap-3">
             <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="lg:hidden" aria-label="Open navigation">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="lg:hidden"
+                  aria-label="Open navigation"
+                >
                   <Menu className="size-5" />
                 </Button>
               </SheetTrigger>

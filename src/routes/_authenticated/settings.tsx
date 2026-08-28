@@ -75,7 +75,10 @@ function SettingsPage() {
         <h2 className="text-sm font-semibold text-foreground">My profile</h2>
 
         <div className="space-y-1.5">
-          <Label htmlFor="name" className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+          <Label
+            htmlFor="name"
+            className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground"
+          >
             Display name
           </Label>
           <Input id="name" value={name} onChange={(event) => setName(event.target.value)} />

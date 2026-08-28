@@ -20,7 +20,10 @@ export function PlaceholderPage({
         title={title}
         description={description}
         badge={
-          <Badge variant="outline" className="border-border text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+          <Badge
+            variant="outline"
+            className="border-border text-[10px] font-bold uppercase tracking-wide text-muted-foreground"
+          >
             Phase {phase}
           </Badge>
         }
@@ -32,8 +35,8 @@ export function PlaceholderPage({
         </div>
         <h2 className="mt-4 text-sm font-semibold text-foreground">Coming in Phase {phase}</h2>
         <p className="mx-auto mt-1 max-w-md text-xs leading-relaxed text-muted-foreground">
-          This module is not implemented yet. Phase 1 delivers the secure application
-          foundation only — no financial records, calculations or documents are generated.
+          This module is not implemented yet. Phase 1 delivers the secure application foundation
+          only — no financial records, calculations or documents are generated.
         </p>
         <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
           {scope.map((item) => (
