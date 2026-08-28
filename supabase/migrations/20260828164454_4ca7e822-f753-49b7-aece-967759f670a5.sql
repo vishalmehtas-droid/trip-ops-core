@@ -1,0 +1,1 @@
+REVOKE DELETE, TRUNCATE ON public.sales FROM authenticated, anon;
