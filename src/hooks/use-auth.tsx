@@ -20,6 +20,7 @@ type AuthState = {
   session: Session | null;
   user: User | null;
   profile: Profile | null;
+  isActive: boolean;
   roles: AppRole[];
   permissions: string[];
   primaryRole: AppRole | null;
@@ -42,6 +43,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [roles, setRoles] = useState<AppRole[]>([]);
   const [permissions, setPermissions] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
 
   const loadIdentity = useCallback(async (activeSession: Session | null) => {
     if (!activeSession?.user) {
