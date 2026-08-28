@@ -118,7 +118,7 @@ export function BookingComponents({
   });
 
   const vendorOptions: RecordOption[] = useMemo(() => {
-    const options = (activeVendorsQuery.data ?? []).map((row) => ({
+    const options: RecordOption[] = (activeVendorsQuery.data ?? []).map((row) => ({
       id: row.id,
       label: row.name,
       hint: row.type,
