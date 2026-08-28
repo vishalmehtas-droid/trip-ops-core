@@ -32,10 +32,7 @@ export const updateClient = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => clientUpdateSchema.parse(input))
   .handler(async ({ data, context }) => {
     requirePermission(context, "clients.manage");
-    const { error } = await context.supabase
-      .from("clients")
-      .update(data.values)
-      .eq("id", data.id);
+    const { error } = await context.supabase.from("clients").update(data.values).eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true as const };
   });
@@ -74,10 +71,7 @@ export const updateVendor = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => vendorUpdateSchema.parse(input))
   .handler(async ({ data, context }) => {
     requirePermission(context, "vendors.manage");
-    const { error } = await context.supabase
-      .from("vendors")
-      .update(data.values)
-      .eq("id", data.id);
+    const { error } = await context.supabase.from("vendors").update(data.values).eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true as const };
   });

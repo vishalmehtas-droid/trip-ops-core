@@ -1,13 +1,6 @@
 import { z } from "zod";
 
-export const VENDOR_TYPES = [
-  "hotel",
-  "flight",
-  "visa",
-  "activity",
-  "transport",
-  "other",
-] as const;
+export const VENDOR_TYPES = ["hotel", "flight", "visa", "activity", "transport", "other"] as const;
 
 export type VendorType = (typeof VENDOR_TYPES)[number];
 

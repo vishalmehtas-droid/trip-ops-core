@@ -56,11 +56,7 @@ import {
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { destinationInputSchema } from "@/lib/master-schemas";
-import {
-  createDestination,
-  setDestinationActive,
-  updateDestination,
-} from "@/lib/master.functions";
+import { createDestination, setDestinationActive, updateDestination } from "@/lib/master.functions";
 
 export const Route = createFileRoute("/_authenticated/destinations")({
   head: () => ({
@@ -138,7 +134,9 @@ function DestinationsPage() {
   const countries = useMemo(
     () =>
       Array.from(
-        new Set((destinationsQuery.data ?? []).map((row) => row.country).filter(Boolean) as string[]),
+        new Set(
+          (destinationsQuery.data ?? []).map((row) => row.country).filter(Boolean) as string[],
+        ),
       ).sort((a, b) => a.localeCompare(b)),
     [destinationsQuery.data],
   );

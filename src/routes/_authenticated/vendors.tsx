@@ -262,7 +262,10 @@ function VendorsPage() {
       />
 
       <MasterToolbar search={search} onSearchChange={setSearch} placeholder="Search vendors">
-        <Select value={typeFilter} onValueChange={(value) => setTypeFilter(value as typeof typeFilter)}>
+        <Select
+          value={typeFilter}
+          onValueChange={(value) => setTypeFilter(value as typeof typeFilter)}
+        >
           <SelectTrigger className="w-[150px]" aria-label="Vendor type filter">
             <SelectValue />
           </SelectTrigger>
