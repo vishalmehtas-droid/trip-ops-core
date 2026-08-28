@@ -52,8 +52,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const user = activeSession.user;
 
-    // The database is the source of truth. A profile row is created on first
-    // sign-in (RLS only allows the user's own id) and never holds credentials.
+    // The database is the source of truth. Provisioning happens through a
+    // trusted SECURITY DEFINER routine that derives identity from the verified
+    // auth token — the client cannot supply an arbitrary id or email.
     const { data: existing } = await supabase
       .from("profiles")
       .select("*")
@@ -63,22 +64,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     let profileRow = existing as Profile | null;
 
     if (!profileRow) {
-      const { data: inserted } = await supabase
-        .from("profiles")
-        .insert({
-          id: user.id,
-          email: user.email ?? "",
-          name:
-            (user.user_metadata?.["name"] as string | undefined) ??
-            user.email?.split("@")[0] ??
-            "",
-        })
-        .select("*")
-        .maybeSingle();
-      profileRow = (inserted as Profile | null) ?? null;
+      const { data: provisioned } = await supabase.rpc("ensure_own_profile");
+      profileRow = (provisioned as Profile | null) ?? null;
     }
 
     setProfile(profileRow);
+
 
     const { data: roleRows } = await supabase
       .from("user_roles")
