@@ -333,8 +333,7 @@ export function BookingComponents({
               <Input
                 id="item-description"
                 value={form.description}
-                onChange={(event) => setForm({ ...form, description: event.target.value })
-                }
+                onChange={(event) => setForm({ ...form, description: event.target.value })}
                 placeholder="3 nights — Hilton Bangkok"
               />
             </Field>

@@ -39,7 +39,11 @@ const quantity = z.coerce
 
 export const saleItemValuesSchema = z.object({
   item_type: z.enum(SALE_ITEM_TYPES, { message: "Select a component type" }),
-  description: z.string().trim().min(1, "Description is required").max(500, "Description is too long"),
+  description: z
+    .string()
+    .trim()
+    .min(1, "Description is required")
+    .max(500, "Description is too long"),
   vendor_id: optionalVendorId,
   quantity,
 });
