@@ -35,7 +35,7 @@ export const Route = createFileRoute("/_authenticated/audit-log")({
 
 type AuditRow = {
   id: string;
-  actor_id: string | null;
+  user_id: string | null;
   action: string;
   entity_type: string;
   entity_id: string | null;
@@ -53,7 +53,7 @@ function AuditLogPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("audit_log")
-        .select("id, actor_id, action, entity_type, entity_id, created_at")
+        .select("id, user_id, action, entity_type, entity_id, created_at")
         .order("created_at", { ascending: false })
         .limit(200);
       if (error) throw error;
@@ -131,7 +131,7 @@ function AuditLogPage() {
                     {row.entity_id ?? "—"}
                   </TableCell>
                   <TableCell className="font-mono text-xs text-muted-foreground">
-                    {row.actor_id ?? "system"}
+                    {row.user_id ?? "system"}
                   </TableCell>
                 </TableRow>
               ))}
