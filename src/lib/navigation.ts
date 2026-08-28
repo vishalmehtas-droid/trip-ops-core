@@ -54,9 +54,27 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     label: "Masters",
     items: [
-      { label: "Clients", to: "/clients", icon: Users, phase: 2 },
-      { label: "Vendors", to: "/vendors", icon: Building2, phase: 2 },
-      { label: "Destinations", to: "/destinations", icon: Globe2, phase: 2 },
+      {
+        label: "Clients",
+        to: "/clients",
+        icon: Users,
+        phase: null,
+        permission: "clients.read",
+      },
+      {
+        label: "Vendors",
+        to: "/vendors",
+        icon: Building2,
+        phase: null,
+        permission: "vendors.read",
+      },
+      {
+        label: "Destinations",
+        to: "/destinations",
+        icon: Globe2,
+        phase: null,
+        permission: "destinations.read",
+      },
     ],
   },
   {
