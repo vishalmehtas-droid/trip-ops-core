@@ -22,7 +22,6 @@ import { Route as AuthenticatedPurchasesRouteImport } from './routes/_authentica
 import { Route as AuthenticatedReceiptsRouteImport } from './routes/_authenticated/receipts'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedUsersRouteImport } from './routes/_authenticated/users'
-import { Route as AuthenticatedVendorTypesRouteImport } from './routes/_authenticated/vendor-types'
 import { Route as AuthenticatedVendorsRouteImport } from './routes/_authenticated/vendors'
 import { Route as AuthenticatedReportsCashflowRouteImport } from './routes/_authenticated/reports.cashflow'
 import { Route as AuthenticatedReportsClientLedgerRouteImport } from './routes/_authenticated/reports.client-ledger'
@@ -97,12 +96,6 @@ const AuthenticatedUsersRoute = AuthenticatedUsersRouteImport.update({
   path: '/users',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedVendorTypesRoute =
-  AuthenticatedVendorTypesRouteImport.update({
-    id: '/vendor-types',
-    path: '/vendor-types',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
 const AuthenticatedVendorsRoute = AuthenticatedVendorsRouteImport.update({
   id: '/vendors',
   path: '/vendors',
@@ -162,7 +155,6 @@ export interface FileRoutesByFullPath {
   '/receipts': typeof AuthenticatedReceiptsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/users': typeof AuthenticatedUsersRoute
-  '/vendor-types': typeof AuthenticatedVendorTypesRoute
   '/vendors': typeof AuthenticatedVendorsRoute
   '/reports/cashflow': typeof AuthenticatedReportsCashflowRoute
   '/reports/client-ledger': typeof AuthenticatedReportsClientLedgerRoute
@@ -185,7 +177,6 @@ export interface FileRoutesByTo {
   '/receipts': typeof AuthenticatedReceiptsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/users': typeof AuthenticatedUsersRoute
-  '/vendor-types': typeof AuthenticatedVendorTypesRoute
   '/vendors': typeof AuthenticatedVendorsRoute
   '/reports/cashflow': typeof AuthenticatedReportsCashflowRoute
   '/reports/client-ledger': typeof AuthenticatedReportsClientLedgerRoute
@@ -210,7 +201,6 @@ export interface FileRoutesById {
   '/_authenticated/receipts': typeof AuthenticatedReceiptsRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/users': typeof AuthenticatedUsersRoute
-  '/_authenticated/vendor-types': typeof AuthenticatedVendorTypesRoute
   '/_authenticated/vendors': typeof AuthenticatedVendorsRoute
   '/_authenticated/reports/cashflow': typeof AuthenticatedReportsCashflowRoute
   '/_authenticated/reports/client-ledger': typeof AuthenticatedReportsClientLedgerRoute
@@ -235,7 +225,6 @@ export interface FileRouteTypes {
     | '/receipts'
     | '/settings'
     | '/users'
-    | '/vendor-types'
     | '/vendors'
     | '/reports/cashflow'
     | '/reports/client-ledger'
@@ -258,7 +247,6 @@ export interface FileRouteTypes {
     | '/receipts'
     | '/settings'
     | '/users'
-    | '/vendor-types'
     | '/vendors'
     | '/reports/cashflow'
     | '/reports/client-ledger'
@@ -282,7 +270,6 @@ export interface FileRouteTypes {
     | '/_authenticated/receipts'
     | '/_authenticated/settings'
     | '/_authenticated/users'
-    | '/_authenticated/vendor-types'
     | '/_authenticated/vendors'
     | '/_authenticated/reports/cashflow'
     | '/_authenticated/reports/client-ledger'
@@ -393,13 +380,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedUsersRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/vendor-types': {
-      id: '/_authenticated/vendor-types'
-      path: '/vendor-types'
-      fullPath: '/vendor-types'
-      preLoaderRoute: typeof AuthenticatedVendorTypesRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/_authenticated/vendors': {
       id: '/_authenticated/vendors'
       path: '/vendors'
@@ -469,7 +449,6 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedReceiptsRoute: typeof AuthenticatedReceiptsRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedUsersRoute: typeof AuthenticatedUsersRoute
-  AuthenticatedVendorTypesRoute: typeof AuthenticatedVendorTypesRoute
   AuthenticatedVendorsRoute: typeof AuthenticatedVendorsRoute
   AuthenticatedReportsCashflowRoute: typeof AuthenticatedReportsCashflowRoute
   AuthenticatedReportsClientLedgerRoute: typeof AuthenticatedReportsClientLedgerRoute
@@ -490,7 +469,6 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedReceiptsRoute: AuthenticatedReceiptsRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedUsersRoute: AuthenticatedUsersRoute,
-  AuthenticatedVendorTypesRoute: AuthenticatedVendorTypesRoute,
   AuthenticatedVendorsRoute: AuthenticatedVendorsRoute,
   AuthenticatedReportsCashflowRoute: AuthenticatedReportsCashflowRoute,
   AuthenticatedReportsClientLedgerRoute: AuthenticatedReportsClientLedgerRoute,

@@ -76,13 +76,6 @@ export const NAV_GROUPS: NavGroup[] = [
         permission: "vendors.read",
       },
       {
-        label: "Vendor Types",
-        to: "/vendor-types",
-        icon: Tags,
-        phase: null,
-        permission: "vendors.read",
-      },
-      {
         label: "Destinations",
         to: "/destinations",
         icon: Globe2,
