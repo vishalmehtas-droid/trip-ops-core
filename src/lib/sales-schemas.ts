@@ -83,6 +83,8 @@ export const saleEditSchema = travelAfterBooking(
     booking_date: isoDate,
     travel_date: optionalIsoDate,
     notes: optionalNotes,
+    /** Drives the GST treatment; recalculates pricing server-side when changed. */
+    billing_type: z.enum(BILLING_TYPES, { message: "Select a billing type" }),
   }),
 );
 
