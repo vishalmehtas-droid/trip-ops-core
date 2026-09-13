@@ -105,7 +105,7 @@ const PRICING_SELECT =
 
 type CostForm = {
   cost_type: SaleCostType | "";
-  
+
   description: string;
   vendor_id: string;
   quantity: string;
@@ -117,7 +117,7 @@ type CostForm = {
 
 const EMPTY_COST: CostForm = {
   cost_type: "",
-  
+
   description: "",
   vendor_id: "",
   quantity: "1",
@@ -328,7 +328,7 @@ export function BookingCosting({
     setEditingCostId(cost.id);
     setCostForm({
       cost_type: cost.cost_type,
-      
+
       description: cost.description,
       vendor_id: cost.vendor_id ?? "",
       quantity: String(cost.quantity),

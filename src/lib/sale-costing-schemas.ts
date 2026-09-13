@@ -22,7 +22,6 @@ export const SALE_COST_TYPE_LABELS: Record<SaleCostType, string> = {
   other: "Other",
 };
 
-
 export const MARKUP_TYPES = ["percentage", "lumpsum", "none"] as const;
 
 export type MarkupType = (typeof MARKUP_TYPES)[number];
