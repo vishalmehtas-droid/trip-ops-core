@@ -39,7 +39,7 @@ export const createSaleCost = createServerFn({ method: "POST" })
         sale_id: data.sale_id,
         vendor_id: data.values.vendor_id,
         cost_type: data.values.cost_type,
-        source_type: data.values.source_type,
+
         description: data.values.description,
         quantity: data.values.quantity,
         unit_cost: data.values.unit_cost,
@@ -82,7 +82,7 @@ export const updateSaleCost = createServerFn({ method: "POST" })
       .update({
         vendor_id: data.values.vendor_id,
         cost_type: data.values.cost_type,
-        source_type: data.values.source_type,
+
         description: data.values.description,
         quantity: data.values.quantity,
         unit_cost: data.values.unit_cost,
