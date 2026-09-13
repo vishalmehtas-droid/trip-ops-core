@@ -103,6 +103,7 @@ function SaleDetailPage() {
     destination_id: "",
     travel_date: "",
     notes: "",
+    billing_type: "tour_package",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [pendingStatus, setPendingStatus] = useState<SaleStatus | null>(null);
