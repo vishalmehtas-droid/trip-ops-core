@@ -45,6 +45,8 @@ export function RecordCombobox({
   disabled,
   id,
   allowClear,
+  onCreateNew,
+  createLabel,
 }: {
   options: RecordOption[];
   value: string;
@@ -55,6 +57,9 @@ export function RecordCombobox({
   disabled?: boolean;
   id?: string;
   allowClear?: boolean;
+  /** When provided, an inline quick-add action is shown inside the list. */
+  onCreateNew?: (() => void) | undefined;
+  createLabel?: string;
 }) {
   const [open, setOpen] = useState(false);
   const selected = options.find((option) => option.id === value);
