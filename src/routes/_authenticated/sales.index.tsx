@@ -461,6 +461,8 @@ function SalesPage() {
                 placeholder="Select a client"
                 searchPlaceholder="Search clients"
                 emptyText="No active clients found"
+                onCreateNew={clientQuickAdd.openQuickAdd}
+                createLabel="Add new client"
               />
             </Field>
             <Field label="Destination" htmlFor="sale-destination" error={errors["destination_id"]}>
@@ -473,6 +475,8 @@ function SalesPage() {
                 searchPlaceholder="Search destinations"
                 emptyText="No active destinations found"
                 allowClear
+                onCreateNew={destinationQuickAdd.openQuickAdd}
+                createLabel="Add new destination"
               />
             </Field>
             <div className="grid gap-4 sm:grid-cols-2">
