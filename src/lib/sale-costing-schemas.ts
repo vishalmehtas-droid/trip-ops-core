@@ -1,37 +1,27 @@
 import { z } from "zod";
 
 export const SALE_COST_TYPES = [
+  "tour_package",
   "hotel",
   "flight",
   "visa",
   "activity",
   "transport",
-  "dmc",
   "other",
 ] as const;
 
 export type SaleCostType = (typeof SALE_COST_TYPES)[number];
 
 export const SALE_COST_TYPE_LABELS: Record<SaleCostType, string> = {
+  tour_package: "Tour Package",
   hotel: "Hotel",
   flight: "Flight",
   visa: "Visa",
   activity: "Activity",
   transport: "Transport",
-  dmc: "DMC",
   other: "Other",
 };
 
-export const COST_SOURCE_TYPES = ["direct", "vendor", "dmc", "other"] as const;
-
-export type CostSourceType = (typeof COST_SOURCE_TYPES)[number];
-
-export const COST_SOURCE_TYPE_LABELS: Record<CostSourceType, string> = {
-  direct: "Direct",
-  vendor: "Vendor",
-  dmc: "DMC",
-  other: "Other",
-};
 
 export const MARKUP_TYPES = ["percentage", "lumpsum", "none"] as const;
 
@@ -99,8 +89,8 @@ const optionalNotes = z
 
 export const saleCostValuesSchema = z
   .object({
-    cost_type: z.enum(SALE_COST_TYPES, { message: "Select a cost type" }),
-    source_type: z.enum(COST_SOURCE_TYPES, { message: "Select a source" }),
+    cost_type: z.enum(SALE_COST_TYPES, { message: "Select a purchase type" }),
+
     description: z
       .string()
       .trim()
