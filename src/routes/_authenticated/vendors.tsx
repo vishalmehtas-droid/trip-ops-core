@@ -232,7 +232,7 @@ function VendorsPage() {
     <div className="space-y-6">
       <PageHeader
         title="Vendors"
-        description="Vendor master with service type and contact details. Records are deactivated rather than deleted so future transactions keep a valid reference."
+        description="Vendor master with contact details. Records are deactivated rather than deleted so future transactions keep a valid reference."
         badge={
           <Badge variant="outline" className="text-[10px] font-bold uppercase tracking-wide">
             Masters
@@ -272,7 +272,7 @@ function VendorsPage() {
           title={vendorsQuery.data.length === 0 ? "No vendors yet" : "No matching vendors"}
           description={
             vendorsQuery.data.length === 0
-              ? "Add hotels, airlines, visa agents, transporters and activity partners here."
+              ? "Add hotels, DMCs, airlines, visa agents, transporters and activity partners here."
               : "Adjust the search term or filters."
           }
           {...(canManage && vendorsQuery.data.length === 0
@@ -350,7 +350,7 @@ function VendorsPage() {
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>{editing ? "Edit vendor" : "New vendor"}</DialogTitle>
-            <DialogDescription>Name and service type are mandatory.</DialogDescription>
+            <DialogDescription>Only the name is mandatory.</DialogDescription>
           </DialogHeader>
 
           <div className="grid gap-4">
