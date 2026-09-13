@@ -209,7 +209,6 @@ export type Database = {
           quantity: number
           sale_id: string
           sort_order: number
-          source_type: Database["public"]["Enums"]["cost_source_type"]
           total_cost: number
           unit_cost: number
           updated_at: string
@@ -227,7 +226,6 @@ export type Database = {
           quantity?: number
           sale_id: string
           sort_order?: number
-          source_type?: Database["public"]["Enums"]["cost_source_type"]
           total_cost?: number
           unit_cost: number
           updated_at?: string
@@ -245,7 +243,6 @@ export type Database = {
           quantity?: number
           sale_id?: string
           sort_order?: number
-          source_type?: Database["public"]["Enums"]["cost_source_type"]
           total_cost?: number
           unit_cost?: number
           updated_at?: string
@@ -561,7 +558,6 @@ export type Database = {
     Enums: {
       app_role: "admin" | "sales" | "operations" | "accounts" | "viewer"
       billing_type: "tour_package" | "standalone_service"
-      cost_source_type: "direct" | "vendor" | "dmc" | "other"
       markup_type: "percentage" | "lumpsum" | "none"
       sale_cost_type:
         | "hotel"
@@ -569,7 +565,7 @@ export type Database = {
         | "visa"
         | "activity"
         | "transport"
-        | "dmc"
+        | "tour_package"
         | "other"
       sale_item_type:
         | "hotel"
@@ -708,7 +704,6 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "sales", "operations", "accounts", "viewer"],
       billing_type: ["tour_package", "standalone_service"],
-      cost_source_type: ["direct", "vendor", "dmc", "other"],
       markup_type: ["percentage", "lumpsum", "none"],
       sale_cost_type: [
         "hotel",
@@ -716,7 +711,7 @@ export const Constants = {
         "visa",
         "activity",
         "transport",
-        "dmc",
+        "tour_package",
         "other",
       ],
       sale_item_type: [
