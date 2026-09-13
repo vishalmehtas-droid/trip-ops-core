@@ -24,6 +24,7 @@ import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedUsersRouteImport } from './routes/_authenticated/users'
 import { Route as AuthenticatedVendorsRouteImport } from './routes/_authenticated/vendors'
 import { Route as AuthenticatedLeadsIndexRouteImport } from './routes/_authenticated/leads.index'
+import { Route as AuthenticatedLeadsLeadIdRouteImport } from './routes/_authenticated/leads.$leadId'
 import { Route as AuthenticatedReportsCashflowRouteImport } from './routes/_authenticated/reports.cashflow'
 import { Route as AuthenticatedReportsClientLedgerRouteImport } from './routes/_authenticated/reports.client-ledger'
 import { Route as AuthenticatedReportsGstRouteImport } from './routes/_authenticated/reports.gst'
@@ -107,6 +108,12 @@ const AuthenticatedLeadsIndexRoute = AuthenticatedLeadsIndexRouteImport.update({
   path: '/leads/',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedLeadsLeadIdRoute =
+  AuthenticatedLeadsLeadIdRouteImport.update({
+    id: '/leads/$leadId',
+    path: '/leads/$leadId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedReportsCashflowRoute =
   AuthenticatedReportsCashflowRouteImport.update({
     id: '/reports/cashflow',
@@ -162,6 +169,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof AuthenticatedSettingsRoute
   '/users': typeof AuthenticatedUsersRoute
   '/vendors': typeof AuthenticatedVendorsRoute
+  '/leads/$leadId': typeof AuthenticatedLeadsLeadIdRoute
   '/reports/cashflow': typeof AuthenticatedReportsCashflowRoute
   '/reports/client-ledger': typeof AuthenticatedReportsClientLedgerRoute
   '/reports/gst': typeof AuthenticatedReportsGstRoute
@@ -185,6 +193,7 @@ export interface FileRoutesByTo {
   '/settings': typeof AuthenticatedSettingsRoute
   '/users': typeof AuthenticatedUsersRoute
   '/vendors': typeof AuthenticatedVendorsRoute
+  '/leads/$leadId': typeof AuthenticatedLeadsLeadIdRoute
   '/reports/cashflow': typeof AuthenticatedReportsCashflowRoute
   '/reports/client-ledger': typeof AuthenticatedReportsClientLedgerRoute
   '/reports/gst': typeof AuthenticatedReportsGstRoute
@@ -210,6 +219,7 @@ export interface FileRoutesById {
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/users': typeof AuthenticatedUsersRoute
   '/_authenticated/vendors': typeof AuthenticatedVendorsRoute
+  '/_authenticated/leads/$leadId': typeof AuthenticatedLeadsLeadIdRoute
   '/_authenticated/reports/cashflow': typeof AuthenticatedReportsCashflowRoute
   '/_authenticated/reports/client-ledger': typeof AuthenticatedReportsClientLedgerRoute
   '/_authenticated/reports/gst': typeof AuthenticatedReportsGstRoute
@@ -235,6 +245,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/users'
     | '/vendors'
+    | '/leads/$leadId'
     | '/reports/cashflow'
     | '/reports/client-ledger'
     | '/reports/gst'
@@ -258,6 +269,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/users'
     | '/vendors'
+    | '/leads/$leadId'
     | '/reports/cashflow'
     | '/reports/client-ledger'
     | '/reports/gst'
@@ -282,6 +294,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings'
     | '/_authenticated/users'
     | '/_authenticated/vendors'
+    | '/_authenticated/leads/$leadId'
     | '/_authenticated/reports/cashflow'
     | '/_authenticated/reports/client-ledger'
     | '/_authenticated/reports/gst'
@@ -406,6 +419,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedLeadsIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/leads/$leadId': {
+      id: '/_authenticated/leads/$leadId'
+      path: '/leads/$leadId'
+      fullPath: '/leads/$leadId'
+      preLoaderRoute: typeof AuthenticatedLeadsLeadIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/reports/cashflow': {
       id: '/_authenticated/reports/cashflow'
       path: '/reports/cashflow'
@@ -469,6 +489,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedUsersRoute: typeof AuthenticatedUsersRoute
   AuthenticatedVendorsRoute: typeof AuthenticatedVendorsRoute
+  AuthenticatedLeadsLeadIdRoute: typeof AuthenticatedLeadsLeadIdRoute
   AuthenticatedReportsCashflowRoute: typeof AuthenticatedReportsCashflowRoute
   AuthenticatedReportsClientLedgerRoute: typeof AuthenticatedReportsClientLedgerRoute
   AuthenticatedReportsGstRoute: typeof AuthenticatedReportsGstRoute
@@ -490,6 +511,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedUsersRoute: AuthenticatedUsersRoute,
   AuthenticatedVendorsRoute: AuthenticatedVendorsRoute,
+  AuthenticatedLeadsLeadIdRoute: AuthenticatedLeadsLeadIdRoute,
   AuthenticatedReportsCashflowRoute: AuthenticatedReportsCashflowRoute,
   AuthenticatedReportsClientLedgerRoute: AuthenticatedReportsClientLedgerRoute,
   AuthenticatedReportsGstRoute: AuthenticatedReportsGstRoute,
