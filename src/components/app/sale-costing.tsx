@@ -40,8 +40,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import {
   BILLING_TYPE_LABELS,
-  COST_SOURCE_TYPES,
-  COST_SOURCE_TYPE_LABELS,
   DEFAULT_TCS_RATE,
   MARKUP_TYPES,
   MARKUP_TYPE_LABELS,
@@ -51,10 +49,10 @@ import {
   saleCostValuesSchema,
   salePricingValuesSchema,
   type BillingType,
-  type CostSourceType,
   type MarkupType,
   type SaleCostType,
 } from "@/lib/sale-costing-schemas";
+
 import {
   createSaleCost,
   deleteSaleCost,
@@ -66,7 +64,6 @@ type SaleCost = {
   id: string;
   sale_id: string;
   cost_type: SaleCostType;
-  source_type: CostSourceType;
   description: string;
   vendor_id: string | null;
   quantity: number;
@@ -101,14 +98,14 @@ type SalePricing = {
 };
 
 const COST_SELECT =
-  "id, sale_id, cost_type, source_type, description, vendor_id, quantity, unit_cost, total_cost, currency_code, exchange_rate, base_currency_cost, notes, sort_order, created_at, vendor:vendors(id, name, is_active)";
+  "id, sale_id, cost_type, description, vendor_id, quantity, unit_cost, total_cost, currency_code, exchange_rate, base_currency_cost, notes, sort_order, created_at, vendor:vendors(id, name, is_active)";
 
 const PRICING_SELECT =
   "sale_id, markup_type, markup_value, markup_amount, discount_amount, selling_value, service_charge_amount, gst_rate, gst_amount, tcs_applicable, tcs_rate, tcs_amount, customer_payable, expected_cost, expected_gross_profit, updated_at";
 
 type CostForm = {
   cost_type: SaleCostType | "";
-  source_type: CostSourceType;
+  
   description: string;
   vendor_id: string;
   quantity: string;
@@ -120,7 +117,7 @@ type CostForm = {
 
 const EMPTY_COST: CostForm = {
   cost_type: "",
-  source_type: "vendor",
+  
   description: "",
   vendor_id: "",
   quantity: "1",
@@ -331,7 +328,7 @@ export function BookingCosting({
     setEditingCostId(cost.id);
     setCostForm({
       cost_type: cost.cost_type,
-      source_type: cost.source_type,
+      
       description: cost.description,
       vendor_id: cost.vendor_id ?? "",
       quantity: String(cost.quantity),
@@ -408,7 +405,7 @@ export function BookingCosting({
         ) : costs.length === 0 ? (
           <p className="px-4 py-10 text-center text-xs text-muted-foreground">
             {canManage
-              ? "Add the DMC, hotel, flight, visa or transport costs you expect to pay for this booking."
+              ? "Add the tour package, hotel, flight, visa or transport costs you expect to pay for this booking."
               : "No internal costs recorded yet."}
           </p>
         ) : (
@@ -416,9 +413,9 @@ export function BookingCosting({
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border text-left text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                  <th className="px-4 py-2">Type</th>
+                  <th className="px-4 py-2">Purchase type</th>
                   <th className="px-4 py-2">Description</th>
-                  <th className="px-4 py-2">Vendor / source</th>
+                  <th className="px-4 py-2">Vendor</th>
                   <th className="px-4 py-2 text-right">Qty</th>
                   <th className="px-4 py-2 text-right">Unit cost</th>
                   <th className="px-4 py-2 text-right">Line total</th>
@@ -451,7 +448,7 @@ export function BookingCosting({
                           ) : null}
                         </span>
                       ) : (
-                        COST_SOURCE_TYPE_LABELS[cost.source_type]
+                        "—"
                       )}
                     </td>
                     <td className="px-4 py-2.5 text-right tabular-nums">{cost.quantity}</td>
@@ -559,7 +556,12 @@ export function BookingCosting({
           </DialogHeader>
 
           <div className="grid gap-4">
-            <Field label="Cost type" htmlFor="cost-type" required error={costErrors["cost_type"]}>
+            <Field
+              label="Purchase type"
+              htmlFor="cost-type"
+              required
+              error={costErrors["cost_type"]}
+            >
               <Select
                 value={costForm.cost_type}
                 onValueChange={(value) =>
@@ -567,7 +569,7 @@ export function BookingCosting({
                 }
               >
                 <SelectTrigger id="cost-type">
-                  <SelectValue placeholder="Select a cost type" />
+                  <SelectValue placeholder="Select a purchase type" />
                 </SelectTrigger>
                 <SelectContent>
                   {SALE_COST_TYPES.map((type) => (
@@ -578,25 +580,7 @@ export function BookingCosting({
                 </SelectContent>
               </Select>
             </Field>
-            <Field label="Source" htmlFor="cost-source" required error={costErrors["source_type"]}>
-              <Select
-                value={costForm.source_type}
-                onValueChange={(value) =>
-                  setCostForm({ ...costForm, source_type: value as CostSourceType })
-                }
-              >
-                <SelectTrigger id="cost-source">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {COST_SOURCE_TYPES.map((type) => (
-                    <SelectItem key={type} value={type}>
-                      {COST_SOURCE_TYPE_LABELS[type]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </Field>
+
             <Field
               label="Description"
               htmlFor="cost-description"
