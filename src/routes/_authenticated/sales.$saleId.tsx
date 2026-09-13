@@ -453,6 +453,33 @@ function SaleDetailPage() {
                 onChange={(event) => setForm({ ...form, travel_date: event.target.value })}
               />
             </Field>
+            <Field
+              label="Billing type"
+              htmlFor="edit-billing-type"
+              required
+              error={errors["billing_type"]}
+            >
+              <Select
+                value={form.billing_type}
+                onValueChange={(value) =>
+                  setForm({ ...form, billing_type: value as BillingType })
+                }
+              >
+                <SelectTrigger id="edit-billing-type">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {BILLING_TYPES.map((type) => (
+                    <SelectItem key={type} value={type}>
+                      {BILLING_TYPE_LABELS[type]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {BILLING_TYPE_HINTS[form.billing_type]}
+              </p>
+            </Field>
             <Field label="Notes" htmlFor="edit-notes" error={errors["notes"]}>
               <Textarea
                 id="edit-notes"
