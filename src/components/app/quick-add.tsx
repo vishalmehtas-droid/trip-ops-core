@@ -24,22 +24,16 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/hooks/use-auth";
+import { useVendorTypes } from "@/hooks/use-vendor-types";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  VENDOR_TYPES,
-  VENDOR_TYPE_LABELS,
-  clientInputSchema,
-  destinationInputSchema,
-  vendorInputSchema,
-  type VendorType,
-} from "@/lib/master-schemas";
+import { clientInputSchema, destinationInputSchema, vendorInputSchema } from "@/lib/master-schemas";
 import { createClient, createDestination, createVendor } from "@/lib/master.functions";
 
 export type QuickAddKind = "client" | "vendor" | "destination";
 
 type Form = {
   name: string;
-  type: VendorType | "";
+  vendor_type_id: string;
   phone: string;
   email: string;
   gst_number: string;
@@ -51,7 +45,7 @@ type Form = {
 
 const EMPTY: Form = {
   name: "",
-  type: "",
+  vendor_type_id: "",
   phone: "",
   email: "",
   gst_number: "",
@@ -115,6 +109,12 @@ export function QuickAddDialog({
   const createVendorFn = useServerFn(createVendor);
   const createDestinationFn = useServerFn(createDestination);
 
+  // Vendor types come from the master list; only active ones are offered.
+  const vendorTypesQuery = useVendorTypes({
+    enabled: kind === "vendor" && canManage,
+    activeOnly: true,
+  });
+
   const reset = useCallback(() => {
     setForm(EMPTY);
     setErrors({});
@@ -174,7 +174,7 @@ export function QuickAddDialog({
       if (kind === "vendor") {
         const values = vendorInputSchema.parse({
           name: form.name,
-          type: form.type,
+          vendor_type_id: form.vendor_type_id,
           phone: form.phone,
           email: form.email,
           gst_number: form.gst_number,
@@ -232,7 +232,7 @@ export function QuickAddDialog({
           : destinationInputSchema;
     const parsed = schema.safeParse({
       name: form.name,
-      ...(kind === "vendor" ? { type: form.type } : {}),
+      ...(kind === "vendor" ? { vendor_type_id: form.vendor_type_id } : {}),
       phone: form.phone,
       email: form.email,
       gst_number: form.gst_number,
@@ -329,18 +329,23 @@ export function QuickAddDialog({
               </Field>
 
               {kind === "vendor" ? (
-                <Field label="Vendor type" htmlFor="qa-vendor-type" required error={errors["type"]}>
+                <Field
+                  label="Vendor type"
+                  htmlFor="qa-vendor-type"
+                  required
+                  error={errors["vendor_type_id"]}
+                >
                   <Select
-                    value={form.type}
-                    onValueChange={(value) => setForm({ ...form, type: value as VendorType })}
+                    value={form.vendor_type_id}
+                    onValueChange={(value) => setForm({ ...form, vendor_type_id: value })}
                   >
                     <SelectTrigger id="qa-vendor-type">
                       <SelectValue placeholder="Select a type" />
                     </SelectTrigger>
                     <SelectContent>
-                      {VENDOR_TYPES.map((type) => (
-                        <SelectItem key={type} value={type}>
-                          {VENDOR_TYPE_LABELS[type]}
+                      {(vendorTypesQuery.data ?? []).map((type) => (
+                        <SelectItem key={type.id} value={type.id}>
+                          {type.name}
                         </SelectItem>
                       ))}
                     </SelectContent>

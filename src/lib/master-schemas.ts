@@ -1,18 +1,5 @@
 import { z } from "zod";
 
-export const VENDOR_TYPES = ["hotel", "flight", "visa", "activity", "transport", "other"] as const;
-
-export type VendorType = (typeof VENDOR_TYPES)[number];
-
-export const VENDOR_TYPE_LABELS: Record<VendorType, string> = {
-  hotel: "Hotel",
-  flight: "Flight",
-  visa: "Visa",
-  activity: "Activity",
-  transport: "Transport",
-  other: "Other",
-};
-
 const requiredName = z
   .string()
   .trim()
@@ -62,9 +49,20 @@ export const clientInputSchema = z.object({
   is_active: z.boolean().default(true),
 });
 
+/** Vendor types are master data now — no hard-coded list anywhere. */
+export const vendorTypeInputSchema = z.object({
+  name: requiredName,
+  is_active: z.boolean().default(true),
+});
+
+export const vendorTypeUpdateSchema = z.object({
+  id: z.string().uuid(),
+  values: vendorTypeInputSchema,
+});
+
 export const vendorInputSchema = z.object({
   name: requiredName,
-  type: z.enum(VENDOR_TYPES),
+  vendor_type_id: z.string().uuid("Select a vendor type"),
   phone: optionalPhone,
   email: optionalEmail,
   gst_number: optionalText(40),
@@ -104,3 +102,12 @@ export const setActiveSchema = z.object({
 export type ClientInput = z.input<typeof clientInputSchema>;
 export type VendorInput = z.input<typeof vendorInputSchema>;
 export type DestinationInput = z.input<typeof destinationInputSchema>;
+export type VendorTypeInput = z.input<typeof vendorTypeInputSchema>;
+
+export type VendorTypeRow = {
+  id: string;
+  name: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+};
