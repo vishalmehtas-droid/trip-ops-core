@@ -528,9 +528,7 @@ export function LeadRequirements({
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {pending
-                ? `Mark requirement ${REQUIREMENT_STATUS_LABELS[pending.status]}?`
-                : ""}
+              {pending ? `Mark requirement ${REQUIREMENT_STATUS_LABELS[pending.status]}?` : ""}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {pending?.status === "superseded"

@@ -359,7 +359,9 @@ function LeadsPage() {
                   <TableHead className="text-[10px] uppercase tracking-wider">Lead</TableHead>
                   <TableHead className="text-[10px] uppercase tracking-wider">Client</TableHead>
                   <TableHead className="text-[10px] uppercase tracking-wider">Enquiry</TableHead>
-                  <TableHead className="text-[10px] uppercase tracking-wider">Assigned to</TableHead>
+                  <TableHead className="text-[10px] uppercase tracking-wider">
+                    Assigned to
+                  </TableHead>
                   <TableHead className="text-[10px] uppercase tracking-wider">Source</TableHead>
                   <TableHead className="text-[10px] uppercase tracking-wider">Status</TableHead>
                   <TableHead className="text-[10px] uppercase tracking-wider">Updated</TableHead>

@@ -395,7 +395,10 @@ function LeadDetailPage() {
           <DetailRow label="Source" value={lead.source} />
           <DetailRow label="Status" value={<LeadStatusBadge status={lead.status} />} />
           <DetailRow label="Notes" value={lead.notes} />
-          <DetailRow label="Created by" value={personNames.get(lead.created_by) ?? "Unknown user"} />
+          <DetailRow
+            label="Created by"
+            value={personNames.get(lead.created_by) ?? "Unknown user"}
+          />
           <DetailRow label="Created at" value={formatDateTime(lead.created_at)} />
           <DetailRow label="Last updated" value={formatDateTime(lead.updated_at)} />
         </dl>
