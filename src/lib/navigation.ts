@@ -12,7 +12,6 @@ import {
   Settings,
   ShieldCheck,
   ShoppingCart,
-  Tags,
   Users,
   Wallet,
 } from "lucide-react";
