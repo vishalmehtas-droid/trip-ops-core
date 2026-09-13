@@ -10,6 +10,7 @@ import { DetailRow, Field, formatDate, formatDateTime } from "@/components/app/m
 import { BookingCosting } from "@/components/app/sale-costing";
 import { BookingComponents } from "@/components/app/sales-items";
 import { RecordCombobox, SaleStatusBadge, type RecordOption } from "@/components/app/sales-ui";
+import { useQuickAdd } from "@/components/app/quick-add";
 import { ErrorState, LoadingState, UnauthorizedState } from "@/components/app/states";
 import {
   AlertDialog,
@@ -438,6 +439,8 @@ function SaleDetailPage() {
                 placeholder="Select a client"
                 searchPlaceholder="Search clients"
                 emptyText="No active clients found"
+                onCreateNew={clientQuickAdd.openQuickAdd}
+                createLabel="Add new client"
               />
             </Field>
             <Field label="Destination" htmlFor="edit-destination" error={errors["destination_id"]}>
@@ -450,6 +453,8 @@ function SaleDetailPage() {
                 searchPlaceholder="Search destinations"
                 emptyText="No active destinations found"
                 allowClear
+                onCreateNew={destinationQuickAdd.openQuickAdd}
+                createLabel="Add new destination"
               />
             </Field>
             <Field label="Travel date" htmlFor="edit-travel-date" error={errors["travel_date"]}>

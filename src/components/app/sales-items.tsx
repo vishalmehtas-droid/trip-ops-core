@@ -6,6 +6,7 @@ import { toast } from "sonner";
 
 import { Field } from "@/components/app/master-data";
 import { RecordCombobox, type RecordOption } from "@/components/app/sales-ui";
+import { useQuickAdd } from "@/components/app/quick-add";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -347,6 +348,8 @@ export function BookingComponents({
                 searchPlaceholder="Search vendors"
                 emptyText="No active vendors found"
                 allowClear
+                onCreateNew={vendorQuickAdd.openQuickAdd}
+                createLabel="Add new vendor"
               />
             </Field>
             <Field label="Quantity" htmlFor="item-quantity" required error={errors["quantity"]}>
