@@ -405,6 +405,12 @@ function SaleDetailPage() {
 
       <BookingComponents saleId={sale.id} canManage={canManage && !isLocked} />
 
+      <BookingCosting
+        saleId={sale.id}
+        billingType={sale.billing_type}
+        canManage={canManage && !isLocked}
+      />
+
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
           <DialogHeader>
