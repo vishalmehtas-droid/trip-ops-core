@@ -62,6 +62,8 @@
   --color-brand: var(--brand);
   --color-brand-foreground: var(--brand-foreground);
   --color-brand-muted: var(--brand-muted);
+  --color-accent-warm: var(--accent-warm);
+  --color-accent-warm-muted: var(--accent-warm-muted);
   --color-success: var(--success);
   --color-success-foreground: var(--success-foreground);
   --color-warning: var(--warning);
