@@ -54,13 +54,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useAuth } from "@/hooks/use-auth";
+import { useVendorTypes } from "@/hooks/use-vendor-types";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  VENDOR_TYPES,
-  VENDOR_TYPE_LABELS,
-  vendorInputSchema,
-  type VendorType,
-} from "@/lib/master-schemas";
+import { vendorInputSchema } from "@/lib/master-schemas";
 import { createVendor, setVendorActive, updateVendor } from "@/lib/master.functions";
 
 export const Route = createFileRoute("/_authenticated/vendors")({
@@ -79,7 +75,8 @@ export const Route = createFileRoute("/_authenticated/vendors")({
 type VendorRow = {
   id: string;
   name: string;
-  type: VendorType;
+  vendor_type_id: string;
+  vendor_type: { id: string; name: string; is_active: boolean } | null;
   phone: string | null;
   email: string | null;
   gst_number: string | null;
@@ -92,7 +89,7 @@ type VendorRow = {
 
 type FormState = {
   name: string;
-  type: VendorType;
+  vendor_type_id: string;
   phone: string;
   email: string;
   gst_number: string;
@@ -103,7 +100,7 @@ type FormState = {
 
 const EMPTY_FORM: FormState = {
   name: "",
-  type: "hotel",
+  vendor_type_id: "",
   phone: "",
   email: "",
   gst_number: "",
@@ -119,7 +116,7 @@ function VendorsPage() {
   const queryClient = useQueryClient();
 
   const [search, setSearch] = useState("");
-  const [typeFilter, setTypeFilter] = useState<"all" | VendorType>("all");
+  const [typeFilter, setTypeFilter] = useState<string>("all");
   const [status, setStatus] = useState<"all" | "active" | "inactive">("all");
   const [editing, setEditing] = useState<VendorRow | null>(null);
   const [formOpen, setFormOpen] = useState(false);
@@ -138,17 +135,26 @@ function VendorsPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("vendors")
-        .select("*")
+        .select("*, vendor_type:vendor_types(id, name, is_active)")
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return (data ?? []) as VendorRow[];
+      return (data ?? []) as unknown as VendorRow[];
     },
   });
+
+  const vendorTypesQuery = useVendorTypes({ enabled: canRead });
+  const allTypes = vendorTypesQuery.data ?? [];
+  const activeTypes = allTypes.filter((type) => type.is_active);
+  /** Keep the current type selectable while editing, even if it was deactivated. */
+  const selectableTypes =
+    editing?.vendor_type && !editing.vendor_type.is_active
+      ? [...activeTypes, editing.vendor_type]
+      : activeTypes;
 
   const rows = useMemo(() => {
     const term = search.trim().toLowerCase();
     return (vendorsQuery.data ?? []).filter((row) => {
-      if (typeFilter !== "all" && row.type !== typeFilter) return false;
+      if (typeFilter !== "all" && row.vendor_type_id !== typeFilter) return false;
       if (status === "active" && !row.is_active) return false;
       if (status === "inactive" && row.is_active) return false;
       if (!term) return true;
@@ -203,7 +209,7 @@ function VendorsPage() {
     setEditing(row);
     setForm({
       name: row.name,
-      type: row.type,
+      vendor_type_id: row.vendor_type_id,
       phone: row.phone ?? "",
       email: row.email ?? "",
       gst_number: row.gst_number ?? "",
@@ -271,9 +277,9 @@ function VendorsPage() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All types</SelectItem>
-            {VENDOR_TYPES.map((type) => (
-              <SelectItem key={type} value={type}>
-                {VENDOR_TYPE_LABELS[type]}
+            {allTypes.map((type) => (
+              <SelectItem key={type.id} value={type.id}>
+                {type.name}
               </SelectItem>
             ))}
           </SelectContent>
@@ -336,7 +342,7 @@ function VendorsPage() {
                   <TableCell className="font-medium">{row.name}</TableCell>
                   <TableCell>
                     <Badge variant="outline" className="text-[10px] uppercase">
-                      {VENDOR_TYPE_LABELS[row.type]}
+                      {row.vendor_type?.name ?? "—"}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-muted-foreground">{row.phone ?? "—"}</TableCell>
@@ -393,18 +399,19 @@ function VendorsPage() {
                 onChange={(event) => setForm({ ...form, name: event.target.value })}
               />
             </Field>
-            <Field label="Type" htmlFor="vendor-type" required error={errors["type"]}>
+            <Field label="Type" htmlFor="vendor-type" required error={errors["vendor_type_id"]}>
               <Select
-                value={form.type}
-                onValueChange={(value) => setForm({ ...form, type: value as VendorType })}
+                value={form.vendor_type_id}
+                onValueChange={(value) => setForm({ ...form, vendor_type_id: value })}
               >
                 <SelectTrigger id="vendor-type">
-                  <SelectValue />
+                  <SelectValue placeholder="Select a vendor type" />
                 </SelectTrigger>
                 <SelectContent>
-                  {VENDOR_TYPES.map((type) => (
-                    <SelectItem key={type} value={type}>
-                      {VENDOR_TYPE_LABELS[type]}
+                  {selectableTypes.map((type) => (
+                    <SelectItem key={type.id} value={type.id}>
+                      {type.name}
+                      {type.is_active ? "" : " (inactive)"}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -484,7 +491,7 @@ function VendorsPage() {
           </DialogHeader>
           {viewing ? (
             <dl>
-              <DetailRow label="Type" value={VENDOR_TYPE_LABELS[viewing.type]} />
+              <DetailRow label="Type" value={viewing.vendor_type?.name ?? null} />
               <DetailRow label="Status" value={<StatusBadge active={viewing.is_active} />} />
               <DetailRow label="Phone" value={viewing.phone} />
               <DetailRow label="Email" value={viewing.email} />

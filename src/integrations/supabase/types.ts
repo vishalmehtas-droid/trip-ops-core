@@ -482,6 +482,30 @@ export type Database = {
         }
         Relationships: []
       }
+      vendor_types: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       vendors: {
         Row: {
           address: string | null
@@ -493,8 +517,8 @@ export type Database = {
           name: string
           notes: string | null
           phone: string | null
-          type: Database["public"]["Enums"]["vendor_type"]
           updated_at: string
+          vendor_type_id: string
         }
         Insert: {
           address?: string | null
@@ -506,8 +530,8 @@ export type Database = {
           name: string
           notes?: string | null
           phone?: string | null
-          type: Database["public"]["Enums"]["vendor_type"]
           updated_at?: string
+          vendor_type_id: string
         }
         Update: {
           address?: string | null
@@ -519,10 +543,18 @@ export type Database = {
           name?: string
           notes?: string | null
           phone?: string | null
-          type?: Database["public"]["Enums"]["vendor_type"]
           updated_at?: string
+          vendor_type_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "vendors_vendor_type_id_fkey"
+            columns: ["vendor_type_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_types"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
@@ -582,13 +614,6 @@ export type Database = {
         | "transport"
         | "other"
       sale_status: "pending" | "confirmed" | "completed" | "cancelled"
-      vendor_type:
-        | "hotel"
-        | "flight"
-        | "visa"
-        | "activity"
-        | "transport"
-        | "other"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -738,14 +763,6 @@ export const Constants = {
         "other",
       ],
       sale_status: ["pending", "confirmed", "completed", "cancelled"],
-      vendor_type: [
-        "hotel",
-        "flight",
-        "visa",
-        "activity",
-        "transport",
-        "other",
-      ],
     },
   },
 } as const

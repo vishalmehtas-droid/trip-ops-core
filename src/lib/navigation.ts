@@ -12,6 +12,7 @@ import {
   Settings,
   ShieldCheck,
   ShoppingCart,
+  Tags,
   Users,
   Wallet,
 } from "lucide-react";
@@ -71,6 +72,13 @@ export const NAV_GROUPS: NavGroup[] = [
         label: "Vendors",
         to: "/vendors",
         icon: Building2,
+        phase: null,
+        permission: "vendors.read",
+      },
+      {
+        label: "Vendor Types",
+        to: "/vendor-types",
+        icon: Tags,
         phase: null,
         permission: "vendors.read",
       },
