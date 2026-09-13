@@ -12,6 +12,7 @@ import {
   Settings,
   ShieldCheck,
   ShoppingCart,
+  Sparkles,
   Users,
   Wallet,
 } from "lucide-react";
@@ -40,6 +41,13 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     label: "Operations",
     items: [
+      {
+        label: "Leads",
+        to: "/leads",
+        icon: Sparkles,
+        phase: null,
+        permission: "leads.read",
+      },
       {
         label: "Bookings",
         to: "/sales",

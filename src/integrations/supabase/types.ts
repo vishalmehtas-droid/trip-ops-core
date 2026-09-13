@@ -119,6 +119,84 @@ export type Database = {
         }
         Relationships: []
       }
+      leads: {
+        Row: {
+          assigned_to: string
+          client_id: string
+          created_at: string
+          created_by: string
+          enquiry_date: string
+          id: string
+          lead_number: string
+          notes: string | null
+          source: string | null
+          status: Database["public"]["Enums"]["lead_status"]
+          updated_at: string
+        }
+        Insert: {
+          assigned_to: string
+          client_id: string
+          created_at?: string
+          created_by?: string
+          enquiry_date?: string
+          id?: string
+          lead_number: string
+          notes?: string | null
+          source?: string | null
+          status?: Database["public"]["Enums"]["lead_status"]
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string
+          client_id?: string
+          created_at?: string
+          created_by?: string
+          enquiry_date?: string
+          id?: string
+          lead_number?: string
+          notes?: string | null
+          source?: string | null
+          status?: Database["public"]["Enums"]["lead_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leads_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "user_directory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "user_directory"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       permissions: {
         Row: {
           created_at: string
@@ -458,6 +536,124 @@ export type Database = {
           },
         ]
       }
+      travel_requirement_destinations: {
+        Row: {
+          created_at: string
+          destination_id: string
+          id: string
+          nights: number | null
+          requirement_id: string
+          sequence_order: number
+        }
+        Insert: {
+          created_at?: string
+          destination_id: string
+          id?: string
+          nights?: number | null
+          requirement_id: string
+          sequence_order?: number
+        }
+        Update: {
+          created_at?: string
+          destination_id?: string
+          id?: string
+          nights?: number | null
+          requirement_id?: string
+          sequence_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "travel_requirement_destinations_destination_id_fkey"
+            columns: ["destination_id"]
+            isOneToOne: false
+            referencedRelation: "destinations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "travel_requirement_destinations_requirement_id_fkey"
+            columns: ["requirement_id"]
+            isOneToOne: false
+            referencedRelation: "travel_requirements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      travel_requirements: {
+        Row: {
+          adults: number
+          budget: number | null
+          children: number
+          created_at: string
+          created_by: string
+          id: string
+          lead_id: string
+          notes: string | null
+          requirement_number: string
+          rooms: number | null
+          status: Database["public"]["Enums"]["requirement_status"]
+          travel_end_date: string | null
+          travel_start_date: string | null
+          trip_type: string | null
+          updated_at: string
+        }
+        Insert: {
+          adults?: number
+          budget?: number | null
+          children?: number
+          created_at?: string
+          created_by?: string
+          id?: string
+          lead_id: string
+          notes?: string | null
+          requirement_number: string
+          rooms?: number | null
+          status?: Database["public"]["Enums"]["requirement_status"]
+          travel_end_date?: string | null
+          travel_start_date?: string | null
+          trip_type?: string | null
+          updated_at?: string
+        }
+        Update: {
+          adults?: number
+          budget?: number | null
+          children?: number
+          created_at?: string
+          created_by?: string
+          id?: string
+          lead_id?: string
+          notes?: string | null
+          requirement_number?: string
+          rooms?: number | null
+          status?: Database["public"]["Enums"]["requirement_status"]
+          travel_end_date?: string | null
+          travel_start_date?: string | null
+          trip_type?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "travel_requirements_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "travel_requirements_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "user_directory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "travel_requirements_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -558,7 +754,15 @@ export type Database = {
     Enums: {
       app_role: "admin" | "sales" | "operations" | "accounts" | "viewer"
       billing_type: "tour_package" | "standalone_service"
+      lead_status:
+        | "new"
+        | "in_progress"
+        | "quoted"
+        | "negotiation"
+        | "won"
+        | "lost"
       markup_type: "percentage" | "lumpsum" | "none"
+      requirement_status: "draft" | "active" | "superseded" | "closed"
       sale_cost_type:
         | "hotel"
         | "flight"
@@ -704,7 +908,16 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "sales", "operations", "accounts", "viewer"],
       billing_type: ["tour_package", "standalone_service"],
+      lead_status: [
+        "new",
+        "in_progress",
+        "quoted",
+        "negotiation",
+        "won",
+        "lost",
+      ],
       markup_type: ["percentage", "lumpsum", "none"],
+      requirement_status: ["draft", "active", "superseded", "closed"],
       sale_cost_type: [
         "hotel",
         "flight",
