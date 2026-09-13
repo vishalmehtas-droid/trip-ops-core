@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { PageHeader } from "@/components/app/page-header";
 import { Field, MasterToolbar, formatDate } from "@/components/app/master-data";
 import { RecordCombobox, SaleStatusBadge, type RecordOption } from "@/components/app/sales-ui";
+import { useQuickAdd } from "@/components/app/quick-add";
 import { EmptyState, ErrorState, TableSkeleton, UnauthorizedState } from "@/components/app/states";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -115,6 +116,13 @@ function SalesPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const createFn = useServerFn(createSale);
+
+  const clientQuickAdd = useQuickAdd("client", (id) =>
+    setForm((current) => ({ ...current, client_id: id })),
+  );
+  const destinationQuickAdd = useQuickAdd("destination", (id) =>
+    setForm((current) => ({ ...current, destination_id: id })),
+  );
 
   const salesQuery = useQuery({
     queryKey: ["sales"],
