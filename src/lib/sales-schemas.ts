@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { BILLING_TYPES } from "./sale-costing-schemas";
+
 export const SALE_STATUSES = ["pending", "confirmed", "completed", "cancelled"] as const;
 
 export type SaleStatus = (typeof SALE_STATUSES)[number];
@@ -83,6 +85,8 @@ export const saleEditSchema = travelAfterBooking(
     booking_date: isoDate,
     travel_date: optionalIsoDate,
     notes: optionalNotes,
+    /** Drives the GST treatment; recalculates pricing server-side when changed. */
+    billing_type: z.enum(BILLING_TYPES, { message: "Select a billing type" }),
   }),
 );
 

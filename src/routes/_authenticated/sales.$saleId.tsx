@@ -7,6 +7,7 @@ import { toast } from "sonner";
 
 import { PageHeader } from "@/components/app/page-header";
 import { DetailRow, Field, formatDate, formatDateTime } from "@/components/app/master-data";
+import { BookingCosting } from "@/components/app/sale-costing";
 import { BookingComponents } from "@/components/app/sales-items";
 import { RecordCombobox, SaleStatusBadge, type RecordOption } from "@/components/app/sales-ui";
 import { ErrorState, LoadingState, UnauthorizedState } from "@/components/app/states";
@@ -31,9 +32,22 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  BILLING_TYPES,
+  BILLING_TYPE_HINTS,
+  BILLING_TYPE_LABELS,
+  type BillingType,
+} from "@/lib/sale-costing-schemas";
 import {
   SALE_STATUS_LABELS,
   SALE_STATUS_TRANSITIONS,
@@ -62,6 +76,7 @@ type SaleDetail = {
   booking_date: string;
   travel_date: string | null;
   status: SaleStatus;
+  billing_type: BillingType;
   notes: string | null;
   created_by: string;
   created_at: string;
@@ -71,13 +86,14 @@ type SaleDetail = {
 };
 
 const SALE_SELECT =
-  "id, client_id, destination_id, booking_date, travel_date, status, notes, created_by, created_at, updated_at, client:clients(id, name, is_active), destination:destinations(id, name, is_active)";
+  "id, client_id, destination_id, booking_date, travel_date, status, billing_type, notes, created_by, created_at, updated_at, client:clients(id, name, is_active), destination:destinations(id, name, is_active)";
 
 type FormState = {
   client_id: string;
   destination_id: string;
   travel_date: string;
   notes: string;
+  billing_type: BillingType;
 };
 
 function SaleDetailPage() {
@@ -94,6 +110,7 @@ function SaleDetailPage() {
     destination_id: "",
     travel_date: "",
     notes: "",
+    billing_type: "tour_package",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [pendingStatus, setPendingStatus] = useState<SaleStatus | null>(null);
@@ -235,6 +252,7 @@ function SaleDetailPage() {
       destination_id: sale.destination_id ?? "",
       travel_date: sale.travel_date ?? "",
       notes: sale.notes ?? "",
+      billing_type: sale.billing_type,
     });
     setErrors({});
     setFormOpen(true);
@@ -374,6 +392,17 @@ function SaleDetailPage() {
           <DetailRow label="Booking date" value={formatDate(sale.booking_date)} />
           <DetailRow label="Travel date" value={formatDate(sale.travel_date)} />
           <DetailRow label="Status" value={<SaleStatusBadge status={sale.status} />} />
+          <DetailRow
+            label="Billing type"
+            value={
+              <span>
+                {BILLING_TYPE_LABELS[sale.billing_type]}
+                <span className="ml-2 text-xs text-muted-foreground">
+                  {BILLING_TYPE_HINTS[sale.billing_type]}
+                </span>
+              </span>
+            }
+          />
           <DetailRow label="Notes" value={sale.notes} />
           <DetailRow label="Created by" value={creatorName} />
           <DetailRow label="Created at" value={formatDateTime(sale.created_at)} />
@@ -382,6 +411,12 @@ function SaleDetailPage() {
       </section>
 
       <BookingComponents saleId={sale.id} canManage={canManage && !isLocked} />
+
+      <BookingCosting
+        saleId={sale.id}
+        billingType={sale.billing_type}
+        canManage={canManage && !isLocked}
+      />
 
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
@@ -424,6 +459,31 @@ function SaleDetailPage() {
                 value={form.travel_date}
                 onChange={(event) => setForm({ ...form, travel_date: event.target.value })}
               />
+            </Field>
+            <Field
+              label="Billing type"
+              htmlFor="edit-billing-type"
+              required
+              error={errors["billing_type"]}
+            >
+              <Select
+                value={form.billing_type}
+                onValueChange={(value) => setForm({ ...form, billing_type: value as BillingType })}
+              >
+                <SelectTrigger id="edit-billing-type">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {BILLING_TYPES.map((type) => (
+                    <SelectItem key={type} value={type}>
+                      {BILLING_TYPE_LABELS[type]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {BILLING_TYPE_HINTS[form.billing_type]}
+              </p>
             </Field>
             <Field label="Notes" htmlFor="edit-notes" error={errors["notes"]}>
               <Textarea

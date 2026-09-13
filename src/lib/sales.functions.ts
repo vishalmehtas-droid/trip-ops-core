@@ -67,6 +67,7 @@ export const updateSale = createServerFn({ method: "POST" })
         destination_id: data.values.destination_id,
         travel_date: data.values.travel_date,
         notes: data.values.notes,
+        billing_type: data.values.billing_type,
       })
       .eq("id", data.id);
 

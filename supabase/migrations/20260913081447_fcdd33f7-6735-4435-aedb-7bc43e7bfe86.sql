@@ -1,0 +1,12 @@
+REVOKE ALL ON FUNCTION app.compute_sale_cost() FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION app.compute_sale_pricing() FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION app.guard_sale_cost_insert() FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION app.guard_sale_cost_update() FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION app.guard_sale_cost_delete() FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION app.audit_sale_cost_insert() FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION app.audit_sale_cost_update() FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION app.audit_sale_cost_delete() FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION app.audit_sale_pricing_update() FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION app.sync_sale_pricing() FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION app.sync_sale_pricing_on_sale() FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION app.recalculate_sale_pricing(uuid) FROM PUBLIC, anon, authenticated;
