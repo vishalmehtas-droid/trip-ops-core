@@ -8,64 +8,8 @@ import {
   destinationUpdateSchema,
   setActiveSchema,
   vendorInputSchema,
-  vendorTypeInputSchema,
-  vendorTypeUpdateSchema,
   vendorUpdateSchema,
 } from "./master-schemas";
-
-/* ----------------------------- VENDOR TYPES ----------------------------- */
-
-export const createVendorType = createServerFn({ method: "POST" })
-  .middleware([requireActiveUser])
-  .inputValidator((input: unknown) => vendorTypeInputSchema.parse(input))
-  .handler(async ({ data, context }) => {
-    requirePermission(context, "vendors.manage");
-    const { data: row, error } = await context.supabase
-      .from("vendor_types")
-      .insert(data)
-      .select("id")
-      .single();
-    if (error) {
-      throw new Error(
-        error.code === "23505" || /duplicate key/i.test(error.message)
-          ? "A vendor type with this name already exists"
-          : error.message,
-      );
-    }
-    return { id: row.id };
-  });
-
-export const updateVendorType = createServerFn({ method: "POST" })
-  .middleware([requireActiveUser])
-  .inputValidator((input: unknown) => vendorTypeUpdateSchema.parse(input))
-  .handler(async ({ data, context }) => {
-    requirePermission(context, "vendors.manage");
-    const { error } = await context.supabase
-      .from("vendor_types")
-      .update(data.values)
-      .eq("id", data.id);
-    if (error) {
-      throw new Error(
-        error.code === "23505" || /duplicate key/i.test(error.message)
-          ? "A vendor type with this name already exists"
-          : error.message,
-      );
-    }
-    return { ok: true as const };
-  });
-
-export const setVendorTypeActive = createServerFn({ method: "POST" })
-  .middleware([requireActiveUser])
-  .inputValidator((input: unknown) => setActiveSchema.parse(input))
-  .handler(async ({ data, context }) => {
-    requirePermission(context, "vendors.manage");
-    const { error } = await context.supabase
-      .from("vendor_types")
-      .update({ is_active: data.isActive })
-      .eq("id", data.id);
-    if (error) throw new Error(error.message);
-    return { ok: true as const };
-  });
 
 /* ------------------------------- CLIENTS -------------------------------- */
 
