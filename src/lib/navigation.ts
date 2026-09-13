@@ -40,7 +40,13 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     label: "Operations",
     items: [
-      { label: "Sales", to: "/sales", icon: ClipboardList, phase: null, permission: "sales.read" },
+      {
+        label: "Bookings",
+        to: "/sales",
+        icon: ClipboardList,
+        phase: null,
+        permission: "sales.read",
+      },
       { label: "Purchases", to: "/purchases", icon: ShoppingCart, phase: 2 },
     ],
   },

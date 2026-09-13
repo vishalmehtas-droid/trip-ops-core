@@ -62,6 +62,8 @@
   --color-brand: var(--brand);
   --color-brand-foreground: var(--brand-foreground);
   --color-brand-muted: var(--brand-muted);
+  --color-accent-warm: var(--accent-warm);
+  --color-accent-warm-muted: var(--accent-warm-muted);
   --color-success: var(--success);
   --color-success-foreground: var(--success-foreground);
   --color-warning: var(--warning);
@@ -73,11 +75,12 @@
 
 :root {
   --radius: 0.5rem;
-  --font-app-sans:
-    "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  --brand: oklch(0.685 0.169 237.323);
-  --brand-foreground: oklch(0.99 0.005 240);
-  --brand-muted: oklch(0.955 0.028 236);
+  --font-app-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --brand: oklch(0.475 0.079 205);
+  --brand-foreground: oklch(0.99 0.005 200);
+  --brand-muted: oklch(0.955 0.022 200);
+  --accent-warm: oklch(0.635 0.155 41);
+  --accent-warm-muted: oklch(0.955 0.032 45);
   --success: oklch(0.696 0.17 162.48);
   --success-foreground: oklch(0.99 0.005 160);
   --warning: oklch(0.769 0.188 70.08);
@@ -119,9 +122,11 @@
 }
 
 .dark {
-  --brand: oklch(0.685 0.169 237.323);
-  --brand-foreground: oklch(0.15 0.02 240);
-  --brand-muted: oklch(0.28 0.05 236);
+  --brand: oklch(0.72 0.085 200);
+  --brand-foreground: oklch(0.15 0.02 200);
+  --brand-muted: oklch(0.3 0.045 205);
+  --accent-warm: oklch(0.74 0.14 45);
+  --accent-warm-muted: oklch(0.32 0.06 45);
   --success: oklch(0.696 0.17 162.48);
   --success-foreground: oklch(0.15 0.02 160);
   --warning: oklch(0.769 0.188 70.08);
