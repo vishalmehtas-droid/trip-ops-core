@@ -54,7 +54,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useAuth } from "@/hooks/use-auth";
-import { useVendorTypes } from "@/hooks/use-vendor-types";
 import { supabase } from "@/integrations/supabase/client";
 import { vendorInputSchema } from "@/lib/master-schemas";
 import { createVendor, setVendorActive, updateVendor } from "@/lib/master.functions";
@@ -75,8 +74,6 @@ export const Route = createFileRoute("/_authenticated/vendors")({
 type VendorRow = {
   id: string;
   name: string;
-  vendor_type_id: string;
-  vendor_type: { id: string; name: string; is_active: boolean } | null;
   phone: string | null;
   email: string | null;
   gst_number: string | null;
@@ -89,7 +86,6 @@ type VendorRow = {
 
 type FormState = {
   name: string;
-  vendor_type_id: string;
   phone: string;
   email: string;
   gst_number: string;
@@ -100,7 +96,6 @@ type FormState = {
 
 const EMPTY_FORM: FormState = {
   name: "",
-  vendor_type_id: "",
   phone: "",
   email: "",
   gst_number: "",
@@ -116,7 +111,6 @@ function VendorsPage() {
   const queryClient = useQueryClient();
 
   const [search, setSearch] = useState("");
-  const [typeFilter, setTypeFilter] = useState<string>("all");
   const [status, setStatus] = useState<"all" | "active" | "inactive">("all");
   const [editing, setEditing] = useState<VendorRow | null>(null);
   const [formOpen, setFormOpen] = useState(false);
@@ -135,26 +129,16 @@ function VendorsPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("vendors")
-        .select("*, vendor_type:vendor_types(id, name, is_active)")
+        .select("*")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as unknown as VendorRow[];
     },
   });
 
-  const vendorTypesQuery = useVendorTypes({ enabled: canRead });
-  const allTypes = vendorTypesQuery.data ?? [];
-  const activeTypes = allTypes.filter((type) => type.is_active);
-  /** Keep the current type selectable while editing, even if it was deactivated. */
-  const selectableTypes =
-    editing?.vendor_type && !editing.vendor_type.is_active
-      ? [...activeTypes, editing.vendor_type]
-      : activeTypes;
-
   const rows = useMemo(() => {
     const term = search.trim().toLowerCase();
     return (vendorsQuery.data ?? []).filter((row) => {
-      if (typeFilter !== "all" && row.vendor_type_id !== typeFilter) return false;
       if (status === "active" && !row.is_active) return false;
       if (status === "inactive" && row.is_active) return false;
       if (!term) return true;
