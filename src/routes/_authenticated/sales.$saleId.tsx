@@ -36,6 +36,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import {
+  BILLING_TYPES,
+  BILLING_TYPE_HINTS,
+  BILLING_TYPE_LABELS,
+  type BillingType,
+} from "@/lib/sale-costing-schemas";
+import {
   SALE_STATUS_LABELS,
   SALE_STATUS_TRANSITIONS,
   saleEditSchema,
