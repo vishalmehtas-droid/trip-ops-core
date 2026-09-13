@@ -106,7 +106,6 @@ export function QuickAddDialog({
   const createVendorFn = useServerFn(createVendor);
   const createDestinationFn = useServerFn(createDestination);
 
-
   const reset = useCallback(() => {
     setForm(EMPTY);
     setErrors({});
@@ -223,7 +222,7 @@ export function QuickAddDialog({
           : destinationInputSchema;
     const parsed = schema.safeParse({
       name: form.name,
-      
+
       phone: form.phone,
       email: form.email,
       gst_number: form.gst_number,
@@ -318,7 +317,6 @@ export function QuickAddDialog({
                   autoFocus
                 />
               </Field>
-
 
               {kind === "destination" ? (
                 <div className="grid gap-4 sm:grid-cols-2">

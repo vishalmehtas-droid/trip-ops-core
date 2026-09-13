@@ -292,7 +292,7 @@ function VendorsPage() {
             <TableHeader>
               <TableRow>
                 <TableHead className="text-[10px] uppercase tracking-wider">Name</TableHead>
-                
+
                 <TableHead className="text-[10px] uppercase tracking-wider">Phone</TableHead>
                 <TableHead className="text-[10px] uppercase tracking-wider">Email</TableHead>
                 <TableHead className="text-[10px] uppercase tracking-wider">GST number</TableHead>
@@ -435,7 +435,6 @@ function VendorsPage() {
           </DialogHeader>
           {viewing ? (
             <dl>
-              
               <DetailRow label="Status" value={<StatusBadge active={viewing.is_active} />} />
               <DetailRow label="Phone" value={viewing.phone} />
               <DetailRow label="Email" value={viewing.email} />
