@@ -87,6 +87,10 @@ export function BookingComponents({
   const updateFn = useServerFn(updateSaleItem);
   const deleteFn = useServerFn(deleteSaleItem);
 
+  const vendorQuickAdd = useQuickAdd("vendor", (id) =>
+    setForm((current) => ({ ...current, vendor_id: id })),
+  );
+
   const itemsQuery = useQuery({
     queryKey: ["sales", saleId, "items"],
     queryFn: async () => {
@@ -400,6 +404,8 @@ export function BookingComponents({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {vendorQuickAdd.quickAddDialog}
     </section>
   );
 }

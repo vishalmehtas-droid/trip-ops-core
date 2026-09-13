@@ -185,6 +185,10 @@ export function BookingCosting({
   const deleteCostFn = useServerFn(deleteSaleCost);
   const updatePricingFn = useServerFn(updateSalePricing);
 
+  const vendorQuickAdd = useQuickAdd("vendor", (id) =>
+    setCostForm((current) => ({ ...current, vendor_id: id })),
+  );
+
   const costsQuery = useQuery({
     queryKey: ["sales", saleId, "costs"],
     queryFn: async () => {

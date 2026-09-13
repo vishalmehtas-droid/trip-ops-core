@@ -119,6 +119,13 @@ function SaleDetailPage() {
   const updateFn = useServerFn(updateSale);
   const statusFn = useServerFn(changeSaleStatus);
 
+  const clientQuickAdd = useQuickAdd("client", (id) =>
+    setForm((current) => ({ ...current, client_id: id })),
+  );
+  const destinationQuickAdd = useQuickAdd("destination", (id) =>
+    setForm((current) => ({ ...current, destination_id: id })),
+  );
+
   const saleQuery = useQuery({
     queryKey: ["sales", saleId],
     enabled: canRead,
@@ -540,6 +547,9 @@ function SaleDetailPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {clientQuickAdd.quickAddDialog}
+      {destinationQuickAdd.quickAddDialog}
     </div>
   );
 }
