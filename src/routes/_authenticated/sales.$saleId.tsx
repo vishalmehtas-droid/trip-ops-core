@@ -245,6 +245,7 @@ function SaleDetailPage() {
       destination_id: sale.destination_id ?? "",
       travel_date: sale.travel_date ?? "",
       notes: sale.notes ?? "",
+      billing_type: sale.billing_type,
     });
     setErrors({});
     setFormOpen(true);
