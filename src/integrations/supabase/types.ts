@@ -196,8 +196,152 @@ export type Database = {
           },
         ]
       }
+      sale_costs: {
+        Row: {
+          base_currency_cost: number
+          cost_type: Database["public"]["Enums"]["sale_cost_type"]
+          created_at: string
+          currency_code: string
+          description: string
+          exchange_rate: number
+          id: string
+          notes: string | null
+          quantity: number
+          sale_id: string
+          sort_order: number
+          source_type: Database["public"]["Enums"]["cost_source_type"]
+          total_cost: number
+          unit_cost: number
+          updated_at: string
+          vendor_id: string | null
+        }
+        Insert: {
+          base_currency_cost?: number
+          cost_type: Database["public"]["Enums"]["sale_cost_type"]
+          created_at?: string
+          currency_code?: string
+          description: string
+          exchange_rate?: number
+          id?: string
+          notes?: string | null
+          quantity?: number
+          sale_id: string
+          sort_order?: number
+          source_type?: Database["public"]["Enums"]["cost_source_type"]
+          total_cost?: number
+          unit_cost: number
+          updated_at?: string
+          vendor_id?: string | null
+        }
+        Update: {
+          base_currency_cost?: number
+          cost_type?: Database["public"]["Enums"]["sale_cost_type"]
+          created_at?: string
+          currency_code?: string
+          description?: string
+          exchange_rate?: number
+          id?: string
+          notes?: string | null
+          quantity?: number
+          sale_id?: string
+          sort_order?: number
+          source_type?: Database["public"]["Enums"]["cost_source_type"]
+          total_cost?: number
+          unit_cost?: number
+          updated_at?: string
+          vendor_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sale_costs_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "sales"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sale_costs_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sale_pricing: {
+        Row: {
+          created_at: string
+          customer_payable: number
+          discount_amount: number
+          expected_cost: number
+          expected_gross_profit: number
+          gst_amount: number
+          gst_rate: number
+          id: string
+          markup_amount: number
+          markup_type: Database["public"]["Enums"]["markup_type"]
+          markup_value: number
+          sale_id: string
+          selling_value: number
+          service_charge_amount: number
+          tcs_amount: number
+          tcs_applicable: boolean
+          tcs_rate: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          customer_payable?: number
+          discount_amount?: number
+          expected_cost?: number
+          expected_gross_profit?: number
+          gst_amount?: number
+          gst_rate?: number
+          id?: string
+          markup_amount?: number
+          markup_type?: Database["public"]["Enums"]["markup_type"]
+          markup_value?: number
+          sale_id: string
+          selling_value?: number
+          service_charge_amount?: number
+          tcs_amount?: number
+          tcs_applicable?: boolean
+          tcs_rate?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          customer_payable?: number
+          discount_amount?: number
+          expected_cost?: number
+          expected_gross_profit?: number
+          gst_amount?: number
+          gst_rate?: number
+          id?: string
+          markup_amount?: number
+          markup_type?: Database["public"]["Enums"]["markup_type"]
+          markup_value?: number
+          sale_id?: string
+          selling_value?: number
+          service_charge_amount?: number
+          tcs_amount?: number
+          tcs_applicable?: boolean
+          tcs_rate?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sale_pricing_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: true
+            referencedRelation: "sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sales: {
         Row: {
+          billing_type: Database["public"]["Enums"]["billing_type"]
           booking_date: string
           client_id: string
           created_at: string
@@ -210,6 +354,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          billing_type?: Database["public"]["Enums"]["billing_type"]
           booking_date?: string
           client_id: string
           created_at?: string
@@ -222,6 +367,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          billing_type?: Database["public"]["Enums"]["billing_type"]
           booking_date?: string
           client_id?: string
           created_at?: string
@@ -417,6 +563,17 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "sales" | "operations" | "accounts" | "viewer"
+      billing_type: "tour_package" | "standalone_service"
+      cost_source_type: "direct" | "vendor" | "dmc" | "other"
+      markup_type: "percentage" | "lumpsum" | "none"
+      sale_cost_type:
+        | "hotel"
+        | "flight"
+        | "visa"
+        | "activity"
+        | "transport"
+        | "dmc"
+        | "other"
       sale_item_type:
         | "hotel"
         | "flight"
@@ -560,6 +717,18 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "sales", "operations", "accounts", "viewer"],
+      billing_type: ["tour_package", "standalone_service"],
+      cost_source_type: ["direct", "vendor", "dmc", "other"],
+      markup_type: ["percentage", "lumpsum", "none"],
+      sale_cost_type: [
+        "hotel",
+        "flight",
+        "visa",
+        "activity",
+        "transport",
+        "dmc",
+        "other",
+      ],
       sale_item_type: [
         "hotel",
         "flight",
