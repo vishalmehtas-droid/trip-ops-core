@@ -468,9 +468,7 @@ function SaleDetailPage() {
             >
               <Select
                 value={form.billing_type}
-                onValueChange={(value) =>
-                  setForm({ ...form, billing_type: value as BillingType })
-                }
+                onValueChange={(value) => setForm({ ...form, billing_type: value as BillingType })}
               >
                 <SelectTrigger id="edit-billing-type">
                   <SelectValue />

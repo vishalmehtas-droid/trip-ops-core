@@ -545,8 +545,8 @@ export function BookingCosting({
           <DialogHeader>
             <DialogTitle>{editingCostId ? "Edit cost" : "Add cost"}</DialogTitle>
             <DialogDescription>
-              Line totals and the INR value are calculated by the system from quantity, unit cost and
-              exchange rate.
+              Line totals and the INR value are calculated by the system from quantity, unit cost
+              and exchange rate.
             </DialogDescription>
           </DialogHeader>
 
@@ -598,9 +598,7 @@ export function BookingCosting({
               <Input
                 id="cost-description"
                 value={costForm.description}
-                onChange={(event) =>
-                  setCostForm({ ...costForm, description: event.target.value })
-                }
+                onChange={(event) => setCostForm({ ...costForm, description: event.target.value })}
                 placeholder="DMC package — 5 nights Bangkok"
               />
             </Field>
@@ -632,12 +630,7 @@ export function BookingCosting({
                   onChange={(event) => setCostForm({ ...costForm, quantity: event.target.value })}
                 />
               </Field>
-              <Field
-                label="Unit cost"
-                htmlFor="cost-unit"
-                required
-                error={costErrors["unit_cost"]}
-              >
+              <Field label="Unit cost" htmlFor="cost-unit" required error={costErrors["unit_cost"]}>
                 <Input
                   id="cost-unit"
                   type="number"
@@ -872,9 +865,7 @@ function MoneyRow({
     <div className="flex items-baseline justify-between gap-4 border-b border-border py-2.5 last:border-b-0">
       <dt
         className={
-          strong
-            ? "text-xs font-semibold uppercase tracking-wide"
-            : "text-xs text-muted-foreground"
+          strong ? "text-xs font-semibold uppercase tracking-wide" : "text-xs text-muted-foreground"
         }
       >
         {label}
