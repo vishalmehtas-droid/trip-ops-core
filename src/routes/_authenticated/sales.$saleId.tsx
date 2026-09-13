@@ -385,6 +385,17 @@ function SaleDetailPage() {
           <DetailRow label="Booking date" value={formatDate(sale.booking_date)} />
           <DetailRow label="Travel date" value={formatDate(sale.travel_date)} />
           <DetailRow label="Status" value={<SaleStatusBadge status={sale.status} />} />
+          <DetailRow
+            label="Billing type"
+            value={
+              <span>
+                {BILLING_TYPE_LABELS[sale.billing_type]}
+                <span className="ml-2 text-xs text-muted-foreground">
+                  {BILLING_TYPE_HINTS[sale.billing_type]}
+                </span>
+              </span>
+            }
+          />
           <DetailRow label="Notes" value={sale.notes} />
           <DetailRow label="Created by" value={creatorName} />
           <DetailRow label="Created at" value={formatDateTime(sale.created_at)} />
