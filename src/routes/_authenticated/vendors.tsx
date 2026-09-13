@@ -54,7 +54,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useAuth } from "@/hooks/use-auth";
-import { useVendorTypes } from "@/hooks/use-vendor-types";
 import { supabase } from "@/integrations/supabase/client";
 import { vendorInputSchema } from "@/lib/master-schemas";
 import { createVendor, setVendorActive, updateVendor } from "@/lib/master.functions";
@@ -63,9 +62,9 @@ export const Route = createFileRoute("/_authenticated/vendors")({
   head: () => ({
     meta: [
       { title: "Vendors — Triptastic Ops" },
-      { name: "description", content: "Vendor master with service and contact details." },
+      { name: "description", content: "Vendor master with contact details." },
       { property: "og:title", content: "Vendors — Triptastic Ops" },
-      { property: "og:description", content: "Vendor master with service and contact details." },
+      { property: "og:description", content: "Vendor master with contact details." },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -75,8 +74,6 @@ export const Route = createFileRoute("/_authenticated/vendors")({
 type VendorRow = {
   id: string;
   name: string;
-  vendor_type_id: string;
-  vendor_type: { id: string; name: string; is_active: boolean } | null;
   phone: string | null;
   email: string | null;
   gst_number: string | null;
@@ -89,7 +86,6 @@ type VendorRow = {
 
 type FormState = {
   name: string;
-  vendor_type_id: string;
   phone: string;
   email: string;
   gst_number: string;
@@ -100,7 +96,6 @@ type FormState = {
 
 const EMPTY_FORM: FormState = {
   name: "",
-  vendor_type_id: "",
   phone: "",
   email: "",
   gst_number: "",
@@ -116,7 +111,6 @@ function VendorsPage() {
   const queryClient = useQueryClient();
 
   const [search, setSearch] = useState("");
-  const [typeFilter, setTypeFilter] = useState<string>("all");
   const [status, setStatus] = useState<"all" | "active" | "inactive">("all");
   const [editing, setEditing] = useState<VendorRow | null>(null);
   const [formOpen, setFormOpen] = useState(false);
@@ -135,26 +129,16 @@ function VendorsPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("vendors")
-        .select("*, vendor_type:vendor_types(id, name, is_active)")
+        .select("*")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as unknown as VendorRow[];
     },
   });
 
-  const vendorTypesQuery = useVendorTypes({ enabled: canRead });
-  const allTypes = vendorTypesQuery.data ?? [];
-  const activeTypes = allTypes.filter((type) => type.is_active);
-  /** Keep the current type selectable while editing, even if it was deactivated. */
-  const selectableTypes =
-    editing?.vendor_type && !editing.vendor_type.is_active
-      ? [...activeTypes, editing.vendor_type]
-      : activeTypes;
-
   const rows = useMemo(() => {
     const term = search.trim().toLowerCase();
     return (vendorsQuery.data ?? []).filter((row) => {
-      if (typeFilter !== "all" && row.vendor_type_id !== typeFilter) return false;
       if (status === "active" && !row.is_active) return false;
       if (status === "inactive" && row.is_active) return false;
       if (!term) return true;
@@ -162,7 +146,7 @@ function VendorsPage() {
         .filter(Boolean)
         .some((value) => value!.toLowerCase().includes(term));
     });
-  }, [vendorsQuery.data, search, status, typeFilter]);
+  }, [vendorsQuery.data, search, status]);
 
   const invalidate = async () => {
     await queryClient.invalidateQueries({ queryKey: ["vendors"] });
@@ -209,7 +193,6 @@ function VendorsPage() {
     setEditing(row);
     setForm({
       name: row.name,
-      vendor_type_id: row.vendor_type_id,
       phone: row.phone ?? "",
       email: row.email ?? "",
       gst_number: row.gst_number ?? "",
@@ -249,7 +232,7 @@ function VendorsPage() {
     <div className="space-y-6">
       <PageHeader
         title="Vendors"
-        description="Vendor master with service type and contact details. Records are deactivated rather than deleted so future transactions keep a valid reference."
+        description="Vendor master with contact details. Records are deactivated rather than deleted so future transactions keep a valid reference."
         badge={
           <Badge variant="outline" className="text-[10px] font-bold uppercase tracking-wide">
             Masters
@@ -268,22 +251,6 @@ function VendorsPage() {
       />
 
       <MasterToolbar search={search} onSearchChange={setSearch} placeholder="Search vendors">
-        <Select
-          value={typeFilter}
-          onValueChange={(value) => setTypeFilter(value as typeof typeFilter)}
-        >
-          <SelectTrigger className="w-[150px]" aria-label="Vendor type filter">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All types</SelectItem>
-            {allTypes.map((type) => (
-              <SelectItem key={type.id} value={type.id}>
-                {type.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
         <Select value={status} onValueChange={(value) => setStatus(value as typeof status)}>
           <SelectTrigger className="w-[150px]" aria-label="Status filter">
             <SelectValue />
@@ -305,7 +272,7 @@ function VendorsPage() {
           title={vendorsQuery.data.length === 0 ? "No vendors yet" : "No matching vendors"}
           description={
             vendorsQuery.data.length === 0
-              ? "Add hotels, airlines, visa agents, transporters and activity partners here."
+              ? "Add hotels, DMCs, airlines, visa agents, transporters and activity partners here."
               : "Adjust the search term or filters."
           }
           {...(canManage && vendorsQuery.data.length === 0
@@ -325,7 +292,7 @@ function VendorsPage() {
             <TableHeader>
               <TableRow>
                 <TableHead className="text-[10px] uppercase tracking-wider">Name</TableHead>
-                <TableHead className="text-[10px] uppercase tracking-wider">Type</TableHead>
+
                 <TableHead className="text-[10px] uppercase tracking-wider">Phone</TableHead>
                 <TableHead className="text-[10px] uppercase tracking-wider">Email</TableHead>
                 <TableHead className="text-[10px] uppercase tracking-wider">GST number</TableHead>
@@ -340,11 +307,6 @@ function VendorsPage() {
               {rows.map((row) => (
                 <TableRow key={row.id}>
                   <TableCell className="font-medium">{row.name}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className="text-[10px] uppercase">
-                      {row.vendor_type?.name ?? "—"}
-                    </Badge>
-                  </TableCell>
                   <TableCell className="text-muted-foreground">{row.phone ?? "—"}</TableCell>
                   <TableCell className="text-muted-foreground">{row.email ?? "—"}</TableCell>
                   <TableCell className="text-muted-foreground">{row.gst_number ?? "—"}</TableCell>
@@ -388,7 +350,7 @@ function VendorsPage() {
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>{editing ? "Edit vendor" : "New vendor"}</DialogTitle>
-            <DialogDescription>Name and service type are mandatory.</DialogDescription>
+            <DialogDescription>Only the name is mandatory.</DialogDescription>
           </DialogHeader>
 
           <div className="grid gap-4">
@@ -398,24 +360,6 @@ function VendorsPage() {
                 value={form.name}
                 onChange={(event) => setForm({ ...form, name: event.target.value })}
               />
-            </Field>
-            <Field label="Type" htmlFor="vendor-type" required error={errors["vendor_type_id"]}>
-              <Select
-                value={form.vendor_type_id}
-                onValueChange={(value) => setForm({ ...form, vendor_type_id: value })}
-              >
-                <SelectTrigger id="vendor-type">
-                  <SelectValue placeholder="Select a vendor type" />
-                </SelectTrigger>
-                <SelectContent>
-                  {selectableTypes.map((type) => (
-                    <SelectItem key={type.id} value={type.id}>
-                      {type.name}
-                      {type.is_active ? "" : " (inactive)"}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
             </Field>
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label="Phone" htmlFor="vendor-phone" error={errors["phone"]}>
@@ -491,7 +435,6 @@ function VendorsPage() {
           </DialogHeader>
           {viewing ? (
             <dl>
-              <DetailRow label="Type" value={viewing.vendor_type?.name ?? null} />
               <DetailRow label="Status" value={<StatusBadge active={viewing.is_active} />} />
               <DetailRow label="Phone" value={viewing.phone} />
               <DetailRow label="Email" value={viewing.email} />

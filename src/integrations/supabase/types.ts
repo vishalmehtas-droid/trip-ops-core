@@ -482,30 +482,6 @@ export type Database = {
         }
         Relationships: []
       }
-      vendor_types: {
-        Row: {
-          created_at: string
-          id: string
-          is_active: boolean
-          name: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          is_active?: boolean
-          name: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          is_active?: boolean
-          name?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
       vendors: {
         Row: {
           address: string | null
@@ -518,7 +494,6 @@ export type Database = {
           notes: string | null
           phone: string | null
           updated_at: string
-          vendor_type_id: string
         }
         Insert: {
           address?: string | null
@@ -531,7 +506,6 @@ export type Database = {
           notes?: string | null
           phone?: string | null
           updated_at?: string
-          vendor_type_id: string
         }
         Update: {
           address?: string | null
@@ -544,17 +518,8 @@ export type Database = {
           notes?: string | null
           phone?: string | null
           updated_at?: string
-          vendor_type_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "vendors_vendor_type_id_fkey"
-            columns: ["vendor_type_id"]
-            isOneToOne: false
-            referencedRelation: "vendor_types"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
     }
     Views: {

@@ -114,14 +114,13 @@ export function BookingComponents({
     queryFn: async () => {
       const { data, error } = await supabase
         .from("vendors")
-        .select("id, name, vendor_type:vendor_types(name)")
+        .select("id, name")
         .eq("is_active", true)
         .order("name");
       if (error) throw error;
       return (data ?? []) as unknown as {
         id: string;
         name: string;
-        vendor_type: { name: string } | null;
       }[];
     },
   });
@@ -130,7 +129,7 @@ export function BookingComponents({
     const options: RecordOption[] = (activeVendorsQuery.data ?? []).map((row) => ({
       id: row.id,
       label: row.name,
-      hint: row.vendor_type?.name ?? null,
+      hint: null,
     }));
     // Keep an already-attached vendor selectable even if it is now inactive.
     if (editing?.vendor && !options.some((option) => option.id === editing.vendor!.id)) {
