@@ -14,6 +14,24 @@ export type Database = {
   }
   public: {
     Tables: {
+      _t_results: {
+        Row: {
+          detail: string | null
+          n: number | null
+          scenario: string | null
+        }
+        Insert: {
+          detail?: string | null
+          n?: number | null
+          scenario?: string | null
+        }
+        Update: {
+          detail?: string | null
+          n?: number | null
+          scenario?: string | null
+        }
+        Relationships: []
+      }
       audit_log: {
         Row: {
           action: string
