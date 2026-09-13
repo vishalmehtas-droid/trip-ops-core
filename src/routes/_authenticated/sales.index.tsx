@@ -531,6 +531,9 @@ function SalesPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {clientQuickAdd.quickAddDialog}
+      {destinationQuickAdd.quickAddDialog}
     </div>
   );
 }
