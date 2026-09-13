@@ -173,7 +173,8 @@ function DashboardPage() {
       .sort((a, b) => (a.travel_date ?? "").localeCompare(b.travel_date ?? ""));
     const pending = sales.filter((s) => s.status === "pending");
     const attention = open.filter(
-      (s) => !s.travel_date || s.travel_date < today || (s.status === "pending" && itemCount(s) === 0),
+      (s) =>
+        !s.travel_date || s.travel_date < today || (s.status === "pending" && itemCount(s) === 0),
     );
     return {
       open,
@@ -203,7 +204,12 @@ function DashboardPage() {
       icon: Plus,
       allowed: hasPermission("sales.manage"),
     },
-    { label: "Add Client", to: "/clients", icon: UserPlus, allowed: hasPermission("clients.manage") },
+    {
+      label: "Add Client",
+      to: "/clients",
+      icon: UserPlus,
+      allowed: hasPermission("clients.manage"),
+    },
     {
       label: "Add Vendor",
       to: "/vendors",
@@ -308,8 +314,8 @@ function DashboardPage() {
                               {sale.client?.name ?? "Client removed"}
                             </span>
                             <span className="block truncate text-xs text-muted-foreground">
-                              {sale.destination?.name ?? "Destination not set"} ·{" "}
-                              {itemCount(sale)} component{itemCount(sale) === 1 ? "" : "s"}
+                              {sale.destination?.name ?? "Destination not set"} · {itemCount(sale)}{" "}
+                              component{itemCount(sale) === 1 ? "" : "s"}
                             </span>
                           </span>
                           <SaleStatusBadge status={sale.status} />
@@ -340,7 +346,9 @@ function DashboardPage() {
                         <span className="grid size-9 place-items-center rounded-xl bg-accent-warm-muted text-accent-warm">
                           <action.icon className="size-4" />
                         </span>
-                        <span className="text-sm font-semibold text-foreground">{action.label}</span>
+                        <span className="text-sm font-semibold text-foreground">
+                          {action.label}
+                        </span>
                       </Link>
                     ))}
                   </div>
