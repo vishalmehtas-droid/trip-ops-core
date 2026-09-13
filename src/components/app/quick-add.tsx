@@ -197,7 +197,11 @@ export function QuickAddDialog({
       await queryClient.invalidateQueries({ queryKey: [config.table] });
       await queryClient.invalidateQueries({ queryKey: ["audit-log"] });
       toast.success(
-        kind === "client" ? "Client created" : kind === "vendor" ? "Vendor created" : "Destination created",
+        kind === "client"
+          ? "Client created"
+          : kind === "vendor"
+            ? "Vendor created"
+            : "Destination created",
       );
       onCreated(result.id);
       close();
