@@ -62,6 +62,7 @@ type SaleDetail = {
   booking_date: string;
   travel_date: string | null;
   status: SaleStatus;
+  billing_type: BillingType;
   notes: string | null;
   created_by: string;
   created_at: string;
@@ -71,13 +72,14 @@ type SaleDetail = {
 };
 
 const SALE_SELECT =
-  "id, client_id, destination_id, booking_date, travel_date, status, notes, created_by, created_at, updated_at, client:clients(id, name, is_active), destination:destinations(id, name, is_active)";
+  "id, client_id, destination_id, booking_date, travel_date, status, billing_type, notes, created_by, created_at, updated_at, client:clients(id, name, is_active), destination:destinations(id, name, is_active)";
 
 type FormState = {
   client_id: string;
   destination_id: string;
   travel_date: string;
   notes: string;
+  billing_type: BillingType;
 };
 
 function SaleDetailPage() {
