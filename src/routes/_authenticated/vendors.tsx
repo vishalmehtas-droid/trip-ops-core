@@ -146,7 +146,7 @@ function VendorsPage() {
         .filter(Boolean)
         .some((value) => value!.toLowerCase().includes(term));
     });
-  }, [vendorsQuery.data, search, status, typeFilter]);
+  }, [vendorsQuery.data, search, status]);
 
   const invalidate = async () => {
     await queryClient.invalidateQueries({ queryKey: ["vendors"] });
@@ -193,7 +193,6 @@ function VendorsPage() {
     setEditing(row);
     setForm({
       name: row.name,
-      vendor_type_id: row.vendor_type_id,
       phone: row.phone ?? "",
       email: row.email ?? "",
       gst_number: row.gst_number ?? "",
@@ -252,22 +251,6 @@ function VendorsPage() {
       />
 
       <MasterToolbar search={search} onSearchChange={setSearch} placeholder="Search vendors">
-        <Select
-          value={typeFilter}
-          onValueChange={(value) => setTypeFilter(value as typeof typeFilter)}
-        >
-          <SelectTrigger className="w-[150px]" aria-label="Vendor type filter">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All types</SelectItem>
-            {allTypes.map((type) => (
-              <SelectItem key={type.id} value={type.id}>
-                {type.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
         <Select value={status} onValueChange={(value) => setStatus(value as typeof status)}>
           <SelectTrigger className="w-[150px]" aria-label="Status filter">
             <SelectValue />
@@ -309,7 +292,7 @@ function VendorsPage() {
             <TableHeader>
               <TableRow>
                 <TableHead className="text-[10px] uppercase tracking-wider">Name</TableHead>
-                <TableHead className="text-[10px] uppercase tracking-wider">Type</TableHead>
+                
                 <TableHead className="text-[10px] uppercase tracking-wider">Phone</TableHead>
                 <TableHead className="text-[10px] uppercase tracking-wider">Email</TableHead>
                 <TableHead className="text-[10px] uppercase tracking-wider">GST number</TableHead>
@@ -324,11 +307,6 @@ function VendorsPage() {
               {rows.map((row) => (
                 <TableRow key={row.id}>
                   <TableCell className="font-medium">{row.name}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className="text-[10px] uppercase">
-                      {row.vendor_type?.name ?? "—"}
-                    </Badge>
-                  </TableCell>
                   <TableCell className="text-muted-foreground">{row.phone ?? "—"}</TableCell>
                   <TableCell className="text-muted-foreground">{row.email ?? "—"}</TableCell>
                   <TableCell className="text-muted-foreground">{row.gst_number ?? "—"}</TableCell>
@@ -382,24 +360,6 @@ function VendorsPage() {
                 value={form.name}
                 onChange={(event) => setForm({ ...form, name: event.target.value })}
               />
-            </Field>
-            <Field label="Type" htmlFor="vendor-type" required error={errors["vendor_type_id"]}>
-              <Select
-                value={form.vendor_type_id}
-                onValueChange={(value) => setForm({ ...form, vendor_type_id: value })}
-              >
-                <SelectTrigger id="vendor-type">
-                  <SelectValue placeholder="Select a vendor type" />
-                </SelectTrigger>
-                <SelectContent>
-                  {selectableTypes.map((type) => (
-                    <SelectItem key={type.id} value={type.id}>
-                      {type.name}
-                      {type.is_active ? "" : " (inactive)"}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
             </Field>
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label="Phone" htmlFor="vendor-phone" error={errors["phone"]}>
@@ -475,7 +435,7 @@ function VendorsPage() {
           </DialogHeader>
           {viewing ? (
             <dl>
-              <DetailRow label="Type" value={viewing.vendor_type?.name ?? null} />
+              
               <DetailRow label="Status" value={<StatusBadge active={viewing.is_active} />} />
               <DetailRow label="Phone" value={viewing.phone} />
               <DetailRow label="Email" value={viewing.email} />

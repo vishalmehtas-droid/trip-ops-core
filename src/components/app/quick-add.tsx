@@ -24,7 +24,6 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/hooks/use-auth";
-import { useVendorTypes } from "@/hooks/use-vendor-types";
 import { supabase } from "@/integrations/supabase/client";
 import { clientInputSchema, destinationInputSchema, vendorInputSchema } from "@/lib/master-schemas";
 import { createClient, createDestination, createVendor } from "@/lib/master.functions";
@@ -33,7 +32,6 @@ export type QuickAddKind = "client" | "vendor" | "destination";
 
 type Form = {
   name: string;
-  vendor_type_id: string;
   phone: string;
   email: string;
   gst_number: string;
@@ -45,7 +43,6 @@ type Form = {
 
 const EMPTY: Form = {
   name: "",
-  vendor_type_id: "",
   phone: "",
   email: "",
   gst_number: "",
@@ -109,11 +106,6 @@ export function QuickAddDialog({
   const createVendorFn = useServerFn(createVendor);
   const createDestinationFn = useServerFn(createDestination);
 
-  // Vendor types come from the master list; only active ones are offered.
-  const vendorTypesQuery = useVendorTypes({
-    enabled: kind === "vendor" && canManage,
-    activeOnly: true,
-  });
 
   const reset = useCallback(() => {
     setForm(EMPTY);
@@ -174,7 +166,6 @@ export function QuickAddDialog({
       if (kind === "vendor") {
         const values = vendorInputSchema.parse({
           name: form.name,
-          vendor_type_id: form.vendor_type_id,
           phone: form.phone,
           email: form.email,
           gst_number: form.gst_number,
@@ -232,7 +223,7 @@ export function QuickAddDialog({
           : destinationInputSchema;
     const parsed = schema.safeParse({
       name: form.name,
-      ...(kind === "vendor" ? { vendor_type_id: form.vendor_type_id } : {}),
+      
       phone: form.phone,
       email: form.email,
       gst_number: form.gst_number,
@@ -328,30 +319,6 @@ export function QuickAddDialog({
                 />
               </Field>
 
-              {kind === "vendor" ? (
-                <Field
-                  label="Vendor type"
-                  htmlFor="qa-vendor-type"
-                  required
-                  error={errors["vendor_type_id"]}
-                >
-                  <Select
-                    value={form.vendor_type_id}
-                    onValueChange={(value) => setForm({ ...form, vendor_type_id: value })}
-                  >
-                    <SelectTrigger id="qa-vendor-type">
-                      <SelectValue placeholder="Select a type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {(vendorTypesQuery.data ?? []).map((type) => (
-                        <SelectItem key={type.id} value={type.id}>
-                          {type.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </Field>
-              ) : null}
 
               {kind === "destination" ? (
                 <div className="grid gap-4 sm:grid-cols-2">
