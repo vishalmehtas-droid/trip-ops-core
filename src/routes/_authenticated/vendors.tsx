@@ -62,9 +62,9 @@ export const Route = createFileRoute("/_authenticated/vendors")({
   head: () => ({
     meta: [
       { title: "Vendors — Triptastic Ops" },
-      { name: "description", content: "Vendor master with service and contact details." },
+      { name: "description", content: "Vendor master with contact details." },
       { property: "og:title", content: "Vendors — Triptastic Ops" },
-      { property: "og:description", content: "Vendor master with service and contact details." },
+      { property: "og:description", content: "Vendor master with contact details." },
       { name: "robots", content: "noindex" },
     ],
   }),
