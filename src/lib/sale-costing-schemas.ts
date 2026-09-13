@@ -150,9 +150,9 @@ export const salePricingValuesSchema = z
     discount_amount: money("Discount"),
     tcs_applicable: z.boolean(),
     tcs_rate: z
-      .union([rate("TCS rate"), z.literal("").transform(() => null), z.null()])
+      .union([z.literal("").transform(() => null), z.null(), rate("TCS rate")])
       .optional()
-      .transform((value) => (value === undefined || value === "" ? null : (value as number | null))),
+      .transform((value) => value ?? null),
   })
   .refine((value) => !value.tcs_applicable || typeof value.tcs_rate === "number", {
     path: ["tcs_rate"],
