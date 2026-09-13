@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { PageHeader } from "@/components/app/page-header";
 import { Field, MasterToolbar, formatDate } from "@/components/app/master-data";
 import { RecordCombobox, SaleStatusBadge, type RecordOption } from "@/components/app/sales-ui";
+import { useQuickAdd } from "@/components/app/quick-add";
 import { EmptyState, ErrorState, TableSkeleton, UnauthorizedState } from "@/components/app/states";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -115,6 +116,13 @@ function SalesPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const createFn = useServerFn(createSale);
+
+  const clientQuickAdd = useQuickAdd("client", (id) =>
+    setForm((current) => ({ ...current, client_id: id })),
+  );
+  const destinationQuickAdd = useQuickAdd("destination", (id) =>
+    setForm((current) => ({ ...current, destination_id: id })),
+  );
 
   const salesQuery = useQuery({
     queryKey: ["sales"],
@@ -461,6 +469,8 @@ function SalesPage() {
                 placeholder="Select a client"
                 searchPlaceholder="Search clients"
                 emptyText="No active clients found"
+                onCreateNew={clientQuickAdd.openQuickAdd}
+                createLabel="Add new client"
               />
             </Field>
             <Field label="Destination" htmlFor="sale-destination" error={errors["destination_id"]}>
@@ -473,6 +483,8 @@ function SalesPage() {
                 searchPlaceholder="Search destinations"
                 emptyText="No active destinations found"
                 allowClear
+                onCreateNew={destinationQuickAdd.openQuickAdd}
+                createLabel="Add new destination"
               />
             </Field>
             <div className="grid gap-4 sm:grid-cols-2">
@@ -519,6 +531,9 @@ function SalesPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {clientQuickAdd.quickAddDialog}
+      {destinationQuickAdd.quickAddDialog}
     </div>
   );
 }

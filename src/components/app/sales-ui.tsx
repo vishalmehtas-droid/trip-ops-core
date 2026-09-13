@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Check, ChevronsUpDown } from "lucide-react";
+import { Check, ChevronsUpDown, Plus } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -45,6 +45,8 @@ export function RecordCombobox({
   disabled,
   id,
   allowClear,
+  onCreateNew,
+  createLabel,
 }: {
   options: RecordOption[];
   value: string;
@@ -55,6 +57,9 @@ export function RecordCombobox({
   disabled?: boolean;
   id?: string;
   allowClear?: boolean;
+  /** When provided, an inline quick-add action is shown inside the list. */
+  onCreateNew?: (() => void) | undefined;
+  createLabel?: string;
 }) {
   const [open, setOpen] = useState(false);
   const selected = options.find((option) => option.id === value);
@@ -115,6 +120,23 @@ export function RecordCombobox({
               ))}
             </CommandGroup>
           </CommandList>
+          {onCreateNew ? (
+            <div className="border-t border-border p-1">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="w-full justify-start font-medium"
+                onClick={() => {
+                  setOpen(false);
+                  onCreateNew();
+                }}
+              >
+                <Plus className="size-4" />
+                {createLabel ?? "Add new"}
+              </Button>
+            </div>
+          ) : null}
         </Command>
       </PopoverContent>
     </Popover>
