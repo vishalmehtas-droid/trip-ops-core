@@ -855,6 +855,8 @@ export function BookingCosting({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {vendorQuickAdd.quickAddDialog}
     </>
   );
 }
