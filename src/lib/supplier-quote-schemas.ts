@@ -53,7 +53,7 @@ export const quoteCreateSchema = z.object({
 
 export const quoteUpdateSchema = z.object({
   id: uuid,
-  values: quoteHeaderSchema.optional(),
+  values: z.object({ valid_until: isoDate, notes }).optional(),
   status: z.enum(SUPPLIER_QUOTE_STATUSES).optional(),
 });
 
@@ -88,4 +88,5 @@ export const quoteLineAddSchema = z.object({
 });
 export const quoteLineUpdateSchema = z.object({ id: uuid, values: quoteLineValuesSchema });
 export const quoteLineRemoveSchema = z.object({ id: uuid });
+export const quoteRevisionSchema = z.object({ id: uuid });
 export const listQuotesSchema = z.object({ requirement_id: uuid });
