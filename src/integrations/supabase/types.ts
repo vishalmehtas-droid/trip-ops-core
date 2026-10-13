@@ -536,6 +536,140 @@ export type Database = {
           },
         ]
       }
+      supplier_quote_lines: {
+        Row: {
+          amount_inr: number
+          created_at: string
+          currency: string
+          description: string
+          exchange_rate: number
+          id: string
+          is_package: boolean
+          purchase_type: Database["public"]["Enums"]["sale_item_type"]
+          quantity: number
+          sort_order: number
+          supplier_quote_id: string
+          unit_amount: number
+          updated_at: string
+        }
+        Insert: {
+          amount_inr?: number
+          created_at?: string
+          currency?: string
+          description: string
+          exchange_rate?: number
+          id?: string
+          is_package?: boolean
+          purchase_type: Database["public"]["Enums"]["sale_item_type"]
+          quantity?: number
+          sort_order?: number
+          supplier_quote_id: string
+          unit_amount: number
+          updated_at?: string
+        }
+        Update: {
+          amount_inr?: number
+          created_at?: string
+          currency?: string
+          description?: string
+          exchange_rate?: number
+          id?: string
+          is_package?: boolean
+          purchase_type?: Database["public"]["Enums"]["sale_item_type"]
+          quantity?: number
+          sort_order?: number
+          supplier_quote_id?: string
+          unit_amount?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_quote_lines_supplier_quote_id_fkey"
+            columns: ["supplier_quote_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supplier_quotes: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          lead_id: string
+          notes: string | null
+          quote_number: string
+          requirement_id: string
+          status: Database["public"]["Enums"]["supplier_quote_status"]
+          updated_at: string
+          valid_until: string | null
+          vendor_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          lead_id: string
+          notes?: string | null
+          quote_number: string
+          requirement_id: string
+          status?: Database["public"]["Enums"]["supplier_quote_status"]
+          updated_at?: string
+          valid_until?: string | null
+          vendor_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          lead_id?: string
+          notes?: string | null
+          quote_number?: string
+          requirement_id?: string
+          status?: Database["public"]["Enums"]["supplier_quote_status"]
+          updated_at?: string
+          valid_until?: string | null
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_quotes_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_quotes_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "user_directory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_quotes_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_quotes_requirement_id_fkey"
+            columns: ["requirement_id"]
+            isOneToOne: false
+            referencedRelation: "travel_requirements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_quotes_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       travel_requirement_destinations: {
         Row: {
           created_at: string
@@ -779,6 +913,7 @@ export type Database = {
         | "transport"
         | "other"
       sale_status: "pending" | "confirmed" | "completed" | "cancelled"
+      supplier_quote_status: "requested" | "received" | "selected" | "rejected"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -936,6 +1071,7 @@ export const Constants = {
         "other",
       ],
       sale_status: ["pending", "confirmed", "completed", "cancelled"],
+      supplier_quote_status: ["requested", "received", "selected", "rejected"],
     },
   },
 } as const
