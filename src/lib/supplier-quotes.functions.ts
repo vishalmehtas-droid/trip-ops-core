@@ -14,7 +14,7 @@ import {
 } from "./supplier-quote-schemas";
 
 const QUOTE_SELECT =
-  "id, quote_number, lead_id, requirement_id, vendor_id, status, valid_until, notes, revision_number, previous_quote_id, is_superseded, created_at, previous:previous_quote_id(quote_number, revision_number), updated_at, vendor:vendors(id, name, is_active), lines:supplier_quote_lines(id, is_package, purchase_type, description, quantity, currency, unit_amount, exchange_rate, amount_inr, sort_order)";
+  "id, quote_number, lead_id, requirement_id, vendor_id, status, valid_until, notes, revision_number, previous_quote_id, is_superseded, created_at, previous:supplier_quotes!supplier_quotes_previous_quote_id_fkey(quote_number, revision_number), updated_at, vendor:vendors(id, name, is_active), lines:supplier_quote_lines(id, is_package, purchase_type, description, quantity, currency, unit_amount, exchange_rate, amount_inr, sort_order)";
 
 export const listSupplierQuotes = createServerFn({ method: "POST" })
   .middleware([requireActiveUser])
