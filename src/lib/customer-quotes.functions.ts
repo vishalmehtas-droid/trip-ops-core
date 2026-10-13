@@ -53,7 +53,11 @@ export const getCustomerQuote = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     requirePermission(context, "leads.read");
     const [header, lines, pricing] = await Promise.all([
-      context.supabase.from("customer_quotes").select(HEADER_SELECT).eq("id", data.id).maybeSingle(),
+      context.supabase
+        .from("customer_quotes")
+        .select(HEADER_SELECT)
+        .eq("id", data.id)
+        .maybeSingle(),
       context.supabase
         .from("customer_quote_lines")
         .select(LINE_SELECT)
@@ -111,6 +115,13 @@ export const createCustomerQuote = createServerFn({ method: "POST" })
       .maybeSingle();
     if (reqError) throw new Error(reqError.message);
     if (!req) throw new Error("Travel requirement not found");
+    const { data: lead, error: leadError } = await context.supabase
+      .from("leads")
+      .select("client_id")
+      .eq("id", req.lead_id)
+      .maybeSingle();
+    if (leadError) throw new Error(leadError.message);
+    if (!lead) throw new Error("Lead not found");
 
     const { data: row, error } = await context.supabase
       .from("customer_quotes")
@@ -119,9 +130,9 @@ export const createCustomerQuote = createServerFn({ method: "POST" })
         requirement_id: req.id,
         valid_until: data.values.valid_until,
         notes: data.values.notes,
-        // Number, client and status are always set by the database.
+        // Number and status are always set; the client is re-derived from the lead by the database.
         quote_number: "pending",
-        client_id: req.lead_id,
+        client_id: lead.client_id,
         created_by: context.userId,
       })
       .select("id")
