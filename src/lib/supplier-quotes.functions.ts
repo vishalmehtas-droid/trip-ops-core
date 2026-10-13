@@ -7,13 +7,14 @@ import {
   quoteLineAddSchema,
   quoteLineRemoveSchema,
   quoteLineUpdateSchema,
+  quoteRevisionSchema,
   quoteUpdateSchema,
   SUPPLIER_QUOTE_TRANSITIONS,
   type SupplierQuoteStatus,
 } from "./supplier-quote-schemas";
 
 const QUOTE_SELECT =
-  "id, quote_number, lead_id, requirement_id, vendor_id, status, valid_until, notes, created_at, updated_at, vendor:vendors(id, name, is_active), lines:supplier_quote_lines(id, is_package, purchase_type, description, quantity, currency, unit_amount, exchange_rate, amount_inr, sort_order)";
+  "id, quote_number, lead_id, requirement_id, vendor_id, status, valid_until, notes, revision_number, previous_quote_id, is_superseded, created_at, previous:supplier_quotes!supplier_quotes_previous_quote_id_fkey(quote_number, revision_number), updated_at, vendor:vendors(id, name, is_active), lines:supplier_quote_lines(id, is_package, purchase_type, description, quantity, currency, unit_amount, exchange_rate, amount_inr, sort_order)";
 
 export const listSupplierQuotes = createServerFn({ method: "POST" })
   .middleware([requireActiveUser])
@@ -28,6 +29,10 @@ export const listSupplierQuotes = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return (rows ?? []).map((row) => ({
       ...row,
+      previous: (Array.isArray(row.previous) ? (row.previous[0] ?? null) : row.previous) as {
+        quote_number: string;
+        revision_number: number;
+      } | null,
       lines: [...(row.lines ?? [])]
         .sort((a, b) => a.sort_order - b.sort_order)
         .map((line) => ({
@@ -69,14 +74,14 @@ export const updateSupplierQuote = createServerFn({ method: "POST" })
     requirePermission(context, "leads.manage");
     const { data: existing, error: readError } = await context.supabase
       .from("supplier_quotes")
-      .select("id, status")
+      .select("id, status, is_superseded")
       .eq("id", data.id)
       .maybeSingle();
     if (readError) throw new Error(readError.message);
     if (!existing) throw new Error("Supplier quote not found");
+    if (existing.is_superseded) throw new Error("A superseded quote is read-only");
 
     const patch: {
-      vendor_id?: string;
       valid_until?: string | null;
       notes?: string | null;
       status?: SupplierQuoteStatus;
@@ -150,4 +155,16 @@ export const removeSupplierQuoteLine = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     if (!rows?.length) throw new Error("Line not found");
     return { id: data.id };
+  });
+
+export const createSupplierQuoteRevision = createServerFn({ method: "POST" })
+  .middleware([requireActiveUser])
+  .inputValidator((input: unknown) => quoteRevisionSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    requirePermission(context, "leads.manage");
+    const { data: id, error } = await context.supabase.rpc("create_supplier_quote_revision", {
+      _quote_id: data.id,
+    });
+    if (error) throw new Error(error.message);
+    return { id: id as string };
   });
