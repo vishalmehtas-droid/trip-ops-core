@@ -62,6 +62,7 @@ import {
 import {
   addSupplierQuoteLine,
   createSupplierQuote,
+  createSupplierQuoteRevision,
   listSupplierQuotes,
   removeSupplierQuoteLine,
   updateSupplierQuote,
@@ -78,7 +79,14 @@ const inr = (value: number) =>
 const quoteTotal = (quote: Quote) =>
   quote.lines.reduce((sum, line) => sum + Math.round(Number(line.amount_inr) * 100), 0) / 100;
 
-function QuoteStatusBadge({ status }: { status: SupplierQuoteStatus }) {
+function QuoteStatusBadge({
+  status,
+  superseded,
+}: {
+  status: SupplierQuoteStatus;
+  superseded?: boolean;
+}) {
+  if (superseded) return <Badge variant="outline">Superseded</Badge>;
   const variant =
     status === "selected" ? "default" : status === "rejected" ? "destructive" : "secondary";
   return <Badge variant={variant}>{SUPPLIER_QUOTE_STATUS_LABELS[status]}</Badge>;
@@ -219,10 +227,15 @@ export function SupplierQuotes({
                 className="cursor-pointer hover:bg-muted/40"
                 onClick={() => setOpenId(quote.id)}
               >
-                <td className="px-3 py-2 font-mono text-xs font-semibold">{quote.quote_number}</td>
+                <td className="px-3 py-2 font-mono text-xs font-semibold">
+                  {quote.quote_number}
+                  <span className="ml-1 font-sans font-normal text-muted-foreground">
+                    Rev {quote.revision_number}
+                  </span>
+                </td>
                 <td className="px-3 py-2">{quote.vendor?.name ?? "—"}</td>
                 <td className="px-3 py-2">
-                  <QuoteStatusBadge status={quote.status} />
+                  <QuoteStatusBadge status={quote.status} superseded={quote.is_superseded} />
                 </td>
                 <td className="px-3 py-2">{formatDate(quote.valid_until)}</td>
                 <td className="px-3 py-2 text-right tabular-nums">{inr(quoteTotal(quote))}</td>
@@ -331,9 +344,13 @@ function QuoteSheetBody({
   const updateLineFn = useServerFn(updateSupplierQuoteLine);
   const removeLineFn = useServerFn(removeSupplierQuoteLine);
 
-  const locked = isQuoteLocked(quote.status);
+  const reviseFn = useServerFn(createSupplierQuoteRevision);
+  const locked = isQuoteLocked(quote.status) || quote.is_superseded;
   const editable = canManage && !locked;
-  const transitions = SUPPLIER_QUOTE_TRANSITIONS[quote.status];
+  const transitions = quote.is_superseded ? [] : SUPPLIER_QUOTE_TRANSITIONS[quote.status];
+  const [headerOpen, setHeaderOpen] = useState(false);
+  const [header, setHeader] = useState({ valid_until: "", notes: "" });
+  const [confirmRevise, setConfirmRevise] = useState(false);
 
   const [pendingStatus, setPendingStatus] = useState<SupplierQuoteStatus | null>(null);
   const [editingLineId, setEditingLineId] = useState<string | "new" | null>(null);
@@ -353,6 +370,32 @@ function QuoteSheetBody({
     onError: (e: Error) => {
       onError(e);
       setPendingStatus(null);
+    },
+  });
+
+  const saveHeader = useMutation({
+    mutationFn: () =>
+      updateFn({
+        data: { id: quote.id, values: { valid_until: header.valid_until, notes: header.notes } },
+      }),
+    onSuccess: async () => {
+      await onChanged();
+      toast.success("Quote updated");
+      setHeaderOpen(false);
+    },
+    onError,
+  });
+
+  const revise = useMutation({
+    mutationFn: () => reviseFn({ data: { id: quote.id } }),
+    onSuccess: async () => {
+      await onChanged();
+      toast.success("Revision created");
+      setConfirmRevise(false);
+    },
+    onError: (e: Error) => {
+      onError(e);
+      setConfirmRevise(false);
     },
   });
 
@@ -418,12 +461,17 @@ function QuoteSheetBody({
       <SheetHeader>
         <SheetTitle className="flex items-center gap-2">
           <span className="font-mono">{quote.quote_number}</span>
-          <QuoteStatusBadge status={quote.status} />
+          <span className="text-sm font-normal text-muted-foreground">
+            Rev {quote.revision_number}
+          </span>
+          <QuoteStatusBadge status={quote.status} superseded={quote.is_superseded} />
         </SheetTitle>
         <SheetDescription>
-          {locked
-            ? "This quote is final. Lines can no longer be changed."
-            : "Lines are converted to INR by the database."}
+          {quote.is_superseded
+            ? "A newer revision replaces this quote. It is read-only."
+            : locked
+              ? "This quote is final. Lines can no longer be changed."
+              : "Lines are converted to INR by the database."}
         </SheetDescription>
       </SheetHeader>
 
@@ -431,6 +479,32 @@ function QuoteSheetBody({
         <DetailRow label="Vendor" value={quote.vendor?.name ?? "—"} />
         <DetailRow label="Valid until" value={formatDate(quote.valid_until)} />
         <DetailRow label="Notes" value={quote.notes ?? "—"} />
+        {quote.previous ? (
+          <DetailRow
+            label="Revises"
+            value={`${quote.previous.quote_number} · Rev ${quote.previous.revision_number}`}
+          />
+        ) : null}
+        {editable ? (
+          <div className="flex gap-2 pt-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                setHeader({ valid_until: quote.valid_until ?? "", notes: quote.notes ?? "" });
+                setHeaderOpen(true);
+              }}
+            >
+              <Pencil className="size-3.5" />
+              Edit details
+            </Button>
+            {quote.status === "received" ? (
+              <Button size="sm" variant="outline" onClick={() => setConfirmRevise(true)}>
+                Create revision
+              </Button>
+            ) : null}
+          </div>
+        ) : null}
         <DetailRow
           label="Status"
           value={
@@ -696,6 +770,60 @@ function QuoteSheetBody({
               disabled={statusMutation.isPending}
             >
               Confirm
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <Dialog open={headerOpen} onOpenChange={setHeaderOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit quote details</DialogTitle>
+            <DialogDescription>The vendor cannot be changed.</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4">
+            <Field label="Valid until" htmlFor="sq-edit-valid">
+              <Input
+                id="sq-edit-valid"
+                type="date"
+                value={header.valid_until}
+                onChange={(e) => setHeader({ ...header, valid_until: e.target.value })}
+              />
+            </Field>
+            <Field label="Notes" htmlFor="sq-edit-notes">
+              <Textarea
+                id="sq-edit-notes"
+                rows={3}
+                value={header.notes}
+                onChange={(e) => setHeader({ ...header, notes: e.target.value })}
+              />
+            </Field>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setHeaderOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={() => saveHeader.mutate()} disabled={saveHeader.isPending}>
+              {saveHeader.isPending ? <Loader2 className="size-4 animate-spin" /> : null}
+              Save
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={confirmRevise} onOpenChange={setConfirmRevise}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Create revision?</AlertDialogTitle>
+            <AlertDialogDescription>
+              A new Requested quote (Rev {quote.revision_number + 1}) is created with the same
+              lines. This quote becomes read-only and is marked Superseded.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => revise.mutate()} disabled={revise.isPending}>
+              Create revision
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
