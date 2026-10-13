@@ -8,6 +8,7 @@ import { Field, formatDate } from "@/components/app/master-data";
 import { RecordCombobox, type RecordOption } from "@/components/app/sales-ui";
 import { RequirementStatusBadge } from "@/components/app/leads-ui";
 import { useQuickAdd } from "@/components/app/quick-add";
+import { SupplierQuotes } from "@/components/app/supplier-quotes";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -342,6 +343,12 @@ export function LeadRequirements({
                     </div>
                   ) : null}
                 </div>
+                <SupplierQuotes
+                  leadId={leadId}
+                  requirementId={row.id}
+                  canManage={canManage}
+                  canCreate={row.status === "draft" || row.status === "active"}
+                />
               </li>
             );
           })}
