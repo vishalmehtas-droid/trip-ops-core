@@ -597,10 +597,13 @@ export type Database = {
           created_at: string
           created_by: string
           id: string
+          is_superseded: boolean
           lead_id: string
           notes: string | null
+          previous_quote_id: string | null
           quote_number: string
           requirement_id: string
+          revision_number: number
           status: Database["public"]["Enums"]["supplier_quote_status"]
           updated_at: string
           valid_until: string | null
@@ -610,10 +613,13 @@ export type Database = {
           created_at?: string
           created_by: string
           id?: string
+          is_superseded?: boolean
           lead_id: string
           notes?: string | null
+          previous_quote_id?: string | null
           quote_number: string
           requirement_id: string
+          revision_number?: number
           status?: Database["public"]["Enums"]["supplier_quote_status"]
           updated_at?: string
           valid_until?: string | null
@@ -623,10 +629,13 @@ export type Database = {
           created_at?: string
           created_by?: string
           id?: string
+          is_superseded?: boolean
           lead_id?: string
           notes?: string | null
+          previous_quote_id?: string | null
           quote_number?: string
           requirement_id?: string
+          revision_number?: number
           status?: Database["public"]["Enums"]["supplier_quote_status"]
           updated_at?: string
           valid_until?: string | null
@@ -652,6 +661,13 @@ export type Database = {
             columns: ["lead_id"]
             isOneToOne: false
             referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_quotes_previous_quote_id_fkey"
+            columns: ["previous_quote_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_quotes"
             referencedColumns: ["id"]
           },
           {
@@ -867,6 +883,10 @@ export type Database = {
       }
     }
     Functions: {
+      create_supplier_quote_revision: {
+        Args: { _quote_id: string }
+        Returns: string
+      }
       ensure_own_profile: {
         Args: never
         Returns: {
