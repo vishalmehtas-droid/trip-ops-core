@@ -29,6 +29,10 @@ export const listSupplierQuotes = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return (rows ?? []).map((row) => ({
       ...row,
+      previous: (Array.isArray(row.previous) ? (row.previous[0] ?? null) : row.previous) as {
+        quote_number: string;
+        revision_number: number;
+      } | null,
       lines: [...(row.lines ?? [])]
         .sort((a, b) => a.sort_order - b.sort_order)
         .map((line) => ({
