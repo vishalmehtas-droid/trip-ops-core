@@ -15,6 +15,13 @@
       "when": 1791893106490,
       "tag": "0001_supplier_quote_revisions",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791896514305,
+      "tag": "0002_customer_quotes",
+      "breakpoints": true
     }
   ]
 }

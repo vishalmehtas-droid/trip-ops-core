@@ -86,6 +86,228 @@ export type Database = {
         }
         Relationships: []
       }
+      customer_quote_lines: {
+        Row: {
+          created_at: string
+          currency: string
+          customer_quote_id: string
+          description: string
+          expected_cost_inr: number
+          id: string
+          purchase_type: Database["public"]["Enums"]["sale_item_type"]
+          quantity: number
+          sort_order: number
+          source_supplier_quote_line_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          currency?: string
+          customer_quote_id: string
+          description: string
+          expected_cost_inr?: number
+          id?: string
+          purchase_type: Database["public"]["Enums"]["sale_item_type"]
+          quantity?: number
+          sort_order?: number
+          source_supplier_quote_line_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          customer_quote_id?: string
+          description?: string
+          expected_cost_inr?: number
+          id?: string
+          purchase_type?: Database["public"]["Enums"]["sale_item_type"]
+          quantity?: number
+          sort_order?: number
+          source_supplier_quote_line_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_quote_lines_customer_quote_id_fkey"
+            columns: ["customer_quote_id"]
+            isOneToOne: false
+            referencedRelation: "customer_quotes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_quote_lines_source_supplier_quote_line_id_fkey"
+            columns: ["source_supplier_quote_line_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_quote_lines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customer_quote_pricing: {
+        Row: {
+          billing_type: Database["public"]["Enums"]["billing_type"]
+          created_at: string
+          customer_payable: number
+          customer_quote_id: string
+          discount_amount: number
+          expected_cost: number
+          expected_gross_profit: number
+          gst_amount: number
+          gst_rate: number
+          id: string
+          markup_amount: number
+          markup_type: Database["public"]["Enums"]["markup_type"]
+          markup_value: number
+          selling_value: number
+          service_charge_amount: number
+          tcs_amount: number
+          tcs_applicable: boolean
+          tcs_rate: number | null
+          updated_at: string
+        }
+        Insert: {
+          billing_type?: Database["public"]["Enums"]["billing_type"]
+          created_at?: string
+          customer_payable?: number
+          customer_quote_id: string
+          discount_amount?: number
+          expected_cost?: number
+          expected_gross_profit?: number
+          gst_amount?: number
+          gst_rate?: number
+          id?: string
+          markup_amount?: number
+          markup_type?: Database["public"]["Enums"]["markup_type"]
+          markup_value?: number
+          selling_value?: number
+          service_charge_amount?: number
+          tcs_amount?: number
+          tcs_applicable?: boolean
+          tcs_rate?: number | null
+          updated_at?: string
+        }
+        Update: {
+          billing_type?: Database["public"]["Enums"]["billing_type"]
+          created_at?: string
+          customer_payable?: number
+          customer_quote_id?: string
+          discount_amount?: number
+          expected_cost?: number
+          expected_gross_profit?: number
+          gst_amount?: number
+          gst_rate?: number
+          id?: string
+          markup_amount?: number
+          markup_type?: Database["public"]["Enums"]["markup_type"]
+          markup_value?: number
+          selling_value?: number
+          service_charge_amount?: number
+          tcs_amount?: number
+          tcs_applicable?: boolean
+          tcs_rate?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_quote_pricing_customer_quote_id_fkey"
+            columns: ["customer_quote_id"]
+            isOneToOne: true
+            referencedRelation: "customer_quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customer_quotes: {
+        Row: {
+          client_id: string
+          created_at: string
+          created_by: string
+          id: string
+          lead_id: string
+          notes: string | null
+          previous_quote_id: string | null
+          quote_number: string
+          requirement_id: string
+          revision_no: number
+          status: Database["public"]["Enums"]["customer_quote_status"]
+          updated_at: string
+          valid_until: string | null
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          created_by: string
+          id?: string
+          lead_id: string
+          notes?: string | null
+          previous_quote_id?: string | null
+          quote_number: string
+          requirement_id: string
+          revision_no?: number
+          status?: Database["public"]["Enums"]["customer_quote_status"]
+          updated_at?: string
+          valid_until?: string | null
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          lead_id?: string
+          notes?: string | null
+          previous_quote_id?: string | null
+          quote_number?: string
+          requirement_id?: string
+          revision_no?: number
+          status?: Database["public"]["Enums"]["customer_quote_status"]
+          updated_at?: string
+          valid_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_quotes_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_quotes_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_quotes_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "user_directory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_quotes_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_quotes_previous_quote_id_fkey"
+            columns: ["previous_quote_id"]
+            isOneToOne: false
+            referencedRelation: "customer_quotes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_quotes_requirement_id_fkey"
+            columns: ["requirement_id"]
+            isOneToOne: false
+            referencedRelation: "travel_requirements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       destinations: {
         Row: {
           country: string | null
@@ -883,6 +1105,10 @@ export type Database = {
       }
     }
     Functions: {
+      create_customer_quote_revision: {
+        Args: { _quote_id: string }
+        Returns: string
+      }
       create_supplier_quote_revision: {
         Args: { _quote_id: string }
         Returns: string
@@ -908,6 +1134,13 @@ export type Database = {
     Enums: {
       app_role: "admin" | "sales" | "operations" | "accounts" | "viewer"
       billing_type: "tour_package" | "standalone_service"
+      customer_quote_status:
+        | "draft"
+        | "sent"
+        | "accepted"
+        | "rejected"
+        | "expired"
+        | "superseded"
       lead_status:
         | "new"
         | "in_progress"
@@ -1063,6 +1296,14 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "sales", "operations", "accounts", "viewer"],
       billing_type: ["tour_package", "standalone_service"],
+      customer_quote_status: [
+        "draft",
+        "sent",
+        "accepted",
+        "rejected",
+        "expired",
+        "superseded",
+      ],
       lead_status: [
         "new",
         "in_progress",
