@@ -39,13 +39,41 @@ const notes = z
   .nullish()
   .transform((v) => (v ? v : null));
 
-const twoDecimals = (v: number) => Math.abs(Math.round(v * 100) - v * 100) < 1e-6;
+const longText = z
+  .string()
+  .trim()
+  .max(8000, "Too long (max 8000 characters)")
+  .nullish()
+  .transform((v) => (v ? v : null));
 
-export const quoteHeaderSchema = z.object({
-  vendor_id: uuid,
+const optionalCount = z
+  .union([z.string(), z.number()])
+  .nullish()
+  .transform((v) => (v === null || v === undefined || String(v).trim() === "" ? null : Number(v)))
+  .refine((v) => v === null || (Number.isInteger(v) && v >= 0 && v <= 999), "Enter 0–999");
+
+export const PRICE_BASES = ["per_person", "per_room", "total"] as const;
+export type PriceBasis = (typeof PRICE_BASES)[number];
+export const PRICE_BASIS_LABELS: Record<PriceBasis, string> = {
+  per_person: "Per person",
+  per_room: "Per room",
+  total: "Total",
+};
+
+export const quoteDetailsSchema = z.object({
   valid_until: isoDate,
   notes,
+  adults: optionalCount,
+  children: optionalCount,
+  child_ages: longText,
+  inclusions: longText,
+  exclusions: longText,
+  itinerary_notes: longText,
 });
+
+const twoDecimals = (v: number) => Math.abs(Math.round(v * 100) - v * 100) < 1e-6;
+
+export const quoteHeaderSchema = quoteDetailsSchema.extend({ vendor_id: uuid });
 
 export const quoteCreateSchema = z.object({
   lead_id: uuid,
@@ -55,12 +83,19 @@ export const quoteCreateSchema = z.object({
 
 export const quoteUpdateSchema = z.object({
   id: uuid,
-  values: z.object({ valid_until: isoDate, notes }).optional(),
+  values: quoteDetailsSchema.optional(),
   status: z.enum(SUPPLIER_QUOTE_STATUSES).optional(),
 });
 
 export const quoteLineValuesSchema = z.object({
-  is_package: z.boolean(),
+  price_basis: z.enum(PRICE_BASES).default("total"),
+  option_label: z
+    .string()
+    .trim()
+    .max(200, "Too long")
+    .nullish()
+    .transform((v) => (v ? v : null)),
+  not_in_total: z.boolean().default(false),
   purchase_type: z.enum(SALE_ITEM_TYPES, { message: "Select a purchase type" }),
   description: z.string().trim().min(1, "Description is required").max(500, "Too long"),
   quantity: z.coerce
@@ -91,4 +126,24 @@ export const quoteLineAddSchema = z.object({
 export const quoteLineUpdateSchema = z.object({ id: uuid, values: quoteLineValuesSchema });
 export const quoteLineRemoveSchema = z.object({ id: uuid });
 export const quoteRevisionSchema = z.object({ id: uuid });
+export const QUOTE_FILE_TYPES: Record<string, string> = {
+  pdf: "application/pdf",
+  png: "image/png",
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  webp: "image/webp",
+  txt: "text/plain",
+  eml: "message/rfc822",
+};
+export const QUOTE_FILE_MAX_BYTES = 10 * 1024 * 1024;
+
+export const quoteFileRegisterSchema = z.object({
+  supplier_quote_id: uuid,
+  file_name: z.string().trim().min(1).max(255),
+  storage_path: z.string().min(1).max(600),
+  content_type: z.enum(Object.values(QUOTE_FILE_TYPES) as [string, ...string[]]),
+  size_bytes: z.number().int().positive().max(QUOTE_FILE_MAX_BYTES, "Max 10 MB"),
+});
+export const quoteFileIdSchema = z.object({ id: uuid });
+
 export const listQuotesSchema = z.object({ requirement_id: uuid });
