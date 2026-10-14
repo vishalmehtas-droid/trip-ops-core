@@ -1,0 +1,3 @@
+- [x] Add read-only latest-vendor supplier comparison.
+- [x] Add customer quotation list, creation, details, lines, pricing and revision/status actions.
+- [x] Check changed code without database tests or UI click-through (lint and automatic compilation checks passed).

@@ -8,6 +8,7 @@ import { DetailRow, Field, formatDate } from "@/components/app/master-data";
 import { RecordCombobox, type RecordOption } from "@/components/app/sales-ui";
 import { useQuickAdd } from "@/components/app/quick-add";
 import { EmptyState, ErrorState, LoadingState } from "@/components/app/states";
+import { SupplierQuoteComparison } from "@/components/app/supplier-quote-comparison";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -181,20 +182,23 @@ export function SupplierQuotes({
         <h3 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
           Supplier quotes
         </h3>
-        {canManage && canCreate ? (
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => {
-              setForm({ vendor_id: "", valid_until: "", notes: "" });
-              setErrors({});
-              setCreateOpen(true);
-            }}
-          >
-            <Plus className="size-4" />
-            New Supplier Quote
-          </Button>
-        ) : null}
+        <div className="flex flex-wrap items-center gap-2">
+          <SupplierQuoteComparison quotes={quotes} />
+          {canManage && canCreate ? (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                setForm({ vendor_id: "", valid_until: "", notes: "" });
+                setErrors({});
+                setCreateOpen(true);
+              }}
+            >
+              <Plus className="size-4" />
+              New Supplier Quote
+            </Button>
+          ) : null}
+        </div>
       </div>
 
       {quotesQuery.isPending ? (

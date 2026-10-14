@@ -9,6 +9,7 @@ import { RecordCombobox, type RecordOption } from "@/components/app/sales-ui";
 import { RequirementStatusBadge } from "@/components/app/leads-ui";
 import { useQuickAdd } from "@/components/app/quick-add";
 import { SupplierQuotes } from "@/components/app/supplier-quotes";
+import { CustomerQuotes } from "@/components/app/customer-quotes";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -348,6 +349,10 @@ export function LeadRequirements({
                   requirementId={row.id}
                   canManage={canManage}
                   canCreate={row.status === "draft" || row.status === "active"}
+                />
+                <CustomerQuotes
+                  requirementId={row.id}
+                  canCreate={canManage && (row.status === "draft" || row.status === "active")}
                 />
               </li>
             );
