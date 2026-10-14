@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
+import { ClientSourceFields } from "@/components/app/client-source-fields";
 import { Field } from "@/components/app/master-data";
 import { Button } from "@/components/ui/button";
 import {
@@ -32,6 +33,8 @@ type Form = {
   country: string;
   region: string;
   notes: string;
+  source: string;
+  referred_by: string;
 };
 
 const EMPTY: Form = {
@@ -43,6 +46,8 @@ const EMPTY: Form = {
   country: "",
   region: "",
   notes: "",
+  source: "",
+  referred_by: "",
 };
 
 const CONFIG: Record<
@@ -151,6 +156,8 @@ export function QuickAddDialog({
           address: form.address,
           gst_number: form.gst_number,
           notes: form.notes,
+          source: form.source,
+          referred_by: form.referred_by,
           is_active: true,
         });
         return createClientFn({ data: values });
@@ -223,6 +230,8 @@ export function QuickAddDialog({
       country: form.country,
       region: form.region,
       notes: form.notes,
+      source: form.source,
+      referred_by: form.referred_by,
       is_active: true,
     });
     if (!parsed.success) {
@@ -354,6 +363,15 @@ export function QuickAddDialog({
                       onChange={(event) => setForm({ ...form, gst_number: event.target.value })}
                     />
                   </Field>
+                  {kind === "client" ? (
+                    <ClientSourceFields
+                      idPrefix={`qa-${kind}`}
+                      source={form.source}
+                      referredBy={form.referred_by}
+                      errors={errors}
+                      onChange={(source, referred_by) => setForm({ ...form, source, referred_by })}
+                    />
+                  ) : null}
                   <Field label="Address" htmlFor={`qa-${kind}-address`} error={errors["address"]}>
                     <Textarea
                       id={`qa-${kind}-address`}
