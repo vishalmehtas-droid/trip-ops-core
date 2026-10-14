@@ -23,7 +23,7 @@ export function ClientSourceFields({ idPrefix, source, referredBy, errors, onCha
     <div className="grid gap-4 sm:grid-cols-2">
       <Field label="Source" htmlFor={`${idPrefix}-source`} error={errors["source"]}>
         <Select
-          value={source || undefined}
+          value={source}
           onValueChange={(value) => onChange(value, value === "Referral" ? referredBy : "")}
         >
           <SelectTrigger id={`${idPrefix}-source`}>
