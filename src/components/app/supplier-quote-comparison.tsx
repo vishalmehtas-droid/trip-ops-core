@@ -18,11 +18,7 @@ import {
   type SupplierQuoteRow,
 } from "@/lib/quotation-display";
 import { formatMoney } from "@/lib/sale-costing-schemas";
-import {
-  isPackageType,
-  SALE_ITEM_TYPES,
-  SALE_ITEM_TYPE_LABELS,
-} from "@/lib/sales-item-schemas";
+import { isPackageType, SALE_ITEM_TYPES, SALE_ITEM_TYPE_LABELS } from "@/lib/sales-item-schemas";
 import { SUPPLIER_QUOTE_STATUS_LABELS } from "@/lib/supplier-quote-schemas";
 
 export function SupplierQuoteComparison({ quotes }: { quotes: SupplierQuoteRow[] }) {

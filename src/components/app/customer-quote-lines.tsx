@@ -283,8 +283,8 @@ export function CustomerQuoteLines({
                           ) : null}
                         </div>
                         <div className="mt-1 text-xs text-muted-foreground">
-                          {SALE_ITEM_TYPE_LABELS[line.purchase_type]}{" "}
-                          · Qty {line.quantity} · {formatMoney(line.amount_inr)}
+                          {SALE_ITEM_TYPE_LABELS[line.purchase_type]} · Qty {line.quantity} ·{" "}
+                          {formatMoney(line.amount_inr)}
                         </div>
                       </div>
                       <Button
