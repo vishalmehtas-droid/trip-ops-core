@@ -30,7 +30,18 @@ export function paise(value: string): bigint {
 }
 
 export function supplierTotal(quote: SupplierQuoteRow) {
-  return quote.lines.reduce((sum, line) => sum + paise(line.amount_inr), 0n);
+  return quote.lines.reduce(
+    (sum, line) => (line.not_in_total ? sum : sum + paise(line.amount_inr)),
+    0n,
+  );
+}
+
+/** Alternatives and add-ons: listed separately, never part of the quote total. */
+export function supplierExtrasTotal(quote: SupplierQuoteRow) {
+  return quote.lines.reduce(
+    (sum, line) => (line.not_in_total ? sum + paise(line.amount_inr) : sum),
+    0n,
+  );
 }
 
 export function decimalString(value: bigint) {

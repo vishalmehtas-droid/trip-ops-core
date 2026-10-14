@@ -1,8 +1,11 @@
 import { createServerFn } from "@tanstack/react-start";
 
+import { isPackageType } from "./sales-item-schemas";
 import { requireActiveUser, requirePermission } from "./authz-middleware";
 import {
   listQuotesSchema,
+  quoteFileIdSchema,
+  quoteFileRegisterSchema,
   quoteCreateSchema,
   quoteLineAddSchema,
   quoteLineRemoveSchema,
@@ -14,7 +17,7 @@ import {
 } from "./supplier-quote-schemas";
 
 const QUOTE_SELECT =
-  "id, quote_number, lead_id, requirement_id, vendor_id, status, valid_until, notes, revision_number, previous_quote_id, is_superseded, created_at, updated_at, vendor:vendors(id, name, is_active), lines:supplier_quote_lines(id, is_package, purchase_type, description, quantity, currency, unit_amount, exchange_rate, amount_inr, sort_order)";
+  "id, quote_number, lead_id, requirement_id, vendor_id, status, valid_until, notes, revision_number, previous_quote_id, is_superseded, adults, children, child_ages, inclusions, exclusions, itinerary_notes, created_at, updated_at, vendor:vendors(id, name, is_active), lines:supplier_quote_lines(id, is_package, purchase_type, description, quantity, currency, unit_amount, exchange_rate, amount_inr, sort_order, price_basis, option_label, not_in_total)";
 
 export const listSupplierQuotes = createServerFn({ method: "POST" })
   .middleware([requireActiveUser])
@@ -71,6 +74,12 @@ export const createSupplierQuote = createServerFn({ method: "POST" })
         vendor_id: data.values.vendor_id,
         valid_until: data.values.valid_until,
         notes: data.values.notes,
+        adults: data.values.adults,
+        children: data.values.children,
+        child_ages: data.values.child_ages,
+        inclusions: data.values.inclusions,
+        exclusions: data.values.exclusions,
+        itinerary_notes: data.values.itinerary_notes,
         // Number, status and timestamps are always set by the database.
         quote_number: "pending",
         created_by: context.userId,
@@ -133,6 +142,7 @@ export const addSupplierQuoteLine = createServerFn({ method: "POST" })
       .insert({
         supplier_quote_id: data.supplier_quote_id,
         ...data.values,
+        is_package: isPackageType(data.values.purchase_type),
         sort_order: count ?? 0,
       })
       .select("id")
@@ -148,7 +158,7 @@ export const updateSupplierQuoteLine = createServerFn({ method: "POST" })
     requirePermission(context, "leads.manage");
     const { data: rows, error } = await context.supabase
       .from("supplier_quote_lines")
-      .update(data.values)
+      .update({ ...data.values, is_package: isPackageType(data.values.purchase_type) })
       .eq("id", data.id)
       .select("id");
     if (error) throw new Error(error.message);
@@ -181,4 +191,52 @@ export const createSupplierQuoteRevision = createServerFn({ method: "POST" })
     });
     if (error) throw new Error(error.message);
     return { id: id as string };
+  });
+
+export const listSupplierQuoteFiles = createServerFn({ method: "POST" })
+  .middleware([requireActiveUser])
+  .inputValidator((input: unknown) => quoteRevisionSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    requirePermission(context, "leads.read");
+    const { data: rows, error } = await context.supabase
+      .from("supplier_quote_files")
+      .select("id, file_name, content_type, size_bytes, created_at")
+      .eq("supplier_quote_id", data.id)
+      .order("created_at", { ascending: false });
+    if (error) throw new Error(error.message);
+    return rows ?? [];
+  });
+
+/** Records a file already uploaded to storage; the database verifies path and object. */
+export const registerSupplierQuoteFile = createServerFn({ method: "POST" })
+  .middleware([requireActiveUser])
+  .inputValidator((input: unknown) => quoteFileRegisterSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    requirePermission(context, "leads.manage");
+    const { data: row, error } = await context.supabase
+      .from("supplier_quote_files")
+      .insert({ ...data, uploaded_by: context.userId })
+      .select("id")
+      .single();
+    if (error) throw new Error(error.message);
+    return { id: row.id };
+  });
+
+export const getSupplierQuoteFileUrl = createServerFn({ method: "POST" })
+  .middleware([requireActiveUser])
+  .inputValidator((input: unknown) => quoteFileIdSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    requirePermission(context, "leads.read");
+    const { data: file, error } = await context.supabase
+      .from("supplier_quote_files")
+      .select("storage_path")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!file) throw new Error("File not found");
+    const { data: signed, error: signError } = await context.supabase.storage
+      .from("supplier-quote-files")
+      .createSignedUrl(file.storage_path, 60);
+    if (signError) throw new Error(signError.message);
+    return { url: signed.signedUrl };
   });

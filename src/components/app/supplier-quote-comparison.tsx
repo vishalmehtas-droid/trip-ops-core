@@ -18,7 +18,11 @@ import {
   type SupplierQuoteRow,
 } from "@/lib/quotation-display";
 import { formatMoney } from "@/lib/sale-costing-schemas";
-import { SALE_ITEM_TYPES, SALE_ITEM_TYPE_LABELS } from "@/lib/sales-item-schemas";
+import {
+  isPackageType,
+  SALE_ITEM_TYPES,
+  SALE_ITEM_TYPE_LABELS,
+} from "@/lib/sales-item-schemas";
 import { SUPPLIER_QUOTE_STATUS_LABELS } from "@/lib/supplier-quote-schemas";
 
 export function SupplierQuoteComparison({ quotes }: { quotes: SupplierQuoteRow[] }) {
@@ -75,7 +79,7 @@ export function SupplierQuoteComparison({ quotes }: { quotes: SupplierQuoteRow[]
                           {SALE_ITEM_TYPE_LABELS[type]}
                         </th>
                       </tr>
-                      {[true, false].map((isPackage) => (
+                      {[isPackageType(type)].map((isPackage) => (
                         <tr key={String(isPackage)} className="border-b border-border">
                           <th className="p-3 align-top text-xs font-normal text-muted-foreground">
                             {isPackage ? "Package lines" : "Component lines"}
@@ -83,7 +87,8 @@ export function SupplierQuoteComparison({ quotes }: { quotes: SupplierQuoteRow[]
                           {latest.map((quote) => {
                             const lines = quote.lines.filter(
                               (line) =>
-                                line.purchase_type === type && line.is_package === isPackage,
+                                line.purchase_type === type &&
+                                isPackageType(line.purchase_type) === isPackage,
                             );
                             return (
                               <td key={quote.id} className="p-3 align-top">
@@ -93,7 +98,15 @@ export function SupplierQuoteComparison({ quotes }: { quotes: SupplierQuoteRow[]
                                   <ul className="space-y-3">
                                     {lines.map((line) => (
                                       <li key={line.id}>
-                                        <div className="break-words">{line.description}</div>
+                                        <div className="break-words">
+                                          {line.description}
+                                          {line.option_label ? ` (${line.option_label})` : ""}
+                                        </div>
+                                        {line.not_in_total ? (
+                                          <Badge variant="outline" className="mt-1">
+                                            Not in total
+                                          </Badge>
+                                        ) : null}
                                         <div className="mt-1 flex justify-between gap-3 text-xs">
                                           <span className="text-muted-foreground">
                                             Qty {line.quantity}
@@ -117,7 +130,7 @@ export function SupplierQuoteComparison({ quotes }: { quotes: SupplierQuoteRow[]
               </tbody>
               <tfoot>
                 <tr>
-                  <th className="p-3">Total INR</th>
+                  <th className="p-3">Quote total INR</th>
                   {latest.map((quote, index) => (
                     <td
                       key={quote.id}

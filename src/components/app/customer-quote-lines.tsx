@@ -269,9 +269,19 @@ export function CustomerQuoteLines({
                             {SUPPLIER_QUOTE_STATUS_LABELS[quote.status]}
                           </Badge>
                         </div>
-                        <div className="mt-1 break-words text-sm">{line.description}</div>
+                        <div className="mt-1 break-words text-sm">
+                          {line.description}
+                          {line.option_label ? (
+                            <span className="text-muted-foreground"> · {line.option_label}</span>
+                          ) : null}
+                          {line.not_in_total ? (
+                            <Badge variant="outline" className="ml-2">
+                              Not in quote total
+                            </Badge>
+                          ) : null}
+                        </div>
                         <div className="mt-1 text-xs text-muted-foreground">
-                          {line.is_package ? "Package" : SALE_ITEM_TYPE_LABELS[line.purchase_type]}{" "}
+                          {SALE_ITEM_TYPE_LABELS[line.purchase_type]}{" "}
                           · Qty {line.quantity} · {formatMoney(line.amount_inr)}
                         </div>
                       </div>
