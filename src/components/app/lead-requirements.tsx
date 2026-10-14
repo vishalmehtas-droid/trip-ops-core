@@ -349,6 +349,8 @@ export function LeadRequirements({
                 <SupplierQuotes
                   leadId={leadId}
                   requirementId={row.id}
+                  defaultAdults={row.adults}
+                  defaultChildren={row.children}
                   canManage={canManage}
                   canCreate={row.status === "draft" || row.status === "active"}
                 />

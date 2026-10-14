@@ -37,6 +37,7 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import {
+  PURCHASE_TYPE_HINTS,
   SALE_ITEM_TYPES,
   SALE_ITEM_TYPE_LABELS,
   saleItemValuesSchema,
@@ -331,6 +332,11 @@ export function BookingComponents({
                   ))}
                 </SelectContent>
               </Select>
+              {PURCHASE_TYPE_HINTS[form.item_type] ? (
+                <p className="text-xs text-muted-foreground">
+                  {PURCHASE_TYPE_HINTS[form.item_type]}
+                </p>
+              ) : null}
             </Field>
             <Field
               label="Description"

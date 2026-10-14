@@ -45,6 +45,8 @@ import { SUPPLIER_QUOTE_STATUS_LABELS } from "@/lib/supplier-quote-schemas";
 import { latestSupplierQuotes, quoteFieldErrors } from "@/lib/quotation-display";
 import { formatMoney } from "@/lib/sale-costing-schemas";
 import {
+  PURCHASE_TYPE_HINTS,
+  QUOTE_LINE_TYPES,
   SALE_ITEM_TYPES,
   SALE_ITEM_TYPE_LABELS,
   type SaleItemType,
@@ -326,13 +328,22 @@ export function CustomerQuoteLines({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {SALE_ITEM_TYPES.map((type) => (
+                  {SALE_ITEM_TYPES.filter(
+                    (type) =>
+                      (QUOTE_LINE_TYPES as readonly string[]).includes(type) ||
+                      type === form.purchase_type,
+                  ).map((type) => (
                     <SelectItem key={type} value={type}>
                       {SALE_ITEM_TYPE_LABELS[type]}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+              {PURCHASE_TYPE_HINTS[form.purchase_type] ? (
+                <p className="text-xs text-muted-foreground">
+                  {PURCHASE_TYPE_HINTS[form.purchase_type]}
+                </p>
+              ) : null}
             </Field>
             <Field label="Quantity" htmlFor="cq-line-qty" error={errors["quantity"]}>
               <Input
