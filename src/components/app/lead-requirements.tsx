@@ -107,10 +107,12 @@ export function LeadRequirements({
   leadId,
   canManage,
   autoOpen,
+  quoteToOpen,
 }: {
   leadId: string;
   canManage: boolean;
   autoOpen?: boolean;
+  quoteToOpen?: string | undefined;
 }) {
   const queryClient = useQueryClient();
   const [formOpen, setFormOpen] = useState(Boolean(autoOpen));
@@ -352,6 +354,7 @@ export function LeadRequirements({
                 />
                 <CustomerQuotes
                   requirementId={row.id}
+                  initialQuoteId={quoteToOpen}
                   canCreate={canManage && (row.status === "draft" || row.status === "active")}
                 />
               </li>

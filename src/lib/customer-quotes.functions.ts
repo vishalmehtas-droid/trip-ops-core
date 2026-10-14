@@ -22,7 +22,7 @@ import {
  */
 
 const HEADER_SELECT =
-  "id, quote_number, lead_id, requirement_id, client_id, revision_no, previous_quote_id, status, valid_until, notes, created_at, updated_at, client:clients(id, name)";
+  "id, quote_number, lead_id, requirement_id, client_id, revision_no, previous_quote_id, status, valid_until, notes, created_at, updated_at, client:clients(id, name), booking:sales!sales_customer_quote_id_fkey(id)";
 const LINE_SELECT =
   "id, customer_quote_id, source_supplier_quote_line_id, purchase_type, description, quantity, currency, expected_cost_inr, sort_order";
 const PRICING_SELECT =
@@ -190,6 +190,24 @@ export const createCustomerQuoteRevision = createServerFn({ method: "POST" })
     });
     if (error) throw new Error(error.message);
     return { id: id as string };
+  });
+
+/** One authenticated RPC executes the whole conversion atomically in the database. */
+export const convertCustomerQuoteToBooking = createServerFn({ method: "POST" })
+  .middleware([requireActiveUser])
+  .inputValidator((input: unknown) => customerQuoteIdSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    requirePermission(context, "leads.manage");
+    requirePermission(context, "sales.manage");
+    if (!context.roles.some((role) => role === "admin" || role === "sales")) {
+      throw new Error("Forbidden: Admin or Sales access is required");
+    }
+    const { data: id, error } = await context.supabase.rpc("convert_customer_quote_to_booking", {
+      _quote_id: data.id,
+    });
+    if (error) throw new Error(error.message);
+    if (!id) throw new Error("Booking conversion returned no booking");
+    return { id };
   });
 
 export const addCustomerQuoteLine = createServerFn({ method: "POST" })
