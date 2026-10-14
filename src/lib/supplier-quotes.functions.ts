@@ -14,7 +14,7 @@ import {
 } from "./supplier-quote-schemas";
 
 const QUOTE_SELECT =
-  "id, quote_number, lead_id, requirement_id, vendor_id, status, valid_until, notes, revision_number, previous_quote_id, is_superseded, created_at, previous:supplier_quotes!supplier_quotes_previous_quote_id_fkey(quote_number, revision_number), updated_at, vendor:vendors(id, name, is_active), lines:supplier_quote_lines(id, is_package, purchase_type, description, quantity, currency, unit_amount, exchange_rate, amount_inr, sort_order)";
+  "id, quote_number, lead_id, requirement_id, vendor_id, status, valid_until, notes, revision_number, previous_quote_id, is_superseded, created_at, updated_at, vendor:vendors(id, name, is_active), lines:supplier_quote_lines(id, is_package, purchase_type, description, quantity, currency, unit_amount, exchange_rate, amount_inr, sort_order)";
 
 export const listSupplierQuotes = createServerFn({ method: "POST" })
   .middleware([requireActiveUser])
@@ -27,12 +27,26 @@ export const listSupplierQuotes = createServerFn({ method: "POST" })
       .eq("requirement_id", data.requirement_id)
       .order("created_at", { ascending: true });
     if (error) throw new Error(error.message);
+    const previousIds = [
+      ...new Set((rows ?? []).map((r) => r.previous_quote_id).filter((v): v is string => !!v)),
+    ];
+    const previousById = new Map<string, { quote_number: string; revision_number: number }>();
+    if (previousIds.length > 0) {
+      const { data: prev, error: prevError } = await context.supabase
+        .from("supplier_quotes")
+        .select("id, quote_number, revision_number")
+        .in("id", previousIds);
+      if (prevError) throw new Error(prevError.message);
+      for (const p of prev ?? []) {
+        previousById.set(p.id, {
+          quote_number: p.quote_number,
+          revision_number: p.revision_number,
+        });
+      }
+    }
     return (rows ?? []).map((row) => ({
       ...row,
-      previous: (Array.isArray(row.previous) ? (row.previous[0] ?? null) : row.previous) as {
-        quote_number: string;
-        revision_number: number;
-      } | null,
+      previous: row.previous_quote_id ? (previousById.get(row.previous_quote_id) ?? null) : null,
       lines: [...(row.lines ?? [])]
         .sort((a, b) => a.sort_order - b.sort_order)
         .map((line) => ({

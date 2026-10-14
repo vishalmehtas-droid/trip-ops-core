@@ -5,6 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { Loader2, Pencil, Plus } from "lucide-react";
 import { toast } from "sonner";
 
+import { ClientSourceFields } from "@/components/app/client-source-fields";
 import { PageHeader } from "@/components/app/page-header";
 import {
   DetailRow,
@@ -79,6 +80,8 @@ type ClientRow = {
   address: string | null;
   gst_number: string | null;
   notes: string | null;
+  source: string | null;
+  referred_by: string | null;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -91,6 +94,8 @@ type FormState = {
   address: string;
   gst_number: string;
   notes: string;
+  source: string;
+  referred_by: string;
   is_active: boolean;
 };
 
@@ -101,6 +106,8 @@ const EMPTY_FORM: FormState = {
   address: "",
   gst_number: "",
   notes: "",
+  source: "",
+  referred_by: "",
   is_active: true,
 };
 
@@ -198,6 +205,8 @@ function ClientsPage() {
       address: row.address ?? "",
       gst_number: row.gst_number ?? "",
       notes: row.notes ?? "",
+      source: row.source ?? "",
+      referred_by: row.referred_by ?? "",
       is_active: row.is_active,
     });
     setErrors({});
@@ -295,6 +304,7 @@ function ClientsPage() {
                 <TableHead className="text-[10px] uppercase tracking-wider">Phone</TableHead>
                 <TableHead className="text-[10px] uppercase tracking-wider">Email</TableHead>
                 <TableHead className="text-[10px] uppercase tracking-wider">GST number</TableHead>
+                <TableHead className="text-[10px] uppercase tracking-wider">Source</TableHead>
                 <TableHead className="text-[10px] uppercase tracking-wider">Status</TableHead>
                 <TableHead className="text-[10px] uppercase tracking-wider">Created</TableHead>
                 <TableHead className="text-right text-[10px] uppercase tracking-wider">
@@ -309,6 +319,10 @@ function ClientsPage() {
                   <TableCell className="text-muted-foreground">{row.phone ?? "—"}</TableCell>
                   <TableCell className="text-muted-foreground">{row.email ?? "—"}</TableCell>
                   <TableCell className="text-muted-foreground">{row.gst_number ?? "—"}</TableCell>
+                  <TableCell className="text-muted-foreground">
+                    <div>{row.source ?? "—"}</div>
+                    {row.referred_by ? <div className="text-xs">by {row.referred_by}</div> : null}
+                  </TableCell>
                   <TableCell>
                     <StatusBadge active={row.is_active} />
                   </TableCell>
@@ -386,6 +400,13 @@ function ClientsPage() {
                 onChange={(event) => setForm({ ...form, gst_number: event.target.value })}
               />
             </Field>
+            <ClientSourceFields
+              idPrefix="client"
+              source={form.source}
+              referredBy={form.referred_by}
+              errors={errors}
+              onChange={(source, referred_by) => setForm({ ...form, source, referred_by })}
+            />
             <Field label="Address" htmlFor="client-address" error={errors["address"]}>
               <Textarea
                 id="client-address"
@@ -442,6 +463,10 @@ function ClientsPage() {
               <DetailRow label="Phone" value={viewing.phone} />
               <DetailRow label="Email" value={viewing.email} />
               <DetailRow label="GST number" value={viewing.gst_number} />
+              <DetailRow label="Source" value={viewing.source} />
+              {viewing.source === "Referral" ? (
+                <DetailRow label="Referred by" value={viewing.referred_by} />
+              ) : null}
               <DetailRow label="Address" value={viewing.address} />
               <DetailRow label="Notes" value={viewing.notes} />
               <DetailRow label="Created" value={formatDateTime(viewing.created_at)} />

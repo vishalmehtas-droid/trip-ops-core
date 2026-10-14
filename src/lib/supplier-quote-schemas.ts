@@ -29,13 +29,15 @@ const isoDate = z
   .string()
   .trim()
   .refine((v) => v === "" || /^\d{4}-\d{2}-\d{2}$/.test(v), "Enter a valid date")
-  .transform((v) => (v === "" ? null : v));
+  .nullish()
+  .transform((v) => (v ? v : null));
 
 const notes = z
   .string()
   .trim()
   .max(2000, "Notes are too long")
-  .transform((v) => (v === "" ? null : v));
+  .nullish()
+  .transform((v) => (v ? v : null));
 
 const twoDecimals = (v: number) => Math.abs(Math.round(v * 100) - v * 100) < 1e-6;
 
