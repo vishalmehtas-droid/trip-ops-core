@@ -39,15 +39,37 @@ const optionalEmail = z
   .optional()
   .transform((value) => value ?? null);
 
-export const clientInputSchema = z.object({
-  name: requiredName,
-  phone: optionalPhone,
-  email: optionalEmail,
-  address: optionalText(600),
-  gst_number: optionalText(40),
-  notes: optionalText(2000),
-  is_active: z.boolean().default(true),
-});
+export const CLIENT_SOURCES = [
+  "Referral",
+  "Repeat client",
+  "Instagram",
+  "Facebook",
+  "WhatsApp",
+  "Google",
+  "Website",
+  "Walk-in",
+  "Other",
+] as const;
+
+const optionalSource = z
+  .union([z.enum(CLIENT_SOURCES), z.literal("")])
+  .nullish()
+  .transform((value) => (value ? value : null));
+
+export const clientInputSchema = z
+  .object({
+    name: requiredName,
+    phone: optionalPhone,
+    email: optionalEmail,
+    address: optionalText(600),
+    gst_number: optionalText(40),
+    notes: optionalText(2000),
+    source: optionalSource,
+    referred_by: optionalText(120),
+    is_active: z.boolean().default(true),
+  })
+  // "Referred by" only applies to referrals.
+  .transform((v) => ({ ...v, referred_by: v.source === "Referral" ? v.referred_by : null }));
 
 /** Vendors are intentionally unclassified — no vendor type concept. */
 export const vendorInputSchema = z.object({
