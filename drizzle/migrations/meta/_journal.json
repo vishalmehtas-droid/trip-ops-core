@@ -36,6 +36,13 @@
       "when": 1791959717684,
       "tag": "0004_client_source_referral",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1791965640001,
+      "tag": "0005_supplier_quote_capture_fields_files",
+      "breakpoints": true
     }
   ]
 }
