@@ -23,8 +23,10 @@ export function latestSupplierQuotes(quotes: SupplierQuoteRow[]) {
 
 /** Exact paise aggregation of database-computed decimal strings, for display only. */
 export function paise(value: string): bigint {
-  const [whole = "0", fraction = ""] = value.split(".");
-  return BigInt(whole) * 100n + BigInt(fraction.padEnd(2, "0").slice(0, 2));
+  const negative = value.startsWith("-");
+  const [whole = "0", fraction = ""] = (negative ? value.slice(1) : value).split(".");
+  const absolute = BigInt(whole) * 100n + BigInt(fraction.padEnd(2, "0").slice(0, 2));
+  return negative ? -absolute : absolute;
 }
 
 export function supplierTotal(quote: SupplierQuoteRow) {
