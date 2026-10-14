@@ -643,9 +643,11 @@ export type Database = {
           client_id: string
           created_at: string
           created_by: string
+          customer_quote_id: string | null
           destination_id: string | null
           id: string
           notes: string | null
+          quote_itinerary: Json | null
           status: Database["public"]["Enums"]["sale_status"]
           travel_date: string | null
           updated_at: string
@@ -656,9 +658,11 @@ export type Database = {
           client_id: string
           created_at?: string
           created_by?: string
+          customer_quote_id?: string | null
           destination_id?: string | null
           id?: string
           notes?: string | null
+          quote_itinerary?: Json | null
           status?: Database["public"]["Enums"]["sale_status"]
           travel_date?: string | null
           updated_at?: string
@@ -669,9 +673,11 @@ export type Database = {
           client_id?: string
           created_at?: string
           created_by?: string
+          customer_quote_id?: string | null
           destination_id?: string | null
           id?: string
           notes?: string | null
+          quote_itinerary?: Json | null
           status?: Database["public"]["Enums"]["sale_status"]
           travel_date?: string | null
           updated_at?: string
@@ -696,6 +702,13 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "user_directory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_customer_quote_id_fkey"
+            columns: ["customer_quote_id"]
+            isOneToOne: true
+            referencedRelation: "customer_quotes"
             referencedColumns: ["id"]
           },
           {
@@ -1105,6 +1118,10 @@ export type Database = {
       }
     }
     Functions: {
+      convert_customer_quote_to_booking: {
+        Args: { _quote_id: string }
+        Returns: string
+      }
       create_customer_quote_revision: {
         Args: { _quote_id: string }
         Returns: string

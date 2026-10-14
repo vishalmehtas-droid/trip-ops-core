@@ -45,11 +45,21 @@ import {
 import { changeLeadStatus, updateLead } from "@/lib/leads.functions";
 
 export const Route = createFileRoute("/_authenticated/leads/$leadId")({
+  validateSearch: (search: Record<string, unknown>): { quote?: string } => {
+    const quote =
+      typeof search["quote"] === "string" &&
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(search["quote"])
+        ? search["quote"]
+        : undefined;
+    return quote ? { quote } : {};
+  },
   head: () => ({
     meta: [
       { title: "Lead detail — Triptastic Ops" },
       { name: "description", content: "Lead detail with travel requirements and history." },
       { property: "og:title", content: "Lead detail — Triptastic Ops" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       {
         property: "og:description",
         content: "Lead detail with travel requirements and history.",
@@ -97,6 +107,7 @@ type FormState = {
 
 function LeadDetailPage() {
   const { leadId } = Route.useParams();
+  const { quote: quoteToOpen } = Route.useSearch();
   const { hasPermission } = useAuth();
   const canRead = hasPermission("leads.read");
   const canManage = hasPermission("leads.manage");
@@ -404,7 +415,11 @@ function LeadDetailPage() {
         </dl>
       </section>
 
-      <LeadRequirements leadId={lead.id} canManage={canManage && !isClosed} />
+      <LeadRequirements
+        leadId={lead.id}
+        canManage={canManage && !isClosed}
+        quoteToOpen={quoteToOpen}
+      />
 
       {canReadAudit ? (
         <section className="rounded-lg border border-border bg-surface px-4 py-2">
