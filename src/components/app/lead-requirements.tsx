@@ -350,7 +350,10 @@ export function LeadRequirements({
                   canManage={canManage}
                   canCreate={row.status === "draft" || row.status === "active"}
                 />
-                <CustomerQuotes requirementId={row.id} canCreate={canManage && (row.status === "draft" || row.status === "active")} />
+                <CustomerQuotes
+                  requirementId={row.id}
+                  canCreate={canManage && (row.status === "draft" || row.status === "active")}
+                />
               </li>
             );
           })}

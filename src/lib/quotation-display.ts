@@ -8,12 +8,17 @@ export function latestSupplierQuotes(quotes: SupplierQuoteRow[]) {
   for (const quote of quotes) {
     if (quote.is_superseded || quote.status === "rejected") continue;
     const previous = vendors.get(quote.vendor_id);
-    if (!previous || quote.created_at > previous.created_at ||
-      (quote.created_at === previous.created_at && quote.revision_number > previous.revision_number)) {
+    if (
+      !previous ||
+      quote.created_at > previous.created_at ||
+      (quote.created_at === previous.created_at && quote.revision_number > previous.revision_number)
+    ) {
       vendors.set(quote.vendor_id, quote);
     }
   }
-  return [...vendors.values()].sort((a, b) => (a.vendor?.name ?? "").localeCompare(b.vendor?.name ?? ""));
+  return [...vendors.values()].sort((a, b) =>
+    (a.vendor?.name ?? "").localeCompare(b.vendor?.name ?? ""),
+  );
 }
 
 /** Exact paise aggregation of database-computed decimal strings, for display only. */

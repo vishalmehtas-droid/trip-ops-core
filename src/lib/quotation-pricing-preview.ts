@@ -22,15 +22,23 @@ function percentage(amount: bigint, rate: string) {
 /** Non-authoritative, exact decimal display preview. Only inputs are sent to the existing server function. */
 export function quotationPricingPreview(expectedCost: string, form: QuotePricingForm) {
   try {
-    for (const value of [form.markup_type === "none" ? "0" : form.markup_value, form.discount_amount]) {
+    for (const value of [
+      form.markup_type === "none" ? "0" : form.markup_value,
+      form.discount_amount,
+    ]) {
       if (!/^\d+(\.\d{0,2})?$/.test(value)) return null;
     }
     const cost = paise(expectedCost);
-    const charge = form.markup_type === "percentage" ? percentage(cost, form.markup_value)
-      : form.markup_type === "lumpsum" ? paise(form.markup_value) : 0n;
+    const charge =
+      form.markup_type === "percentage"
+        ? percentage(cost, form.markup_value)
+        : form.markup_type === "lumpsum"
+          ? paise(form.markup_value)
+          : 0n;
     const selling = cost + charge - paise(form.discount_amount);
     if (selling < 0n) return null;
-    const gst = form.billing_type === "tour_package" ? percentage(selling, "5") : percentage(charge, "18");
+    const gst =
+      form.billing_type === "tour_package" ? percentage(selling, "5") : percentage(charge, "18");
     const tcs = form.tcs_applicable ? percentage(selling + gst, form.tcs_rate) : 0n;
     return {
       expected_cost: expectedCost,
@@ -40,7 +48,9 @@ export function quotationPricingPreview(expectedCost: string, form: QuotePricing
       customer_payable: decimalString(selling + gst + tcs),
       expected_gross_profit: decimalString(selling - cost),
     };
-  } catch { return null; }
+  } catch {
+    return null;
+  }
 }
 
 export function quotationMargin(profit: string, selling: string) {

@@ -183,21 +183,21 @@ export function SupplierQuotes({
           Supplier quotes
         </h3>
         <div className="flex flex-wrap items-center gap-2">
-        <SupplierQuoteComparison quotes={quotes} />
-        {canManage && canCreate ? (
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => {
-              setForm({ vendor_id: "", valid_until: "", notes: "" });
-              setErrors({});
-              setCreateOpen(true);
-            }}
-          >
-            <Plus className="size-4" />
-            New Supplier Quote
-          </Button>
-        ) : null}
+          <SupplierQuoteComparison quotes={quotes} />
+          {canManage && canCreate ? (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                setForm({ vendor_id: "", valid_until: "", notes: "" });
+                setErrors({});
+                setCreateOpen(true);
+              }}
+            >
+              <Plus className="size-4" />
+              New Supplier Quote
+            </Button>
+          ) : null}
         </div>
       </div>
 
