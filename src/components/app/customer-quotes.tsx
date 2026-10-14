@@ -221,7 +221,10 @@ export function CustomerQuotes({
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      <Sheet open={openId !== null && Boolean(quotes.data?.some((quote) => quote.id === openId))} onOpenChange={(open) => !open && setOpenId(null)}>
+      <Sheet
+        open={openId !== null && Boolean(quotes.data?.some((quote) => quote.id === openId))}
+        onOpenChange={(open) => !open && setOpenId(null)}
+      >
         <SheetContent className="w-full overflow-y-auto sm:max-w-3xl">
           {openId ? (
             <CustomerQuoteDetail
