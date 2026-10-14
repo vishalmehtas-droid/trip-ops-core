@@ -63,6 +63,8 @@ export const Route = createFileRoute("/_authenticated/sales/$saleId")({
       { title: "Booking detail — Triptastic Ops" },
       { name: "description", content: "Booking header detail with status workflow." },
       { property: "og:title", content: "Booking detail — Triptastic Ops" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { property: "og:description", content: "Booking header detail with status workflow." },
       { name: "robots", content: "noindex" },
     ],

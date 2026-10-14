@@ -58,6 +58,8 @@ export const Route = createFileRoute("/_authenticated/leads/$leadId")({
       { title: "Lead detail — Triptastic Ops" },
       { name: "description", content: "Lead detail with travel requirements and history." },
       { property: "og:title", content: "Lead detail — Triptastic Ops" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       {
         property: "og:description",
         content: "Lead detail with travel requirements and history.",
