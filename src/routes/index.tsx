@@ -4,9 +4,15 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "Triptastic Ops — Travel operations" },
-      { name: "description", content: "Triptastic Holidays travel operations, bookings and quotations." },
+      {
+        name: "description",
+        content: "Triptastic Holidays travel operations, bookings and quotations.",
+      },
       { property: "og:title", content: "Triptastic Ops — Travel operations" },
-      { property: "og:description", content: "Triptastic Holidays travel operations, bookings and quotations." },
+      {
+        property: "og:description",
+        content: "Triptastic Holidays travel operations, bookings and quotations.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
