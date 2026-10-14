@@ -335,7 +335,8 @@ function CustomerQuoteBody({
   const navigate = useNavigate();
   const auth = useAuth();
   const booking = Array.isArray(quote.booking) ? quote.booking[0] : quote.booking;
-  const canConvert = canManage && auth.hasPermission("sales.manage") && quote.status === "accepted" && !booking;
+  const canConvert =
+    canManage && auth.hasPermission("sales.manage") && quote.status === "accepted" && !booking;
   const editable = canManage && quote.status === "draft";
   const [headerOpen, setHeaderOpen] = useState(false);
   const [form, setForm] = useState({
@@ -403,7 +404,18 @@ function CustomerQuoteBody({
       </div>
       <dl className="space-y-1">
         <DetailRow label="Client" value={quote.client?.name ?? "—"} />
-        {booking ? <DetailRow label="Booking" value={<Button asChild size="sm" variant="link" className="h-auto p-0"><Link to="/sales/$saleId" params={{ saleId: booking.id }}>Booking BK-{booking.id}</Link></Button>} /> : null}
+        {booking ? (
+          <DetailRow
+            label="Booking"
+            value={
+              <Button asChild size="sm" variant="link" className="h-auto p-0">
+                <Link to="/sales/$saleId" params={{ saleId: booking.id }}>
+                  Booking BK-{booking.id}
+                </Link>
+              </Button>
+            }
+          />
+        ) : null}
         <DetailRow label="Valid until" value={formatDate(quote.valid_until)} />
         <DetailRow
           label="Notes"
@@ -428,7 +440,11 @@ function CustomerQuoteBody({
         ) : null}
       </dl>
       <div className="flex flex-wrap gap-2">
-        {canConvert ? <Button size="sm" onClick={() => setConfirmConvert(true)} disabled={convert.isPending}>Convert to Booking</Button> : null}
+        {canConvert ? (
+          <Button size="sm" onClick={() => setConfirmConvert(true)} disabled={convert.isPending}>
+            Convert to Booking
+          </Button>
+        ) : null}
         {editable ? (
           <Button
             size="sm"
@@ -536,16 +552,30 @@ function CustomerQuoteBody({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      <AlertDialog open={confirmConvert && canConvert} onOpenChange={(open) => !convert.isPending && setConfirmConvert(open)}>
+      <AlertDialog
+        open={confirmConvert && canConvert}
+        onOpenChange={(open) => !convert.isPending && setConfirmConvert(open)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Convert Accepted quote to Booking?</AlertDialogTitle>
-            <AlertDialogDescription>The booking will include the itinerary, quote lines, INR cost snapshots and matching pricing. The lead moves to Won. This quote can convert only once and remains read-only.</AlertDialogDescription>
+            <AlertDialogDescription>
+              The booking will include the itinerary, quote lines, INR cost snapshots and matching
+              pricing. The lead moves to Won. This quote can convert only once and remains
+              read-only.
+            </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={convert.isPending}>Cancel</AlertDialogCancel>
-            <AlertDialogAction disabled={convert.isPending} onClick={(event) => { event.preventDefault(); convert.mutate(); }}>
-              {convert.isPending ? <Loader2 className="size-4 animate-spin" /> : null}Convert to Booking
+            <AlertDialogAction
+              disabled={convert.isPending}
+              onClick={(event) => {
+                event.preventDefault();
+                convert.mutate();
+              }}
+            >
+              {convert.isPending ? <Loader2 className="size-4 animate-spin" /> : null}Convert to
+              Booking
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

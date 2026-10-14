@@ -73,7 +73,9 @@ export const Route = createFileRoute("/_authenticated/sales/$saleId")({
 type SaleDetail = {
   id: string;
   source_quote: { id: string; quote_number: string; lead_id: string } | null;
-  quote_itinerary: { destination_id: string; name: string; sequence_order: number; nights: number | null }[] | null;
+  quote_itinerary:
+    | { destination_id: string; name: string; sequence_order: number; nights: number | null }[]
+    | null;
   client_id: string;
   destination_id: string | null;
   booking_date: string;
@@ -365,8 +367,37 @@ function SaleDetailPage() {
             label="Booking ID"
             value={<span className="font-mono text-xs">{sale.id}</span>}
           />
-          {sale.source_quote ? <DetailRow label="From quote" value={<Button asChild variant="link" size="sm" className="h-auto p-0"><Link to="/leads/$leadId" params={{ leadId: sale.source_quote.lead_id }} search={{ quote: sale.source_quote.id }}>From quote {sale.source_quote.quote_number}</Link></Button>} /> : null}
-          {sale.quote_itinerary && sale.quote_itinerary.length > 0 ? <DetailRow label="Itinerary" value={<ol className="space-y-1">{sale.quote_itinerary.map((leg, index) => <li key={`${leg.destination_id}-${index}`}>{index + 1}. {leg.name}{leg.nights !== null ? ` · ${leg.nights} nights` : ""}</li>)}</ol>} /> : null}
+          {sale.source_quote ? (
+            <DetailRow
+              label="From quote"
+              value={
+                <Button asChild variant="link" size="sm" className="h-auto p-0">
+                  <Link
+                    to="/leads/$leadId"
+                    params={{ leadId: sale.source_quote.lead_id }}
+                    search={{ quote: sale.source_quote.id }}
+                  >
+                    From quote {sale.source_quote.quote_number}
+                  </Link>
+                </Button>
+              }
+            />
+          ) : null}
+          {sale.quote_itinerary && sale.quote_itinerary.length > 0 ? (
+            <DetailRow
+              label="Itinerary"
+              value={
+                <ol className="space-y-1">
+                  {sale.quote_itinerary.map((leg, index) => (
+                    <li key={`${leg.destination_id}-${index}`}>
+                      {index + 1}. {leg.name}
+                      {leg.nights !== null ? ` · ${leg.nights} nights` : ""}
+                    </li>
+                  ))}
+                </ol>
+              }
+            />
+          ) : null}
           <DetailRow
             label="Client"
             value={
