@@ -777,6 +777,61 @@ export type Database = {
           },
         ]
       }
+      supplier_quote_files: {
+        Row: {
+          content_type: string
+          created_at: string
+          file_name: string
+          id: string
+          size_bytes: number
+          storage_path: string
+          supplier_quote_id: string
+          uploaded_by: string
+        }
+        Insert: {
+          content_type: string
+          created_at?: string
+          file_name: string
+          id?: string
+          size_bytes: number
+          storage_path: string
+          supplier_quote_id: string
+          uploaded_by: string
+        }
+        Update: {
+          content_type?: string
+          created_at?: string
+          file_name?: string
+          id?: string
+          size_bytes?: number
+          storage_path?: string
+          supplier_quote_id?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_quote_files_supplier_quote_id_fkey"
+            columns: ["supplier_quote_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_quotes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_quote_files_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_quote_files_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "user_directory"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       supplier_quote_lines: {
         Row: {
           amount_inr: number
@@ -786,6 +841,9 @@ export type Database = {
           exchange_rate: number
           id: string
           is_package: boolean
+          not_in_total: boolean
+          option_label: string | null
+          price_basis: string
           purchase_type: Database["public"]["Enums"]["sale_item_type"]
           quantity: number
           sort_order: number
@@ -801,6 +859,9 @@ export type Database = {
           exchange_rate?: number
           id?: string
           is_package?: boolean
+          not_in_total?: boolean
+          option_label?: string | null
+          price_basis?: string
           purchase_type: Database["public"]["Enums"]["sale_item_type"]
           quantity?: number
           sort_order?: number
@@ -816,6 +877,9 @@ export type Database = {
           exchange_rate?: number
           id?: string
           is_package?: boolean
+          not_in_total?: boolean
+          option_label?: string | null
+          price_basis?: string
           purchase_type?: Database["public"]["Enums"]["sale_item_type"]
           quantity?: number
           sort_order?: number
@@ -835,10 +899,16 @@ export type Database = {
       }
       supplier_quotes: {
         Row: {
+          adults: number | null
+          child_ages: string | null
+          children: number | null
           created_at: string
           created_by: string
+          exclusions: string | null
           id: string
+          inclusions: string | null
           is_superseded: boolean
+          itinerary_notes: string | null
           lead_id: string
           notes: string | null
           previous_quote_id: string | null
@@ -851,10 +921,16 @@ export type Database = {
           vendor_id: string
         }
         Insert: {
+          adults?: number | null
+          child_ages?: string | null
+          children?: number | null
           created_at?: string
           created_by: string
+          exclusions?: string | null
           id?: string
+          inclusions?: string | null
           is_superseded?: boolean
+          itinerary_notes?: string | null
           lead_id: string
           notes?: string | null
           previous_quote_id?: string | null
@@ -867,10 +943,16 @@ export type Database = {
           vendor_id: string
         }
         Update: {
+          adults?: number | null
+          child_ages?: string | null
+          children?: number | null
           created_at?: string
           created_by?: string
+          exclusions?: string | null
           id?: string
+          inclusions?: string | null
           is_superseded?: boolean
+          itinerary_notes?: string | null
           lead_id?: string
           notes?: string | null
           previous_quote_id?: string | null
@@ -1181,6 +1263,8 @@ export type Database = {
         | "transport"
         | "tour_package"
         | "other"
+        | "land_package"
+        | "full_package"
       sale_item_type:
         | "hotel"
         | "flight"
@@ -1188,6 +1272,8 @@ export type Database = {
         | "activity"
         | "transport"
         | "other"
+        | "land_package"
+        | "full_package"
       sale_status: "pending" | "confirmed" | "completed" | "cancelled"
       supplier_quote_status: "requested" | "received" | "selected" | "rejected"
     }
@@ -1345,6 +1431,8 @@ export const Constants = {
         "transport",
         "tour_package",
         "other",
+        "land_package",
+        "full_package",
       ],
       sale_item_type: [
         "hotel",
@@ -1353,6 +1441,8 @@ export const Constants = {
         "activity",
         "transport",
         "other",
+        "land_package",
+        "full_package",
       ],
       sale_status: ["pending", "confirmed", "completed", "cancelled"],
       supplier_quote_status: ["requested", "received", "selected", "rejected"],

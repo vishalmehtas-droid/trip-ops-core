@@ -6,6 +6,8 @@ export const SALE_ITEM_TYPES = [
   "visa",
   "activity",
   "transport",
+  "land_package",
+  "full_package",
   "other",
 ] as const;
 
@@ -16,9 +18,30 @@ export const SALE_ITEM_TYPE_LABELS: Record<SaleItemType, string> = {
   flight: "Flight",
   visa: "Visa",
   activity: "Activity",
-  transport: "Transport",
+  transport: "Car Rental",
+  land_package: "Land Package",
+  full_package: "Full Package",
   other: "Other",
 };
+
+/** Types offered for new supplier/customer quote lines ("Other" stays for old records). */
+export const QUOTE_LINE_TYPES = [
+  "hotel",
+  "transport",
+  "land_package",
+  "full_package",
+  "visa",
+  "flight",
+  "activity",
+] as const satisfies readonly SaleItemType[];
+
+export const PURCHASE_TYPE_HINTS: Partial<Record<string, string>> = {
+  land_package:
+    "Car rental, sightseeing and entry tickets: everything except hotel, visa and taxes.",
+  full_package: "Hotels plus land services, quoted together.",
+};
+
+export const isPackageType = (type: string) => type === "land_package" || type === "full_package";
 
 const optionalVendorId = z
   .string()

@@ -45,6 +45,8 @@ import { SUPPLIER_QUOTE_STATUS_LABELS } from "@/lib/supplier-quote-schemas";
 import { latestSupplierQuotes, quoteFieldErrors } from "@/lib/quotation-display";
 import { formatMoney } from "@/lib/sale-costing-schemas";
 import {
+  PURCHASE_TYPE_HINTS,
+  QUOTE_LINE_TYPES,
   SALE_ITEM_TYPES,
   SALE_ITEM_TYPE_LABELS,
   type SaleItemType,
@@ -269,10 +271,20 @@ export function CustomerQuoteLines({
                             {SUPPLIER_QUOTE_STATUS_LABELS[quote.status]}
                           </Badge>
                         </div>
-                        <div className="mt-1 break-words text-sm">{line.description}</div>
+                        <div className="mt-1 break-words text-sm">
+                          {line.description}
+                          {line.option_label ? (
+                            <span className="text-muted-foreground"> · {line.option_label}</span>
+                          ) : null}
+                          {line.not_in_total ? (
+                            <Badge variant="outline" className="ml-2">
+                              Not in quote total
+                            </Badge>
+                          ) : null}
+                        </div>
                         <div className="mt-1 text-xs text-muted-foreground">
-                          {line.is_package ? "Package" : SALE_ITEM_TYPE_LABELS[line.purchase_type]}{" "}
-                          · Qty {line.quantity} · {formatMoney(line.amount_inr)}
+                          {SALE_ITEM_TYPE_LABELS[line.purchase_type]} · Qty {line.quantity} ·{" "}
+                          {formatMoney(line.amount_inr)}
                         </div>
                       </div>
                       <Button
@@ -316,13 +328,22 @@ export function CustomerQuoteLines({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {SALE_ITEM_TYPES.map((type) => (
+                  {SALE_ITEM_TYPES.filter(
+                    (type) =>
+                      (QUOTE_LINE_TYPES as readonly string[]).includes(type) ||
+                      type === form.purchase_type,
+                  ).map((type) => (
                     <SelectItem key={type} value={type}>
                       {SALE_ITEM_TYPE_LABELS[type]}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+              {PURCHASE_TYPE_HINTS[form.purchase_type] ? (
+                <p className="text-xs text-muted-foreground">
+                  {PURCHASE_TYPE_HINTS[form.purchase_type]}
+                </p>
+              ) : null}
             </Field>
             <Field label="Quantity" htmlFor="cq-line-qty" error={errors["quantity"]}>
               <Input

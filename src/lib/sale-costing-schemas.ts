@@ -7,6 +7,8 @@ export const SALE_COST_TYPES = [
   "visa",
   "activity",
   "transport",
+  "land_package",
+  "full_package",
   "other",
 ] as const;
 
@@ -18,7 +20,9 @@ export const SALE_COST_TYPE_LABELS: Record<SaleCostType, string> = {
   flight: "Flight",
   visa: "Visa",
   activity: "Activity",
-  transport: "Transport",
+  transport: "Car Rental",
+  land_package: "Land Package",
+  full_package: "Full Package",
   other: "Other",
 };
 

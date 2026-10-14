@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Loader2, Pencil, Plus, Trash2 } from "lucide-react";
+import { ExternalLink, Loader2, Paperclip, Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { DetailRow, Field, formatDate } from "@/components/app/master-data";
@@ -47,14 +47,24 @@ import {
 } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
+import { decimalString, supplierExtrasTotal, supplierTotal } from "@/lib/quotation-display";
 import {
+  isPackageType,
+  PURCHASE_TYPE_HINTS,
+  QUOTE_LINE_TYPES,
   SALE_ITEM_TYPES,
   SALE_ITEM_TYPE_LABELS,
   type SaleItemType,
 } from "@/lib/sales-item-schemas";
 import {
   isQuoteLocked,
+  PRICE_BASES,
+  PRICE_BASIS_LABELS,
+  QUOTE_FILE_MAX_BYTES,
+  QUOTE_FILE_TYPES,
+  quoteDetailsSchema,
   quoteHeaderSchema,
+  type PriceBasis,
   quoteLineValuesSchema,
   SUPPLIER_QUOTE_STATUS_LABELS,
   SUPPLIER_QUOTE_TRANSITIONS,
@@ -64,7 +74,10 @@ import {
   addSupplierQuoteLine,
   createSupplierQuote,
   createSupplierQuoteRevision,
+  getSupplierQuoteFileUrl,
+  listSupplierQuoteFiles,
   listSupplierQuotes,
+  registerSupplierQuoteFile,
   removeSupplierQuoteLine,
   updateSupplierQuote,
   updateSupplierQuoteLine,
@@ -76,9 +89,116 @@ type Line = Quote["lines"][number];
 const inr = (value: number) =>
   value.toLocaleString("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2 });
 
-/** Sums database-calculated INR amounts in paise to avoid float drift. */
-const quoteTotal = (quote: Quote) =>
-  quote.lines.reduce((sum, line) => sum + Math.round(Number(line.amount_inr) * 100), 0) / 100;
+/** Quote total excludes lines marked not in total; summed exactly in paise. */
+const quoteTotal = (quote: Quote) => Number(decimalString(supplierTotal(quote)));
+const extrasTotal = (quote: Quote) => Number(decimalString(supplierExtrasTotal(quote)));
+
+type DetailsForm = {
+  valid_until: string;
+  notes: string;
+  adults: string;
+  children: string;
+  child_ages: string;
+  inclusions: string;
+  exclusions: string;
+  itinerary_notes: string;
+};
+const detailsFrom = (q: Partial<Record<keyof DetailsForm, string | number | null>>) =>
+  Object.fromEntries(
+    (
+      [
+        "valid_until",
+        "notes",
+        "adults",
+        "children",
+        "child_ages",
+        "inclusions",
+        "exclusions",
+        "itinerary_notes",
+      ] as const
+    ).map((k) => [k, q[k] === null || q[k] === undefined ? "" : String(q[k])]),
+  ) as DetailsForm;
+
+function CollapsibleText({ text }: { text: string | null }) {
+  const [open, setOpen] = useState(false);
+  if (!text) return <span>—</span>;
+  const long = text.length > 240 || text.split("\n").length > 4;
+  return (
+    <div>
+      <p className={`whitespace-pre-wrap break-words ${!open && long ? "line-clamp-4" : ""}`}>
+        {text}
+      </p>
+      {long ? (
+        <button
+          type="button"
+          className="mt-1 text-xs font-medium text-primary hover:underline"
+          onClick={() => setOpen(!open)}
+        >
+          {open ? "Show less" : "Show more"}
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
+function DetailsFields({
+  value,
+  onChange,
+  errors,
+  idPrefix,
+}: {
+  value: DetailsForm;
+  onChange: (v: DetailsForm) => void;
+  errors: Record<string, string>;
+  idPrefix: string;
+}) {
+  const text = (key: "inclusions" | "exclusions" | "itinerary_notes", label: string) => (
+    <Field label={label} htmlFor={`${idPrefix}-${key}`} error={errors[key]}>
+      <Textarea
+        id={`${idPrefix}-${key}`}
+        rows={3}
+        maxLength={8000}
+        value={value[key]}
+        onChange={(e) => onChange({ ...value, [key]: e.target.value })}
+      />
+    </Field>
+  );
+  return (
+    <>
+      <div className="grid gap-4 sm:grid-cols-3">
+        <Field label="Adults" htmlFor={`${idPrefix}-adults`} error={errors["adults"]}>
+          <Input
+            id={`${idPrefix}-adults`}
+            type="number"
+            min={0}
+            value={value.adults}
+            onChange={(e) => onChange({ ...value, adults: e.target.value })}
+          />
+        </Field>
+        <Field label="Children" htmlFor={`${idPrefix}-children`} error={errors["children"]}>
+          <Input
+            id={`${idPrefix}-children`}
+            type="number"
+            min={0}
+            value={value.children}
+            onChange={(e) => onChange({ ...value, children: e.target.value })}
+          />
+        </Field>
+        <Field label="Child ages" htmlFor={`${idPrefix}-ages`} error={errors["child_ages"]}>
+          <Input
+            id={`${idPrefix}-ages`}
+            placeholder="11, 6, 2"
+            value={value.child_ages}
+            onChange={(e) => onChange({ ...value, child_ages: e.target.value })}
+          />
+        </Field>
+      </div>
+      {text("inclusions", "Inclusions")}
+      {text("exclusions", "Exclusions")}
+      {text("itinerary_notes", "Itinerary / notes")}
+    </>
+  );
+}
 
 function QuoteStatusBadge({
   status,
@@ -105,11 +225,15 @@ function issuesToErrors(issues: { path: PropertyKey[]; message: string }[]) {
 export function SupplierQuotes({
   leadId,
   requirementId,
+  defaultAdults,
+  defaultChildren,
   canManage,
   canCreate,
 }: {
   leadId: string;
   requirementId: string;
+  defaultAdults: number;
+  defaultChildren: number;
   canManage: boolean;
   canCreate: boolean;
 }) {
@@ -119,7 +243,7 @@ export function SupplierQuotes({
   const queryKey = ["supplier-quotes", requirementId];
 
   const [createOpen, setCreateOpen] = useState(false);
-  const [form, setForm] = useState({ vendor_id: "", valid_until: "", notes: "" });
+  const [form, setForm] = useState({ vendor_id: "", ...detailsFrom({}) });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [openId, setOpenId] = useState<string | null>(null);
 
@@ -189,7 +313,10 @@ export function SupplierQuotes({
               size="sm"
               variant="outline"
               onClick={() => {
-                setForm({ vendor_id: "", valid_until: "", notes: "" });
+                setForm({
+                  vendor_id: "",
+                  ...detailsFrom({ adults: defaultAdults, children: defaultChildren }),
+                });
                 setErrors({});
                 setCreateOpen(true);
               }}
@@ -250,7 +377,7 @@ export function SupplierQuotes({
       )}
 
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>New Supplier Quote</DialogTitle>
             <DialogDescription>The quote number is assigned automatically.</DialogDescription>
@@ -285,6 +412,12 @@ export function SupplierQuotes({
                 onChange={(e) => setForm({ ...form, notes: e.target.value })}
               />
             </Field>
+            <DetailsFields
+              idPrefix="sq-new"
+              value={form}
+              onChange={(v) => setForm({ ...form, ...v })}
+              errors={errors}
+            />
           </div>
           <DialogFooter>
             <Button
@@ -305,7 +438,12 @@ export function SupplierQuotes({
       <Sheet open={openQuote !== null} onOpenChange={(open) => !open && setOpenId(null)}>
         <SheetContent className="w-full overflow-y-auto sm:max-w-3xl">
           {openQuote ? (
-            <QuoteSheetBody quote={openQuote} canManage={canManage} onChanged={invalidate} />
+            <QuoteSheetBody
+              quote={openQuote}
+              canManage={canManage}
+              onChanged={invalidate}
+              defaultPersons={defaultAdults + defaultChildren}
+            />
           ) : null}
         </SheetContent>
       </Sheet>
@@ -316,7 +454,9 @@ export function SupplierQuotes({
 }
 
 type LineForm = {
-  is_package: boolean;
+  price_basis: PriceBasis;
+  option_label: string;
+  not_in_total: boolean;
   purchase_type: SaleItemType;
   description: string;
   quantity: string;
@@ -325,7 +465,9 @@ type LineForm = {
   exchange_rate: string;
 };
 const EMPTY_LINE: LineForm = {
-  is_package: false,
+  price_basis: "total",
+  option_label: "",
+  not_in_total: false,
   purchase_type: "hotel",
   description: "",
   quantity: "1",
@@ -338,10 +480,12 @@ function QuoteSheetBody({
   quote,
   canManage,
   onChanged,
+  defaultPersons,
 }: {
   quote: Quote;
   canManage: boolean;
   onChanged: () => Promise<void>;
+  defaultPersons: number;
 }) {
   const updateFn = useServerFn(updateSupplierQuote);
   const addLineFn = useServerFn(addSupplierQuoteLine);
@@ -353,7 +497,9 @@ function QuoteSheetBody({
   const editable = canManage && !locked;
   const transitions = quote.is_superseded ? [] : SUPPLIER_QUOTE_TRANSITIONS[quote.status];
   const [headerOpen, setHeaderOpen] = useState(false);
-  const [header, setHeader] = useState({ valid_until: "", notes: "" });
+  const [header, setHeader] = useState<DetailsForm>(detailsFrom({}));
+  const [headerErrors, setHeaderErrors] = useState<Record<string, string>>({});
+  const persons = (quote.adults ?? 0) + (quote.children ?? 0) || defaultPersons;
   const [confirmRevise, setConfirmRevise] = useState(false);
 
   const [pendingStatus, setPendingStatus] = useState<SupplierQuoteStatus | null>(null);
@@ -378,10 +524,8 @@ function QuoteSheetBody({
   });
 
   const saveHeader = useMutation({
-    mutationFn: () =>
-      updateFn({
-        data: { id: quote.id, values: { valid_until: header.valid_until, notes: header.notes } },
-      }),
+    mutationFn: (values: ReturnType<typeof quoteDetailsSchema.parse>) =>
+      updateFn({ data: { id: quote.id, values } }),
     onSuccess: async () => {
       await onChanged();
       toast.success("Quote updated");
@@ -437,7 +581,9 @@ function QuoteSheetBody({
       return;
     }
     setLineForm({
-      is_package: line.is_package,
+      price_basis: (line.price_basis as PriceBasis) ?? "total",
+      option_label: line.option_label ?? "",
+      not_in_total: line.not_in_total,
       purchase_type: line.purchase_type,
       description: line.description,
       quantity: String(line.quantity),
@@ -456,6 +602,16 @@ function QuoteSheetBody({
     }
     setLineErrors({});
     saveLine.mutate(parsed.data);
+  }
+
+  function submitHeader() {
+    const parsed = quoteDetailsSchema.safeParse(header);
+    if (!parsed.success) {
+      setHeaderErrors(issuesToErrors(parsed.error.issues));
+      return;
+    }
+    setHeaderErrors({});
+    saveHeader.mutate(parsed.data);
   }
 
   const isInr = lineForm.currency.trim().toUpperCase() === "INR";
@@ -483,6 +639,22 @@ function QuoteSheetBody({
         <DetailRow label="Vendor" value={quote.vendor?.name ?? "—"} />
         <DetailRow label="Valid until" value={formatDate(quote.valid_until)} />
         <DetailRow label="Notes" value={quote.notes ?? "—"} />
+        <DetailRow
+          label="Travellers"
+          value={
+            quote.adults === null && quote.children === null && !quote.child_ages
+              ? "—"
+              : `${quote.adults ?? 0} adults · ${quote.children ?? 0} children${
+                  quote.child_ages ? ` (ages ${quote.child_ages})` : ""
+                }`
+          }
+        />
+        <DetailRow label="Inclusions" value={<CollapsibleText text={quote.inclusions} />} />
+        <DetailRow label="Exclusions" value={<CollapsibleText text={quote.exclusions} />} />
+        <DetailRow
+          label="Itinerary / notes"
+          value={<CollapsibleText text={quote.itinerary_notes} />}
+        />
         {quote.previous ? (
           <DetailRow
             label="Revises"
@@ -495,7 +667,8 @@ function QuoteSheetBody({
               size="sm"
               variant="outline"
               onClick={() => {
-                setHeader({ valid_until: quote.valid_until ?? "", notes: quote.notes ?? "" });
+                setHeader(detailsFrom(quote));
+                setHeaderErrors({});
                 setHeaderOpen(true);
               }}
             >
@@ -558,6 +731,8 @@ function QuoteSheetBody({
               <tr>
                 <th className="px-2 py-2 font-medium">Type</th>
                 <th className="px-2 py-2 font-medium">Description</th>
+                <th className="px-2 py-2 font-medium">Option</th>
+                <th className="px-2 py-2 font-medium">Basis</th>
                 <th className="px-2 py-2 text-right font-medium">Qty</th>
                 <th className="px-2 py-2 text-right font-medium">Unit</th>
                 <th className="px-2 py-2 text-right font-medium">Rate</th>
@@ -568,7 +743,7 @@ function QuoteSheetBody({
             <tbody className="divide-y divide-border">
               {quote.lines.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-2 py-6 text-center text-muted-foreground">
+                  <td colSpan={9} className="px-2 py-6 text-center text-muted-foreground">
                     No lines yet.
                   </td>
                 </tr>
@@ -577,13 +752,24 @@ function QuoteSheetBody({
                   <tr key={line.id}>
                     <td className="px-2 py-2">
                       {SALE_ITEM_TYPE_LABELS[line.purchase_type]}
-                      {line.is_package ? (
+                      {isPackageType(line.purchase_type) ? (
                         <Badge variant="outline" className="ml-1">
                           Package
                         </Badge>
                       ) : null}
                     </td>
-                    <td className="px-2 py-2">{line.description}</td>
+                    <td className="px-2 py-2">
+                      {line.description}
+                      {line.not_in_total ? (
+                        <Badge variant="outline" className="ml-1">
+                          Not in total
+                        </Badge>
+                      ) : null}
+                    </td>
+                    <td className="px-2 py-2 text-muted-foreground">{line.option_label ?? "—"}</td>
+                    <td className="px-2 py-2 text-muted-foreground">
+                      {PRICE_BASIS_LABELS[line.price_basis as PriceBasis] ?? line.price_basis}
+                    </td>
                     <td className="px-2 py-2 text-right tabular-nums">{line.quantity}</td>
                     <td className="px-2 py-2 text-right tabular-nums">
                       {line.currency} {Number(line.unit_amount).toLocaleString("en-IN")}
@@ -618,16 +804,27 @@ function QuoteSheetBody({
             </tbody>
             <tfoot>
               <tr className="border-t border-border font-semibold">
-                <td colSpan={5} className="px-2 py-2 text-right">
-                  Total INR
+                <td colSpan={7} className="px-2 py-2 text-right">
+                  Quote total
                 </td>
                 <td className="px-2 py-2 text-right tabular-nums">{inr(quoteTotal(quote))}</td>
                 {editable ? <td /> : null}
               </tr>
+              {quote.lines.some((l) => l.not_in_total) ? (
+                <tr className="text-muted-foreground">
+                  <td colSpan={7} className="px-2 py-2 text-right">
+                    Alternatives and add-ons (not in quote total)
+                  </td>
+                  <td className="px-2 py-2 text-right tabular-nums">{inr(extrasTotal(quote))}</td>
+                  {editable ? <td /> : null}
+                </tr>
+              ) : null}
             </tfoot>
           </table>
         </div>
       </div>
+
+      <QuoteFiles quoteId={quote.id} canUpload={canManage && !quote.is_superseded} />
 
       <Dialog open={editingLineId !== null} onOpenChange={(o) => !o && setEditingLineId(null)}>
         <DialogContent className="sm:max-w-md">
@@ -653,22 +850,66 @@ function QuoteSheetBody({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {SALE_ITEM_TYPES.map((t) => (
+                    {SALE_ITEM_TYPES.filter(
+                      (t) =>
+                        (QUOTE_LINE_TYPES as readonly string[]).includes(t) ||
+                        t === lineForm.purchase_type,
+                    ).map((t) => (
                       <SelectItem key={t} value={t}>
                         {SALE_ITEM_TYPE_LABELS[t]}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
+                {PURCHASE_TYPE_HINTS[lineForm.purchase_type] ? (
+                  <p className="text-xs text-muted-foreground">
+                    {PURCHASE_TYPE_HINTS[lineForm.purchase_type]}
+                  </p>
+                ) : null}
               </Field>
-              <label className="flex items-center gap-2 pt-6 text-sm">
-                <Checkbox
-                  checked={lineForm.is_package}
-                  onCheckedChange={(c) => setLineForm({ ...lineForm, is_package: c === true })}
-                />
-                Part of a package
-              </label>
+              <Field label="Price basis" htmlFor="sql-basis" error={lineErrors["price_basis"]}>
+                <Select
+                  value={lineForm.price_basis}
+                  onValueChange={(v) => {
+                    const price_basis = v as PriceBasis;
+                    setLineForm({
+                      ...lineForm,
+                      price_basis,
+                      quantity:
+                        price_basis === "per_person" && lineForm.price_basis !== "per_person"
+                          ? String(Math.max(persons, 1))
+                          : lineForm.quantity,
+                    });
+                  }}
+                >
+                  <SelectTrigger id="sql-basis">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PRICE_BASES.map((b) => (
+                      <SelectItem key={b} value={b}>
+                        {PRICE_BASIS_LABELS[b]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Field>
             </div>
+            <Field label="Option label" htmlFor="sql-option" error={lineErrors["option_label"]}>
+              <Input
+                id="sql-option"
+                placeholder="Double sharing"
+                value={lineForm.option_label}
+                onChange={(e) => setLineForm({ ...lineForm, option_label: e.target.value })}
+              />
+            </Field>
+            <label className="flex items-center gap-2 text-sm">
+              <Checkbox
+                checked={lineForm.not_in_total}
+                onCheckedChange={(c) => setLineForm({ ...lineForm, not_in_total: c === true })}
+              />
+              Alternative or optional (not in quote total)
+            </label>
             <Field
               label="Description"
               htmlFor="sql-desc"
@@ -682,7 +923,12 @@ function QuoteSheetBody({
               />
             </Field>
             <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Quantity" htmlFor="sql-qty" required error={lineErrors["quantity"]}>
+              <Field
+                label={lineForm.price_basis === "per_person" ? "No. of persons" : "Quantity"}
+                htmlFor="sql-qty"
+                required
+                error={lineErrors["quantity"]}
+              >
                 <Input
                   id="sql-qty"
                   type="number"
@@ -780,7 +1026,7 @@ function QuoteSheetBody({
       </AlertDialog>
 
       <Dialog open={headerOpen} onOpenChange={setHeaderOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>Edit quote details</DialogTitle>
             <DialogDescription>The vendor cannot be changed.</DialogDescription>
@@ -802,12 +1048,18 @@ function QuoteSheetBody({
                 onChange={(e) => setHeader({ ...header, notes: e.target.value })}
               />
             </Field>
+            <DetailsFields
+              idPrefix="sq-edit"
+              value={header}
+              onChange={setHeader}
+              errors={headerErrors}
+            />
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setHeaderOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={() => saveHeader.mutate()} disabled={saveHeader.isPending}>
+            <Button onClick={submitHeader} disabled={saveHeader.isPending}>
               {saveHeader.isPending ? <Loader2 className="size-4 animate-spin" /> : null}
               Save
             </Button>
@@ -853,5 +1105,129 @@ function QuoteSheetBody({
         </AlertDialogContent>
       </AlertDialog>
     </>
+  );
+}
+
+const formatBytes = (n: number) =>
+  n >= 1024 * 1024
+    ? `${(n / 1024 / 1024).toFixed(1)} MB`
+    : `${Math.max(1, Math.round(n / 1024))} KB`;
+
+function QuoteFiles({ quoteId, canUpload }: { quoteId: string; canUpload: boolean }) {
+  const queryClient = useQueryClient();
+  const listFn = useServerFn(listSupplierQuoteFiles);
+  const registerFn = useServerFn(registerSupplierQuoteFile);
+  const urlFn = useServerFn(getSupplierQuoteFileUrl);
+  const queryKey = ["supplier-quote-files", quoteId];
+  const files = useQuery({ queryKey, queryFn: () => listFn({ data: { id: quoteId } }) });
+
+  const upload = useMutation({
+    mutationFn: async (file: File) => {
+      const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
+      const contentType = QUOTE_FILE_TYPES[ext];
+      if (!contentType) throw new Error("Allowed types: PDF, PNG, JPG, WEBP, TXT, EML");
+      if (file.size > QUOTE_FILE_MAX_BYTES) throw new Error("Files can be at most 10 MB");
+      const path = `${quoteId}/${crypto.randomUUID()}.${ext}`;
+      const { error } = await supabase.storage
+        .from("supplier-quote-files")
+        .upload(path, file, { contentType, upsert: false });
+      if (error) throw new Error(error.message);
+      return registerFn({
+        data: {
+          supplier_quote_id: quoteId,
+          file_name: file.name.slice(0, 255),
+          storage_path: path,
+          content_type: contentType,
+          size_bytes: file.size,
+        },
+      });
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey });
+      await queryClient.invalidateQueries({ queryKey: ["audit-log"] });
+      toast.success("File uploaded");
+    },
+    onError: (e: Error) => toast.error("Upload failed", { description: e.message }),
+  });
+
+  const open = useMutation({
+    mutationFn: (id: string) => urlFn({ data: { id } }),
+    onSuccess: ({ url }) => window.open(url, "_blank", "noopener,noreferrer"),
+    onError: (e: Error) => toast.error("Could not open file", { description: e.message }),
+  });
+
+  return (
+    <div className="px-4 pb-6">
+      <div className="mb-2 flex items-center justify-between">
+        <h3 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+          Files
+        </h3>
+        {canUpload ? (
+          <Button size="sm" variant="outline" asChild disabled={upload.isPending}>
+            <label className="cursor-pointer">
+              {upload.isPending ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Paperclip className="size-4" />
+              )}
+              Upload file
+              <input
+                type="file"
+                className="sr-only"
+                accept=".pdf,.png,.jpg,.jpeg,.webp,.txt,.eml"
+                disabled={upload.isPending}
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  e.target.value = "";
+                  if (file) upload.mutate(file);
+                }}
+              />
+            </label>
+          </Button>
+        ) : null}
+      </div>
+      {files.isPending ? (
+        <LoadingState label="Loading files" />
+      ) : files.isError ? (
+        <ErrorState description={files.error.message} onRetry={() => void files.refetch()} />
+      ) : files.data.length === 0 ? (
+        <EmptyState title="No files attached" />
+      ) : (
+        <div className="overflow-x-auto rounded-md border border-border">
+          <table className="w-full text-sm">
+            <thead className="bg-muted/40 text-left text-xs text-muted-foreground">
+              <tr>
+                <th className="px-2 py-2 font-medium">Name</th>
+                <th className="px-2 py-2 text-right font-medium">Size</th>
+                <th className="px-2 py-2 font-medium">Uploaded</th>
+                <th className="w-20" />
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {files.data.map((file) => (
+                <tr key={file.id}>
+                  <td className="break-all px-2 py-2">{file.file_name}</td>
+                  <td className="px-2 py-2 text-right tabular-nums">
+                    {formatBytes(Number(file.size_bytes))}
+                  </td>
+                  <td className="px-2 py-2">{formatDate(file.created_at)}</td>
+                  <td className="px-2 py-2 text-right">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      disabled={open.isPending}
+                      onClick={() => open.mutate(file.id)}
+                    >
+                      <ExternalLink className="size-3.5" />
+                      Open
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
   );
 }
