@@ -280,7 +280,11 @@ export function PurchaseFormDialog({
       hint: row.phone,
     }));
     if (purchase?.vendor && !options.some((option) => option.id === purchase.vendor_id)) {
-      options.unshift({ id: purchase.vendor_id, label: `${purchase.vendor.name} (inactive)`, hint: null });
+      options.unshift({
+        id: purchase.vendor_id,
+        label: `${purchase.vendor.name} (inactive)`,
+        hint: null,
+      });
     }
     return options;
   }, [vendors.data, purchase]);
@@ -323,7 +327,9 @@ export function PurchaseFormDialog({
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>{purchase ? `Edit ${purchase.purchase_number}` : "New purchase"}</DialogTitle>
+            <DialogTitle>
+              {purchase ? `Edit ${purchase.purchase_number}` : "New purchase"}
+            </DialogTitle>
             <DialogDescription>
               Record the final amount on the supplier invoice. The INR amount is calculated by the
               system.
@@ -627,7 +633,13 @@ function Stat({ label, value, tone }: { label: string; value: string; tone?: str
 }
 
 /** Booking detail: purchases list, New Purchase shortcut and cost variance. */
-export function BookingPurchases({ saleId, bookingOpen }: { saleId: string; bookingOpen: boolean }) {
+export function BookingPurchases({
+  saleId,
+  bookingOpen,
+}: {
+  saleId: string;
+  bookingOpen: boolean;
+}) {
   const { hasPermission } = useAuth();
   const canManage = hasPermission("purchases.manage") && bookingOpen;
   const purchases = usePurchases({ sale_id: saleId });
