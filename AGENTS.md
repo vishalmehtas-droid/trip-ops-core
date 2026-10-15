@@ -14,3 +14,5 @@
 - Accepted quote conversion is one permission-checked PostgreSQL transaction with a unique immutable sales quote link; existing triggers calculate totals and the transaction aborts unless they match the source quote exactly.
 - Converted bookings retain all ordered requirement stops in an immutable itinerary snapshot and use the first stop as the existing primary destination; expected-cost snapshot rows use quantity one to preserve the exact total without unit rounding.
 - Booking links use the existing UUID identifier with a BK display prefix; do not invent a separate booking number sequence.
+- Purchases: numbers, creator, INR amount and cancel rules are set by DB triggers; variance totals are aggregated in exact paise from text-cast numerics on the server — never floats.
+- Booking numbers (BK-xxxxxx) are assigned only by a DB insert trigger and are immutable; display them instead of UUIDs.

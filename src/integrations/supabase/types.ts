@@ -473,6 +473,92 @@ export type Database = {
         }
         Relationships: []
       }
+      purchases: {
+        Row: {
+          amount: number
+          amount_inr: number
+          cancel_reason: string | null
+          created_at: string
+          created_by: string
+          currency_code: string
+          exchange_rate: number
+          id: string
+          invoice_date: string
+          notes: string | null
+          purchase_number: string
+          sale_id: string
+          status: string
+          updated_at: string
+          vendor_id: string
+          vendor_invoice_number: string | null
+        }
+        Insert: {
+          amount: number
+          amount_inr?: number
+          cancel_reason?: string | null
+          created_at?: string
+          created_by?: string
+          currency_code?: string
+          exchange_rate?: number
+          id?: string
+          invoice_date?: string
+          notes?: string | null
+          purchase_number?: string
+          sale_id: string
+          status?: string
+          updated_at?: string
+          vendor_id: string
+          vendor_invoice_number?: string | null
+        }
+        Update: {
+          amount?: number
+          amount_inr?: number
+          cancel_reason?: string | null
+          created_at?: string
+          created_by?: string
+          currency_code?: string
+          exchange_rate?: number
+          id?: string
+          invoice_date?: string
+          notes?: string | null
+          purchase_number?: string
+          sale_id?: string
+          status?: string
+          updated_at?: string
+          vendor_id?: string
+          vendor_invoice_number?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchases_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchases_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "user_directory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchases_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "sales"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchases_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       role_permissions: {
         Row: {
           created_at: string
@@ -646,6 +732,7 @@ export type Database = {
         Row: {
           billing_type: Database["public"]["Enums"]["billing_type"]
           booking_date: string
+          booking_number: string
           client_id: string
           created_at: string
           created_by: string
@@ -661,6 +748,7 @@ export type Database = {
         Insert: {
           billing_type?: Database["public"]["Enums"]["billing_type"]
           booking_date?: string
+          booking_number?: string
           client_id: string
           created_at?: string
           created_by?: string
@@ -676,6 +764,7 @@ export type Database = {
         Update: {
           billing_type?: Database["public"]["Enums"]["billing_type"]
           booking_date?: string
+          booking_number?: string
           client_id?: string
           created_at?: string
           created_by?: string
