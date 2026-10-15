@@ -61,6 +61,7 @@ export const Route = createFileRoute("/_authenticated/sales/")({
 
 export type SaleListRow = {
   id: string;
+  booking_number: string;
   client_id: string;
   destination_id: string | null;
   booking_date: string;
@@ -75,7 +76,7 @@ export type SaleListRow = {
 };
 
 const SALE_SELECT =
-  "id, client_id, destination_id, booking_date, travel_date, status, notes, created_by, created_at, updated_at, client:clients(id, name, is_active), destination:destinations(id, name, is_active)";
+  "id, booking_number, client_id, destination_id, booking_date, travel_date, status, notes, created_by, created_at, updated_at, client:clients(id, name, is_active), destination:destinations(id, name, is_active)";
 
 const PAGE_SIZE = 25;
 
@@ -209,7 +210,7 @@ function SalesPage() {
       if (fromDate && row.booking_date < fromDate) return false;
       if (toDate && row.booking_date > toDate) return false;
       if (!term) return true;
-      return [row.client?.name, row.destination?.name]
+      return [row.booking_number, row.client?.name, row.destination?.name]
         .filter(Boolean)
         .some((value) => value!.toLowerCase().includes(term));
     });
@@ -369,6 +370,7 @@ function SalesPage() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="text-[10px] uppercase tracking-wider">Booking</TableHead>
                   <TableHead className="text-[10px] uppercase tracking-wider">Booked</TableHead>
                   <TableHead className="text-[10px] uppercase tracking-wider">Client</TableHead>
                   <TableHead className="text-[10px] uppercase tracking-wider">
@@ -386,6 +388,7 @@ function SalesPage() {
               <TableBody>
                 {rows.map((row) => (
                   <TableRow key={row.id}>
+                    <TableCell className="font-mono text-xs font-semibold">{row.booking_number}</TableCell>
                     <TableCell className="font-medium">{formatDate(row.booking_date)}</TableCell>
                     <TableCell>{row.client?.name ?? "—"}</TableCell>
                     <TableCell className="text-muted-foreground">

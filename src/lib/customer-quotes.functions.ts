@@ -22,7 +22,7 @@ import {
  */
 
 const HEADER_SELECT =
-  "id, quote_number, lead_id, requirement_id, client_id, revision_no, previous_quote_id, status, valid_until, notes, created_at, updated_at, client:clients(id, name), booking:sales!sales_customer_quote_id_fkey(id)";
+  "id, quote_number, lead_id, requirement_id, client_id, revision_no, previous_quote_id, status, valid_until, notes, created_at, updated_at, client:clients(id, name), booking:sales!sales_customer_quote_id_fkey(id, booking_number)";
 const LINE_SELECT =
   "id, customer_quote_id, source_supplier_quote_line_id, purchase_type, description, quantity, currency, expected_cost_inr, sort_order";
 const PRICING_SELECT =

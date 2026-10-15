@@ -413,7 +413,7 @@ function CustomerQuoteBody({
             value={
               <Button asChild size="sm" variant="link" className="h-auto p-0">
                 <Link to="/sales/$saleId" params={{ saleId: booking.id }}>
-                  Booking BK-{booking.id}
+                  Booking {booking.booking_number}
                 </Link>
               </Button>
             }

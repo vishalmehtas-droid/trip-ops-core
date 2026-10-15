@@ -49,6 +49,7 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 
 type DashboardSale = {
   id: string;
+  booking_number: string;
   booking_date: string;
   travel_date: string | null;
   status: SaleStatus;
@@ -60,7 +61,7 @@ type DashboardSale = {
 };
 
 const SELECT =
-  "id, booking_date, travel_date, status, created_at, updated_at, client:clients(name), destination:destinations(name), sales_items(count)";
+  "id, booking_number, booking_date, travel_date, status, created_at, updated_at, client:clients(name), destination:destinations(name), sales_items(count)";
 
 function todayISO() {
   const now = new Date();
@@ -91,8 +92,8 @@ function longDate(value: string | null) {
   });
 }
 
-function bookingRef(id: string) {
-  return `TH-${id.slice(0, 8).toUpperCase()}`;
+function bookingRef(sale: { booking_number: string }) {
+  return sale.booking_number;
 }
 
 function itemCount(sale: DashboardSale) {
@@ -386,7 +387,7 @@ function DashboardPage() {
                               params={{ saleId: sale.id }}
                               className="text-foreground hover:text-brand"
                             >
-                              {sale.client?.name ?? bookingRef(sale.id)}
+                              {sale.client?.name ?? bookingRef(sale)}
                             </Link>
                             <span className="text-muted-foreground">
                               {" "}
@@ -439,7 +440,7 @@ function DashboardPage() {
                             params={{ saleId: sale.id }}
                             className="text-foreground hover:text-brand"
                           >
-                            {bookingRef(sale.id)}
+                            {bookingRef(sale)}
                           </Link>
                         </TableCell>
                         <TableCell>{sale.client?.name ?? "—"}</TableCell>

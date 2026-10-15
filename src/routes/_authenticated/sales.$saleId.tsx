@@ -74,6 +74,7 @@ export const Route = createFileRoute("/_authenticated/sales/$saleId")({
 
 type SaleDetail = {
   id: string;
+  booking_number: string;
   source_quote: { id: string; quote_number: string; lead_id: string } | null;
   quote_itinerary:
     | { destination_id: string; name: string; sequence_order: number; nights: number | null }[]
@@ -93,7 +94,7 @@ type SaleDetail = {
 };
 
 const SALE_SELECT =
-  "id, client_id, destination_id, booking_date, travel_date, status, billing_type, notes, created_by, created_at, updated_at, client:clients(id, name, is_active), destination:destinations(id, name, is_active), quote_itinerary, source_quote:customer_quotes!sales_customer_quote_id_fkey(id, quote_number, lead_id)";
+  "id, booking_number, client_id, destination_id, booking_date, travel_date, status, billing_type, notes, created_by, created_at, updated_at, client:clients(id, name, is_active), destination:destinations(id, name, is_active), quote_itinerary, source_quote:customer_quotes!sales_customer_quote_id_fkey(id, quote_number, lead_id)";
 
 type FormState = {
   client_id: string;
@@ -329,7 +330,7 @@ function SaleDetailPage() {
 
       <PageHeader
         title={sale.client?.name ?? "Booking"}
-        description={`Booked ${formatDate(sale.booking_date)}${
+        description={`${sale.booking_number} · Booked ${formatDate(sale.booking_date)}${
           sale.destination ? ` · ${sale.destination.name}` : ""
         }`}
         badge={<SaleStatusBadge status={sale.status} />}
@@ -366,8 +367,8 @@ function SaleDetailPage() {
         </h2>
         <dl>
           <DetailRow
-            label="Booking ID"
-            value={<span className="font-mono text-xs">{sale.id}</span>}
+            label="Booking number"
+            value={<span className="font-mono text-xs">{sale.booking_number}</span>}
           />
           {sale.source_quote ? (
             <DetailRow
