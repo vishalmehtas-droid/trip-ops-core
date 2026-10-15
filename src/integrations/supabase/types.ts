@@ -497,13 +497,13 @@ export type Database = {
           amount_inr?: number
           cancel_reason?: string | null
           created_at?: string
-          created_by: string
+          created_by?: string
           currency_code?: string
           exchange_rate?: number
           id?: string
           invoice_date?: string
           notes?: string | null
-          purchase_number: string
+          purchase_number?: string
           sale_id: string
           status?: string
           updated_at?: string
@@ -748,7 +748,7 @@ export type Database = {
         Insert: {
           billing_type?: Database["public"]["Enums"]["billing_type"]
           booking_date?: string
-          booking_number: string
+          booking_number?: string
           client_id: string
           created_at?: string
           created_by?: string
