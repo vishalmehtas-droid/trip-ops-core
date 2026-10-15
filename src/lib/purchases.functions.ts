@@ -179,8 +179,10 @@ function toDecimal(value: bigint) {
 /** Percentage of `part` over `base`, to two decimals, computed in integers. */
 function percent(part: bigint, base: bigint): string | null {
   if (base === 0n) return null;
-  const scaled = (part * 10000n * 2n + base) / (base * 2n);
-  return toDecimal(scaled);
+  const negative = part < 0n;
+  const absolute = negative ? -part : part;
+  const scaled = (absolute * 20000n + base) / (base * 2n);
+  return toDecimal(negative ? -scaled : scaled);
 }
 
 export type VendorVarianceRow = {
