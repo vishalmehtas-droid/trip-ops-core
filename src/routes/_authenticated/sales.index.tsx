@@ -388,7 +388,9 @@ function SalesPage() {
               <TableBody>
                 {rows.map((row) => (
                   <TableRow key={row.id}>
-                    <TableCell className="font-mono text-xs font-semibold">{row.booking_number}</TableCell>
+                    <TableCell className="font-mono text-xs font-semibold">
+                      {row.booking_number}
+                    </TableCell>
                     <TableCell className="font-medium">{formatDate(row.booking_date)}</TableCell>
                     <TableCell>{row.client?.name ?? "—"}</TableCell>
                     <TableCell className="text-muted-foreground">

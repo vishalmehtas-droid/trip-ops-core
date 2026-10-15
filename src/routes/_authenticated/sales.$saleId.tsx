@@ -9,6 +9,7 @@ import { PageHeader } from "@/components/app/page-header";
 import { DetailRow, Field, formatDate, formatDateTime } from "@/components/app/master-data";
 import { BookingCosting } from "@/components/app/sale-costing";
 import { BookingComponents } from "@/components/app/sales-items";
+import { BookingPurchases } from "@/components/app/purchases";
 import { RecordCombobox, SaleStatusBadge, type RecordOption } from "@/components/app/sales-ui";
 import { useQuickAdd } from "@/components/app/quick-add";
 import { ErrorState, LoadingState, UnauthorizedState } from "@/components/app/states";
@@ -463,6 +464,13 @@ function SaleDetailPage() {
         billingType={sale.billing_type}
         canManage={canManage && !isLocked}
       />
+
+      {hasPermission("purchases.read") ? (
+        <BookingPurchases
+          saleId={sale.id}
+          bookingOpen={sale.status === "pending" || sale.status === "confirmed"}
+        />
+      ) : null}
 
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
