@@ -43,6 +43,13 @@
       "when": 1791965640001,
       "tag": "0005_supplier_quote_capture_fields_files",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792047309384,
+      "tag": "0006_booking_numbers_and_purchases",
+      "breakpoints": true
     }
   ]
 }
