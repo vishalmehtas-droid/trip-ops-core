@@ -55,7 +55,13 @@ export const NAV_GROUPS: NavGroup[] = [
         phase: null,
         permission: "sales.read",
       },
-      { label: "Purchases", to: "/purchases", icon: ShoppingCart, phase: 2 },
+      {
+        label: "Purchases",
+        to: "/purchases",
+        icon: ShoppingCart,
+        phase: null,
+        permission: "purchases.read",
+      },
     ],
   },
   {
