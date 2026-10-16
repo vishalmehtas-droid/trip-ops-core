@@ -6,7 +6,7 @@ import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { DetailRow, Field, formatDate, formatDateTime } from "@/components/app/master-data";
-import { useBookingOptions } from "@/components/app/purchases";
+import { useBookingOptions, VendorTermsNote } from "@/components/app/purchases";
 import { useQuickAdd } from "@/components/app/quick-add";
 import { RecordCombobox, type RecordOption } from "@/components/app/sales-ui";
 import { ErrorState, TableSkeleton } from "@/components/app/states";
@@ -417,6 +417,9 @@ export function PaymentFormDialog({
                   createLabel="Add new vendor"
                 />
               </Field>
+              <VendorTermsNote
+                vendor={(vendors.data ?? []).find((row) => row.id === form.vendor_id)}
+              />
               <Field label="Booking (optional)" htmlFor="payment-booking" error={errors["sale_id"]}>
                 <RecordCombobox
                   id="payment-booking"
