@@ -6,6 +6,7 @@ import { Loader2, Plus } from "lucide-react";
 import { toast } from "sonner";
 
 import { DetailRow, Field, formatDate, formatDateTime } from "@/components/app/master-data";
+import { PaymentFormDialog } from "@/components/app/payments";
 import { useQuickAdd } from "@/components/app/quick-add";
 import { RecordCombobox, type RecordOption } from "@/components/app/sales-ui";
 import { EmptyState, ErrorState, TableSkeleton } from "@/components/app/states";
@@ -891,7 +892,17 @@ export function BookingPurchases({
       </div>
 
       <PurchaseFormDialog open={createOpen} onOpenChange={setCreateOpen} presetSaleId={saleId} />
-      <PurchaseSheet purchase={selected} onOpenChange={(open) => !open && setSelected(null)} />
+      <PurchaseSheet
+        purchase={selected}
+        onOpenChange={(open) => !open && setSelected(null)}
+        onRecordPayment={recordPayment}
+      />
+      <PaymentFormDialog
+        open={paymentVendor !== null}
+        onOpenChange={(open) => !open && setPaymentVendor(null)}
+        presetSaleId={saleId}
+        presetVendorId={paymentVendor ?? undefined}
+      />
     </section>
   );
 }
