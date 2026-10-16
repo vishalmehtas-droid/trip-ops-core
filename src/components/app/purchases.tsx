@@ -189,7 +189,7 @@ export function PurchasesTable({
   rows: PurchaseRow[];
   onOpen: (row: PurchaseRow) => void;
   showBooking?: boolean;
-  onRecordPayment?: (row: PurchaseRow) => void;
+  onRecordPayment?: ((row: PurchaseRow) => void) | undefined;
 }) {
   return (
     <div className="overflow-x-auto rounded-lg border border-border bg-surface">
@@ -561,7 +561,7 @@ export function PurchaseSheet({
 }: {
   purchase: PurchaseRow | null;
   onOpenChange: (open: boolean) => void;
-  onRecordPayment?: (row: PurchaseRow) => void;
+  onRecordPayment?: ((row: PurchaseRow) => void) | undefined;
 }) {
   const { hasPermission } = useAuth();
   const queryClient = useQueryClient();

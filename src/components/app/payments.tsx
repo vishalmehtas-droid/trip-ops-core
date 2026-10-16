@@ -242,8 +242,8 @@ export function PaymentFormDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
   payment?: PaymentRow | null;
-  presetSaleId?: string;
-  presetVendorId?: string;
+  presetSaleId?: string | undefined;
+  presetVendorId?: string | undefined;
 }) {
   const queryClient = useQueryClient();
   const saveFn = useServerFn(saveVendorPayment);
