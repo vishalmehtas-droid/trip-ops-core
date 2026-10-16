@@ -117,9 +117,13 @@ function LeadsPage() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
+  const { followup } = Route.useSearch();
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<"all" | LeadStatus>("all");
   const [assignee, setAssignee] = useState<string>("all");
+  const [followUpFilter, setFollowUpFilter] = useState<"all" | "due">(
+    followup === "due" ? "due" : "all",
+  );
   const [page, setPage] = useState(0);
   const [formOpen, setFormOpen] = useState(false);
   const [form, setForm] = useState<FormState>({
@@ -127,6 +131,7 @@ function LeadsPage() {
     enquiry_date: today(),
     assigned_to: "",
     source: "",
+    follow_up_date: "",
     notes: "",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -214,6 +219,7 @@ function LeadsPage() {
     return (leadsQuery.data ?? []).filter((row) => {
       if (status !== "all" && row.status !== status) return false;
       if (assignee !== "all" && row.assigned_to !== assignee) return false;
+      if (followUpFilter === "due" && !followUpDue(row)) return false;
       if (!term) return true;
       return [row.lead_number, row.client?.name, row.source]
         .filter(Boolean)
