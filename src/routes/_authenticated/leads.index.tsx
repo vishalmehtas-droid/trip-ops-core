@@ -48,6 +48,8 @@ import {
 import { createLead } from "@/lib/leads.functions";
 
 export const Route = createFileRoute("/_authenticated/leads/")({
+  validateSearch: (search: Record<string, unknown>): { followup?: "due" } =>
+    search["followup"] === "due" ? { followup: "due" } : {},
   head: () => ({
     meta: [
       { title: "Leads — Triptastic Ops" },
@@ -73,13 +75,14 @@ type LeadListRow = {
   enquiry_date: string;
   assigned_to: string;
   source: string | null;
+  follow_up_date: string | null;
   status: LeadStatus;
   updated_at: string;
   client: { id: string; name: string; is_active: boolean } | null;
 };
 
 const LEAD_SELECT =
-  "id, lead_number, client_id, enquiry_date, assigned_to, source, status, updated_at, client:clients(id, name, is_active)";
+  "id, lead_number, client_id, enquiry_date, assigned_to, source, follow_up_date, status, updated_at, client:clients(id, name, is_active)";
 
 const PAGE_SIZE = 25;
 
@@ -94,8 +97,18 @@ type FormState = {
   enquiry_date: string;
   assigned_to: string;
   source: string;
+  follow_up_date: string;
   notes: string;
 };
+
+function followUpDue(row: { follow_up_date: string | null; status: LeadStatus }) {
+  return (
+    row.follow_up_date !== null &&
+    row.follow_up_date <= today() &&
+    row.status !== "won" &&
+    row.status !== "lost"
+  );
+}
 
 function LeadsPage() {
   const { hasPermission, user } = useAuth();
