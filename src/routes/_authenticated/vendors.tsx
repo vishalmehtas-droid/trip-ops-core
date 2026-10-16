@@ -78,6 +78,8 @@ type VendorRow = {
   email: string | null;
   gst_number: string | null;
   address: string | null;
+  payment_terms: string | null;
+  advance_rule: string | null;
   notes: string | null;
   is_active: boolean;
   created_at: string;
@@ -90,6 +92,8 @@ type FormState = {
   email: string;
   gst_number: string;
   address: string;
+  payment_terms: string;
+  advance_rule: string;
   notes: string;
   is_active: boolean;
 };
@@ -100,6 +104,8 @@ const EMPTY_FORM: FormState = {
   email: "",
   gst_number: "",
   address: "",
+  payment_terms: "",
+  advance_rule: "",
   notes: "",
   is_active: true,
 };
@@ -197,6 +203,8 @@ function VendorsPage() {
       email: row.email ?? "",
       gst_number: row.gst_number ?? "",
       address: row.address ?? "",
+      payment_terms: row.payment_terms ?? "",
+      advance_rule: row.advance_rule ?? "",
       notes: row.notes ?? "",
       is_active: row.is_active,
     });
@@ -306,7 +314,14 @@ function VendorsPage() {
             <TableBody>
               {rows.map((row) => (
                 <TableRow key={row.id}>
-                  <TableCell className="font-medium">{row.name}</TableCell>
+                  <TableCell className="font-medium">
+                    <div>{row.name}</div>
+                    {row.payment_terms || row.advance_rule ? (
+                      <div className="mt-0.5 max-w-64 truncate text-xs font-normal text-muted-foreground">
+                        {[row.payment_terms, row.advance_rule].filter(Boolean).join(" · ")}
+                      </div>
+                    ) : null}
+                  </TableCell>
                   <TableCell className="text-muted-foreground">{row.phone ?? "—"}</TableCell>
                   <TableCell className="text-muted-foreground">{row.email ?? "—"}</TableCell>
                   <TableCell className="text-muted-foreground">{row.gst_number ?? "—"}</TableCell>
