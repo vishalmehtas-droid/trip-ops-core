@@ -407,6 +407,33 @@ function VendorsPage() {
                 onChange={(event) => setForm({ ...form, address: event.target.value })}
               />
             </Field>
+            <Field
+              label="Payment terms"
+              htmlFor="vendor-payment-terms"
+              error={errors["payment_terms"]}
+            >
+              <Textarea
+                id="vendor-payment-terms"
+                rows={2}
+                maxLength={500}
+                value={form.payment_terms}
+                onChange={(event) => setForm({ ...form, payment_terms: event.target.value })}
+                placeholder="e.g. 50% advance at booking, balance 15 days before travel"
+              />
+            </Field>
+            <Field
+              label="Advance rule"
+              htmlFor="vendor-advance-rule"
+              error={errors["advance_rule"]}
+            >
+              <Input
+                id="vendor-advance-rule"
+                maxLength={500}
+                value={form.advance_rule}
+                onChange={(event) => setForm({ ...form, advance_rule: event.target.value })}
+                placeholder="e.g. 30% advance at booking"
+              />
+            </Field>
             <Field label="Notes" htmlFor="vendor-notes" error={errors["notes"]}>
               <Textarea
                 id="vendor-notes"
@@ -455,6 +482,8 @@ function VendorsPage() {
               <DetailRow label="Email" value={viewing.email} />
               <DetailRow label="GST number" value={viewing.gst_number} />
               <DetailRow label="Address" value={viewing.address} />
+              <DetailRow label="Payment terms" value={viewing.payment_terms} />
+              <DetailRow label="Advance rule" value={viewing.advance_rule} />
               <DetailRow label="Notes" value={viewing.notes} />
               <DetailRow label="Created" value={formatDateTime(viewing.created_at)} />
               <DetailRow label="Last updated" value={formatDateTime(viewing.updated_at)} />
