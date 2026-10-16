@@ -311,7 +311,11 @@ export function PaymentFormDialog({
       hint: row.phone,
     }));
     if (payment?.vendor && !options.some((option) => option.id === payment.vendor_id)) {
-      options.unshift({ id: payment.vendor_id, label: `${payment.vendor.name} (inactive)`, hint: null });
+      options.unshift({
+        id: payment.vendor_id,
+        label: `${payment.vendor.name} (inactive)`,
+        hint: null,
+      });
     }
     return options;
   }, [vendors.data, payment]);
@@ -447,7 +451,12 @@ export function PaymentFormDialog({
                   onChange={(event) => setForm({ ...form, payment_date: event.target.value })}
                 />
               </Field>
-              <Field label="Amount (INR)" htmlFor="payment-amount" required error={errors["amount_inr"]}>
+              <Field
+                label="Amount (INR)"
+                htmlFor="payment-amount"
+                required
+                error={errors["amount_inr"]}
+              >
                 <Input
                   id="payment-amount"
                   inputMode="decimal"
@@ -507,7 +516,9 @@ export function PaymentFormDialog({
                 </Button>
               </div>
               {!form.vendor_id ? (
-                <p className="text-xs text-muted-foreground">Select a vendor to see open purchases.</p>
+                <p className="text-xs text-muted-foreground">
+                  Select a vendor to see open purchases.
+                </p>
               ) : openPurchases.isPending ? (
                 <TableSkeleton rows={2} />
               ) : openPurchases.isError ? (
@@ -526,17 +537,23 @@ export function PaymentFormDialog({
                         <TableHead className={MONEY_HEAD}>Booking</TableHead>
                         <TableHead className={MONEY_HEAD}>Invoice</TableHead>
                         <TableHead className={cn(MONEY_HEAD, "text-right")}>Outstanding</TableHead>
-                        <TableHead className={cn(MONEY_HEAD, "w-40 text-right")}>Allocate</TableHead>
+                        <TableHead className={cn(MONEY_HEAD, "w-40 text-right")}>
+                          Allocate
+                        </TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {rows.map((row) => (
                         <TableRow key={row.id}>
                           <TableCell className="font-mono text-xs">{row.purchase_number}</TableCell>
-                          <TableCell className="font-mono text-xs">{row.booking_number ?? "—"}</TableCell>
+                          <TableCell className="font-mono text-xs">
+                            {row.booking_number ?? "—"}
+                          </TableCell>
                           <TableCell className="text-xs">
                             {row.vendor_invoice_number ?? "—"}
-                            <div className="text-muted-foreground">{formatDate(row.invoice_date)}</div>
+                            <div className="text-muted-foreground">
+                              {formatDate(row.invoice_date)}
+                            </div>
                           </TableCell>
                           <TableCell className="text-right tabular-nums">
                             {formatMoney(row.outstanding)}
@@ -565,17 +582,27 @@ export function PaymentFormDialog({
               )}
               <div className="flex justify-end gap-6 text-sm">
                 <span className="text-muted-foreground">
-                  Allocated <span className="font-semibold tabular-nums text-foreground">{formatMoney(fromPaise(allocatedPaise))}</span>
+                  Allocated{" "}
+                  <span className="font-semibold tabular-nums text-foreground">
+                    {formatMoney(fromPaise(allocatedPaise))}
+                  </span>
                 </span>
                 <span className="text-muted-foreground">
                   Unallocated{" "}
-                  <span className={cn("font-semibold tabular-nums", remainder < 0n ? "text-destructive" : "text-foreground")}>
+                  <span
+                    className={cn(
+                      "font-semibold tabular-nums",
+                      remainder < 0n ? "text-destructive" : "text-foreground",
+                    )}
+                  >
                     {formatMoney(fromPaise(remainder))}
                   </span>
                 </span>
               </div>
               {errors["allocations"] ? (
-                <p className="text-right text-xs font-medium text-destructive">{errors["allocations"]}</p>
+                <p className="text-right text-xs font-medium text-destructive">
+                  {errors["allocations"]}
+                </p>
               ) : null}
             </div>
           </div>

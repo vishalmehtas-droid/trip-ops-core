@@ -6,12 +6,7 @@ import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { DetailRow, Field, formatDate, formatDateTime } from "@/components/app/master-data";
-import {
-  MONEY_HEAD,
-  MoneyStatusBadge,
-  SummaryStat,
-  todayIso,
-} from "@/components/app/payments";
+import { MONEY_HEAD, MoneyStatusBadge, SummaryStat, todayIso } from "@/components/app/payments";
 import { RecordCombobox, type RecordOption } from "@/components/app/sales-ui";
 import { EmptyState, ErrorState, TableSkeleton } from "@/components/app/states";
 import { Badge } from "@/components/ui/badge";
@@ -315,7 +310,9 @@ export function ReceiptFormDialog({
             <div className="grid grid-cols-3 gap-2 rounded-md border border-border p-3 text-sm">
               <div>
                 <div className="text-[10px] uppercase text-muted-foreground">Customer payable</div>
-                <div className="font-semibold tabular-nums">{formatMoney(chosen.customer_payable)}</div>
+                <div className="font-semibold tabular-nums">
+                  {formatMoney(chosen.customer_payable)}
+                </div>
               </div>
               <div>
                 <div className="text-[10px] uppercase text-muted-foreground">Received</div>
@@ -353,7 +350,12 @@ export function ReceiptFormDialog({
                 onChange={(event) => setForm({ ...form, receipt_date: event.target.value })}
               />
             </Field>
-            <Field label="Amount (INR)" htmlFor="receipt-amount" required error={errors["amount_inr"]}>
+            <Field
+              label="Amount (INR)"
+              htmlFor="receipt-amount"
+              required
+              error={errors["amount_inr"]}
+            >
               <Input
                 id="receipt-amount"
                 inputMode="decimal"

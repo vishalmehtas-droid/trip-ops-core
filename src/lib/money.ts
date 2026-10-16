@@ -4,8 +4,7 @@ export function toPaise(value: string | number | null | undefined): bigint {
   const text = String(value).trim();
   const negative = text.startsWith("-");
   const [whole = "0", fraction = ""] = (negative ? text.slice(1) : text).split(".");
-  const absolute =
-    BigInt(whole || "0") * 100n + BigInt(fraction.padEnd(2, "0").slice(0, 2) || "0");
+  const absolute = BigInt(whole || "0") * 100n + BigInt(fraction.padEnd(2, "0").slice(0, 2) || "0");
   return negative ? -absolute : absolute;
 }
 

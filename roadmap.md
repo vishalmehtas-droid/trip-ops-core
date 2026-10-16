@@ -4,3 +4,4 @@
 - [x] Add one transactional, permission-checked Accepted quote conversion with a unique booking link.
 - [x] Add conversion confirmation and reciprocal quote/booking links.
 - [x] Verify changed code without database tests or UI clicks and report mapping defaults (automatic compilation OK; lint has no errors).- [x] Phase 2C: booking numbers (BK-000001), purchases (PU-000001) with page, booking Purchases section and cost variance.
+- [x] Phase 2D: vendor payments + allocations, customer receipts, booking receipt status, paid to vendors, purchases on completed bookings.
