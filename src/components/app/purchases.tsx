@@ -455,6 +455,9 @@ export function PurchaseFormDialog({
                 createLabel="Add new vendor"
               />
             </Field>
+            <VendorTermsNote
+              vendor={(vendors.data ?? []).find((row) => row.id === form.vendor_id)}
+            />
             <div className="grid gap-4 sm:grid-cols-2">
               <Field
                 label="Invoice number"
@@ -551,9 +554,11 @@ export function PurchaseFormDialog({
 export function PurchaseSheet({
   purchase,
   onOpenChange,
+  onRecordPayment,
 }: {
   purchase: PurchaseRow | null;
   onOpenChange: (open: boolean) => void;
+  onRecordPayment?: (row: PurchaseRow) => void;
 }) {
   const { hasPermission } = useAuth();
   const queryClient = useQueryClient();
@@ -566,6 +571,12 @@ export function PurchaseSheet({
   const bookingOpen = Boolean(purchase?.sale) && purchase?.sale?.status !== "cancelled";
   const canChange =
     hasPermission("purchases.manage") && purchase?.status === "recorded" && bookingOpen;
+  const canRecordPayment =
+    onRecordPayment !== undefined &&
+    hasPermission("payments.manage") &&
+    purchase?.status === "recorded" &&
+    bookingOpen &&
+    toPaise(purchase.outstanding) > 0n;
 
   const cancel = useMutation({
     mutationFn: () => cancelFn({ data: { id: purchase!.id, reason } }),
