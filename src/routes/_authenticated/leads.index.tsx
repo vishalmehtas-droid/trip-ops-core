@@ -48,6 +48,8 @@ import {
 import { createLead } from "@/lib/leads.functions";
 
 export const Route = createFileRoute("/_authenticated/leads/")({
+  validateSearch: (search: Record<string, unknown>): { followup?: "due" } =>
+    search["followup"] === "due" ? { followup: "due" } : {},
   head: () => ({
     meta: [
       { title: "Leads — Triptastic Ops" },
@@ -73,13 +75,14 @@ type LeadListRow = {
   enquiry_date: string;
   assigned_to: string;
   source: string | null;
+  follow_up_date: string | null;
   status: LeadStatus;
   updated_at: string;
   client: { id: string; name: string; is_active: boolean } | null;
 };
 
 const LEAD_SELECT =
-  "id, lead_number, client_id, enquiry_date, assigned_to, source, status, updated_at, client:clients(id, name, is_active)";
+  "id, lead_number, client_id, enquiry_date, assigned_to, source, follow_up_date, status, updated_at, client:clients(id, name, is_active)";
 
 const PAGE_SIZE = 25;
 
@@ -94,8 +97,18 @@ type FormState = {
   enquiry_date: string;
   assigned_to: string;
   source: string;
+  follow_up_date: string;
   notes: string;
 };
+
+function followUpDue(row: { follow_up_date: string | null; status: LeadStatus }) {
+  return (
+    row.follow_up_date !== null &&
+    row.follow_up_date <= today() &&
+    row.status !== "won" &&
+    row.status !== "lost"
+  );
+}
 
 function LeadsPage() {
   const { hasPermission, user } = useAuth();
@@ -104,9 +117,13 @@ function LeadsPage() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
+  const { followup } = Route.useSearch();
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<"all" | LeadStatus>("all");
   const [assignee, setAssignee] = useState<string>("all");
+  const [followUpFilter, setFollowUpFilter] = useState<"all" | "due">(
+    followup === "due" ? "due" : "all",
+  );
   const [page, setPage] = useState(0);
   const [formOpen, setFormOpen] = useState(false);
   const [form, setForm] = useState<FormState>({
@@ -114,6 +131,7 @@ function LeadsPage() {
     enquiry_date: today(),
     assigned_to: "",
     source: "",
+    follow_up_date: "",
     notes: "",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -201,12 +219,13 @@ function LeadsPage() {
     return (leadsQuery.data ?? []).filter((row) => {
       if (status !== "all" && row.status !== status) return false;
       if (assignee !== "all" && row.assigned_to !== assignee) return false;
+      if (followUpFilter === "due" && !followUpDue(row)) return false;
       if (!term) return true;
       return [row.lead_number, row.client?.name, row.source]
         .filter(Boolean)
         .some((value) => value!.toLowerCase().includes(term));
     });
-  }, [leadsQuery.data, search, status, assignee]);
+  }, [leadsQuery.data, search, status, assignee, followUpFilter]);
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safePage = Math.min(page, pageCount - 1);
@@ -232,6 +251,7 @@ function LeadsPage() {
       enquiry_date: today(),
       assigned_to: user?.id ?? "",
       source: "",
+      follow_up_date: "",
       notes: "",
     });
     setErrors({});
@@ -325,6 +345,21 @@ function LeadsPage() {
             ))}
           </SelectContent>
         </Select>
+        <Select
+          value={followUpFilter}
+          onValueChange={(value) => {
+            setFollowUpFilter(value as typeof followUpFilter);
+            setPage(0);
+          }}
+        >
+          <SelectTrigger className="w-[160px]" aria-label="Follow-up filter">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All follow-ups</SelectItem>
+            <SelectItem value="due">Follow-up due</SelectItem>
+          </SelectContent>
+        </Select>
       </MasterToolbar>
 
       {leadsQuery.isPending ? (
@@ -363,6 +398,7 @@ function LeadsPage() {
                     Assigned to
                   </TableHead>
                   <TableHead className="text-[10px] uppercase tracking-wider">Source</TableHead>
+                  <TableHead className="text-[10px] uppercase tracking-wider">Follow-up</TableHead>
                   <TableHead className="text-[10px] uppercase tracking-wider">Status</TableHead>
                   <TableHead className="text-[10px] uppercase tracking-wider">Updated</TableHead>
                   <TableHead className="text-right text-[10px] uppercase tracking-wider">
@@ -384,6 +420,15 @@ function LeadsPage() {
                       {personNames.get(row.assigned_to) ?? "—"}
                     </TableCell>
                     <TableCell className="text-muted-foreground">{row.source ?? "—"}</TableCell>
+                    <TableCell
+                      className={
+                        row.follow_up_date && followUpDue(row)
+                          ? "font-semibold text-destructive"
+                          : "text-muted-foreground"
+                      }
+                    >
+                      {row.follow_up_date ? formatDate(row.follow_up_date) : "—"}
+                    </TableCell>
                     <TableCell>
                       <LeadStatusBadge status={row.status} />
                     </TableCell>
@@ -484,6 +529,14 @@ function LeadsPage() {
                 />
               </Field>
             </div>
+            <Field label="Follow-up date" htmlFor="lead-follow-up" error={errors["follow_up_date"]}>
+              <Input
+                id="lead-follow-up"
+                type="date"
+                value={form.follow_up_date}
+                onChange={(event) => setForm({ ...form, follow_up_date: event.target.value })}
+              />
+            </Field>
             <Field
               label="Assigned to"
               htmlFor="lead-assigned"

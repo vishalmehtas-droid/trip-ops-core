@@ -77,6 +77,7 @@ type LeadDetail = {
   enquiry_date: string;
   assigned_to: string;
   source: string | null;
+  follow_up_date: string | null;
   status: LeadStatus;
   notes: string | null;
   created_by: string;
@@ -86,7 +87,7 @@ type LeadDetail = {
 };
 
 const LEAD_SELECT =
-  "id, lead_number, client_id, enquiry_date, assigned_to, source, status, notes, created_by, created_at, updated_at, client:clients(id, name, phone, is_active)";
+  "id, lead_number, client_id, enquiry_date, assigned_to, source, follow_up_date, status, notes, created_by, created_at, updated_at, client:clients(id, name, phone, is_active)";
 
 type AuditRow = {
   id: string;
@@ -102,6 +103,7 @@ type FormState = {
   enquiry_date: string;
   assigned_to: string;
   source: string;
+  follow_up_date: string;
   notes: string;
 };
 
@@ -121,6 +123,7 @@ function LeadDetailPage() {
     enquiry_date: "",
     assigned_to: "",
     source: "",
+    follow_up_date: "",
     notes: "",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -276,6 +279,7 @@ function LeadDetailPage() {
       enquiry_date: lead.enquiry_date,
       assigned_to: lead.assigned_to,
       source: lead.source ?? "",
+      follow_up_date: lead.follow_up_date ?? "",
       notes: lead.notes ?? "",
     });
     setErrors({});
@@ -404,6 +408,24 @@ function LeadDetailPage() {
             value={personNames.get(lead.assigned_to) ?? "Unknown user"}
           />
           <DetailRow label="Source" value={lead.source} />
+          <DetailRow
+            label="Follow-up date"
+            value={
+              lead.follow_up_date ? (
+                <span
+                  className={
+                    lead.status !== "won" &&
+                    lead.status !== "lost" &&
+                    lead.follow_up_date <= new Date().toISOString().slice(0, 10)
+                      ? "font-semibold text-destructive"
+                      : undefined
+                  }
+                >
+                  {formatDate(lead.follow_up_date)}
+                </span>
+              ) : null
+            }
+          />
           <DetailRow label="Status" value={<LeadStatusBadge status={lead.status} />} />
           <DetailRow label="Notes" value={lead.notes} />
           <DetailRow
@@ -492,6 +514,18 @@ function LeadDetailPage() {
                 />
               </Field>
             </div>
+            <Field
+              label="Follow-up date"
+              htmlFor="edit-lead-follow-up"
+              error={errors["follow_up_date"]}
+            >
+              <Input
+                id="edit-lead-follow-up"
+                type="date"
+                value={form.follow_up_date}
+                onChange={(event) => setForm({ ...form, follow_up_date: event.target.value })}
+              />
+            </Field>
             <Field
               label="Assigned to"
               htmlFor="edit-lead-assigned"

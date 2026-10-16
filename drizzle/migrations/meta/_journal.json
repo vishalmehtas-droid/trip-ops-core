@@ -64,6 +64,13 @@
       "when": 1792140608675,
       "tag": "0008_vendor_payments_customer_receipts",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1792149555657,
+      "tag": "0009_lead_follow_up_and_vendor_terms",
+      "breakpoints": true
     }
   ]
 }

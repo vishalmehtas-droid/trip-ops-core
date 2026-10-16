@@ -78,6 +78,8 @@ type VendorRow = {
   email: string | null;
   gst_number: string | null;
   address: string | null;
+  payment_terms: string | null;
+  advance_rule: string | null;
   notes: string | null;
   is_active: boolean;
   created_at: string;
@@ -90,6 +92,8 @@ type FormState = {
   email: string;
   gst_number: string;
   address: string;
+  payment_terms: string;
+  advance_rule: string;
   notes: string;
   is_active: boolean;
 };
@@ -100,6 +104,8 @@ const EMPTY_FORM: FormState = {
   email: "",
   gst_number: "",
   address: "",
+  payment_terms: "",
+  advance_rule: "",
   notes: "",
   is_active: true,
 };
@@ -197,6 +203,8 @@ function VendorsPage() {
       email: row.email ?? "",
       gst_number: row.gst_number ?? "",
       address: row.address ?? "",
+      payment_terms: row.payment_terms ?? "",
+      advance_rule: row.advance_rule ?? "",
       notes: row.notes ?? "",
       is_active: row.is_active,
     });
@@ -306,7 +314,14 @@ function VendorsPage() {
             <TableBody>
               {rows.map((row) => (
                 <TableRow key={row.id}>
-                  <TableCell className="font-medium">{row.name}</TableCell>
+                  <TableCell className="font-medium">
+                    <div>{row.name}</div>
+                    {row.payment_terms || row.advance_rule ? (
+                      <div className="mt-0.5 max-w-64 truncate text-xs font-normal text-muted-foreground">
+                        {[row.payment_terms, row.advance_rule].filter(Boolean).join(" · ")}
+                      </div>
+                    ) : null}
+                  </TableCell>
                   <TableCell className="text-muted-foreground">{row.phone ?? "—"}</TableCell>
                   <TableCell className="text-muted-foreground">{row.email ?? "—"}</TableCell>
                   <TableCell className="text-muted-foreground">{row.gst_number ?? "—"}</TableCell>
@@ -392,6 +407,33 @@ function VendorsPage() {
                 onChange={(event) => setForm({ ...form, address: event.target.value })}
               />
             </Field>
+            <Field
+              label="Payment terms"
+              htmlFor="vendor-payment-terms"
+              error={errors["payment_terms"]}
+            >
+              <Textarea
+                id="vendor-payment-terms"
+                rows={2}
+                maxLength={500}
+                value={form.payment_terms}
+                onChange={(event) => setForm({ ...form, payment_terms: event.target.value })}
+                placeholder="e.g. 50% advance at booking, balance 15 days before travel"
+              />
+            </Field>
+            <Field
+              label="Advance rule"
+              htmlFor="vendor-advance-rule"
+              error={errors["advance_rule"]}
+            >
+              <Input
+                id="vendor-advance-rule"
+                maxLength={500}
+                value={form.advance_rule}
+                onChange={(event) => setForm({ ...form, advance_rule: event.target.value })}
+                placeholder="e.g. 30% advance at booking"
+              />
+            </Field>
             <Field label="Notes" htmlFor="vendor-notes" error={errors["notes"]}>
               <Textarea
                 id="vendor-notes"
@@ -440,6 +482,8 @@ function VendorsPage() {
               <DetailRow label="Email" value={viewing.email} />
               <DetailRow label="GST number" value={viewing.gst_number} />
               <DetailRow label="Address" value={viewing.address} />
+              <DetailRow label="Payment terms" value={viewing.payment_terms} />
+              <DetailRow label="Advance rule" value={viewing.advance_rule} />
               <DetailRow label="Notes" value={viewing.notes} />
               <DetailRow label="Created" value={formatDateTime(viewing.created_at)} />
               <DetailRow label="Last updated" value={formatDateTime(viewing.updated_at)} />

@@ -6,7 +6,7 @@ import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { DetailRow, Field, formatDate, formatDateTime } from "@/components/app/master-data";
-import { useBookingOptions } from "@/components/app/purchases";
+import { useBookingOptions, VendorTermsNote } from "@/components/app/purchases";
 import { useQuickAdd } from "@/components/app/quick-add";
 import { RecordCombobox, type RecordOption } from "@/components/app/sales-ui";
 import { ErrorState, TableSkeleton } from "@/components/app/states";
@@ -196,9 +196,9 @@ type PaymentForm = {
   notes: string;
 };
 
-function emptyPaymentForm(saleId = ""): PaymentForm {
+function emptyPaymentForm(saleId = "", vendorId = ""): PaymentForm {
   return {
-    vendor_id: "",
+    vendor_id: vendorId,
     sale_id: saleId,
     payment_type: "part",
     payment_date: todayIso(),
@@ -216,11 +216,17 @@ function useActiveVendors(enabled: boolean) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("vendors")
-        .select("id, name, phone")
+        .select("id, name, phone, payment_terms, advance_rule")
         .eq("is_active", true)
         .order("name");
       if (error) throw error;
-      return (data ?? []) as { id: string; name: string; phone: string | null }[];
+      return (data ?? []) as {
+        id: string;
+        name: string;
+        phone: string | null;
+        payment_terms: string | null;
+        advance_rule: string | null;
+      }[];
     },
   });
 }
@@ -231,16 +237,18 @@ export function PaymentFormDialog({
   onOpenChange,
   payment,
   presetSaleId,
+  presetVendorId,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   payment?: PaymentRow | null;
-  presetSaleId?: string;
+  presetSaleId?: string | undefined;
+  presetVendorId?: string | undefined;
 }) {
   const queryClient = useQueryClient();
   const saveFn = useServerFn(saveVendorPayment);
   const openFn = useServerFn(listOpenPurchases);
-  const [form, setForm] = useState<PaymentForm>(emptyPaymentForm(presetSaleId));
+  const [form, setForm] = useState<PaymentForm>(emptyPaymentForm(presetSaleId, presetVendorId));
   const [alloc, setAlloc] = useState<Record<string, string>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [lastOpen, setLastOpen] = useState(false);
@@ -266,7 +274,7 @@ export function PaymentFormDialog({
         }
         setAlloc(initial);
       } else {
-        setForm(emptyPaymentForm(presetSaleId));
+        setForm(emptyPaymentForm(presetSaleId, presetVendorId));
         setAlloc({});
       }
     }
@@ -409,6 +417,11 @@ export function PaymentFormDialog({
                   createLabel="Add new vendor"
                 />
               </Field>
+              <div className="sm:col-span-2">
+                <VendorTermsNote
+                  vendor={(vendors.data ?? []).find((row) => row.id === form.vendor_id)}
+                />
+              </div>
               <Field label="Booking (optional)" htmlFor="payment-booking" error={errors["sale_id"]}>
                 <RecordCombobox
                   id="payment-booking"

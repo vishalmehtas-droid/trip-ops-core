@@ -78,6 +78,8 @@ export const vendorInputSchema = z.object({
   email: optionalEmail,
   gst_number: optionalText(40),
   address: optionalText(600),
+  payment_terms: optionalText(500),
+  advance_rule: optionalText(500),
   notes: optionalText(2000),
   is_active: z.boolean().default(true),
 });

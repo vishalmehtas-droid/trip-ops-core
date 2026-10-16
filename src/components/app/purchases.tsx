@@ -6,6 +6,7 @@ import { Loader2, Plus } from "lucide-react";
 import { toast } from "sonner";
 
 import { DetailRow, Field, formatDate, formatDateTime } from "@/components/app/master-data";
+import { PaymentFormDialog } from "@/components/app/payments";
 import { useQuickAdd } from "@/components/app/quick-add";
 import { RecordCombobox, type RecordOption } from "@/components/app/sales-ui";
 import { EmptyState, ErrorState, TableSkeleton } from "@/components/app/states";
@@ -35,6 +36,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { quoteFieldErrors } from "@/lib/quotation-display";
 import { formatMoney } from "@/lib/sale-costing-schemas";
+import { toPaise } from "@/lib/money";
 import {
   PURCHASE_STATUS_LABELS,
   purchaseCancelSchema,
@@ -71,6 +73,58 @@ export function PurchaseStatusBadge({ status }: { status: PurchaseStatus }) {
     >
       {PURCHASE_STATUS_LABELS[status]}
     </Badge>
+  );
+}
+
+/** Unpaid / Partly paid / Paid, derived from exact paise amounts. */
+export function PurchasePaymentBadge({
+  row,
+}: {
+  row: Pick<PurchaseRow, "status" | "paid" | "outstanding">;
+}) {
+  if (row.status !== "recorded") return null;
+  const paid = toPaise(row.paid);
+  const outstanding = toPaise(row.outstanding);
+  const label = outstanding <= 0n && paid > 0n ? "Paid" : paid <= 0n ? "Unpaid" : "Partly paid";
+  return (
+    <Badge
+      variant="outline"
+      className={cn(
+        "text-[10px] uppercase",
+        label === "Paid"
+          ? "border-success/40 text-success"
+          : label === "Partly paid"
+            ? "border-warning/40 text-warning"
+            : "border-destructive/40 text-destructive",
+      )}
+    >
+      {label}
+    </Badge>
+  );
+}
+
+/** Vendor payment terms shown inside payment/purchase dialogs. */
+export function VendorTermsNote({
+  vendor,
+}: {
+  vendor?: { payment_terms: string | null; advance_rule: string | null } | null | undefined;
+}) {
+  if (!vendor || (!vendor.payment_terms && !vendor.advance_rule)) return null;
+  return (
+    <div className="rounded-md border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+      {vendor.payment_terms ? (
+        <p>
+          <span className="font-semibold text-foreground">Payment terms: </span>
+          {vendor.payment_terms}
+        </p>
+      ) : null}
+      {vendor.advance_rule ? (
+        <p className={vendor.payment_terms ? "mt-0.5" : ""}>
+          <span className="font-semibold text-foreground">Advance: </span>
+          {vendor.advance_rule}
+        </p>
+      ) : null}
+    </div>
   );
 }
 
@@ -111,11 +165,17 @@ function useActiveVendors(enabled: boolean) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("vendors")
-        .select("id, name, phone")
+        .select("id, name, phone, payment_terms, advance_rule")
         .eq("is_active", true)
         .order("name");
       if (error) throw error;
-      return (data ?? []) as { id: string; name: string; phone: string | null }[];
+      return (data ?? []) as {
+        id: string;
+        name: string;
+        phone: string | null;
+        payment_terms: string | null;
+        advance_rule: string | null;
+      }[];
     },
   });
 }
@@ -124,10 +184,12 @@ export function PurchasesTable({
   rows,
   onOpen,
   showBooking = true,
+  onRecordPayment,
 }: {
   rows: PurchaseRow[];
   onOpen: (row: PurchaseRow) => void;
   showBooking?: boolean;
+  onRecordPayment?: ((row: PurchaseRow) => void) | undefined;
 }) {
   return (
     <div className="overflow-x-auto rounded-lg border border-border bg-surface">
@@ -143,6 +205,7 @@ export function PurchasesTable({
             <TableHead className={cn(HEAD, "text-right")}>Paid</TableHead>
             <TableHead className={cn(HEAD, "text-right")}>Outstanding</TableHead>
             <TableHead className={HEAD}>Status</TableHead>
+            <TableHead className={HEAD}>Payment</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -178,6 +241,30 @@ export function PurchasesTable({
               </TableCell>
               <TableCell>
                 <PurchaseStatusBadge status={row.status} />
+              </TableCell>
+              <TableCell>
+                {row.status === "recorded" ? (
+                  <div className="flex items-center gap-2">
+                    <PurchasePaymentBadge row={row} />
+                    {onRecordPayment &&
+                    row.sale?.status !== "cancelled" &&
+                    toPaise(row.outstanding) > 0n ? (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 px-2 text-xs"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          onRecordPayment(row);
+                        }}
+                      >
+                        Record Payment
+                      </Button>
+                    ) : null}
+                  </div>
+                ) : (
+                  "—"
+                )}
               </TableCell>
             </TableRow>
           ))}
@@ -371,6 +458,9 @@ export function PurchaseFormDialog({
                 createLabel="Add new vendor"
               />
             </Field>
+            <VendorTermsNote
+              vendor={(vendors.data ?? []).find((row) => row.id === form.vendor_id)}
+            />
             <div className="grid gap-4 sm:grid-cols-2">
               <Field
                 label="Invoice number"
@@ -467,9 +557,11 @@ export function PurchaseFormDialog({
 export function PurchaseSheet({
   purchase,
   onOpenChange,
+  onRecordPayment,
 }: {
   purchase: PurchaseRow | null;
   onOpenChange: (open: boolean) => void;
+  onRecordPayment?: ((row: PurchaseRow) => void) | undefined;
 }) {
   const { hasPermission } = useAuth();
   const queryClient = useQueryClient();
@@ -482,6 +574,12 @@ export function PurchaseSheet({
   const bookingOpen = Boolean(purchase?.sale) && purchase?.sale?.status !== "cancelled";
   const canChange =
     hasPermission("purchases.manage") && purchase?.status === "recorded" && bookingOpen;
+  const canRecordPayment =
+    onRecordPayment !== undefined &&
+    hasPermission("payments.manage") &&
+    purchase?.status === "recorded" &&
+    bookingOpen &&
+    toPaise(purchase.outstanding) > 0n;
 
   const cancel = useMutation({
     mutationFn: () => cancelFn({ data: { id: purchase!.id, reason } }),
@@ -514,6 +612,7 @@ export function PurchaseSheet({
                 <SheetTitle className="flex items-center gap-2 font-mono">
                   {purchase.purchase_number}
                   <PurchaseStatusBadge status={purchase.status} />
+                  <PurchasePaymentBadge row={purchase} />
                 </SheetTitle>
               </SheetHeader>
               <dl className="mt-4">
@@ -560,23 +659,32 @@ export function PurchaseSheet({
                 <DetailRow label="Recorded" value={formatDateTime(purchase.created_at)} />
                 <DetailRow label="Last updated" value={formatDateTime(purchase.updated_at)} />
               </dl>
-              {canChange ? (
-                <div className="mt-4 flex gap-2">
-                  <Button size="sm" variant="outline" onClick={() => setEditOpen(true)}>
-                    Edit
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="text-destructive"
-                    onClick={() => {
-                      setReason("");
-                      setReasonError(undefined);
-                      setCancelOpen(true);
-                    }}
-                  >
-                    Cancel purchase
-                  </Button>
+              {canChange || canRecordPayment ? (
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {canRecordPayment ? (
+                    <Button size="sm" onClick={() => onRecordPayment(purchase)}>
+                      Record Payment
+                    </Button>
+                  ) : null}
+                  {canChange ? (
+                    <>
+                      <Button size="sm" variant="outline" onClick={() => setEditOpen(true)}>
+                        Edit
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-destructive"
+                        onClick={() => {
+                          setReason("");
+                          setReasonError(undefined);
+                          setCancelOpen(true);
+                        }}
+                      >
+                        Cancel purchase
+                      </Button>
+                    </>
+                  ) : null}
                 </div>
               ) : purchase.status === "recorded" && !bookingOpen ? (
                 <p className="mt-4 text-xs text-muted-foreground">
@@ -656,6 +764,7 @@ export function BookingPurchases({
 }) {
   const { hasPermission } = useAuth();
   const canManage = hasPermission("purchases.manage") && bookingOpen;
+  const canRecordPayment = hasPermission("payments.manage") && bookingOpen;
   const purchases = usePurchases({ sale_id: saleId });
   const varianceFn = useServerFn(getBookingVariance);
   const variance = useQuery({
@@ -664,6 +773,11 @@ export function BookingPurchases({
   });
   const [createOpen, setCreateOpen] = useState(false);
   const [selected, setSelected] = useState<PurchaseRow | null>(null);
+  const [paymentVendor, setPaymentVendor] = useState<string | null>(null);
+
+  const recordPayment = canRecordPayment
+    ? (row: PurchaseRow) => setPaymentVendor(row.vendor_id)
+    : undefined;
 
   const v = variance.data;
 
@@ -691,7 +805,12 @@ export function BookingPurchases({
           description="Supplier invoices recorded against this booking appear here."
         />
       ) : (
-        <PurchasesTable rows={purchases.data} onOpen={setSelected} showBooking={false} />
+        <PurchasesTable
+          rows={purchases.data}
+          onOpen={setSelected}
+          showBooking={false}
+          onRecordPayment={recordPayment}
+        />
       )}
 
       <div className="space-y-3">
@@ -775,7 +894,17 @@ export function BookingPurchases({
       </div>
 
       <PurchaseFormDialog open={createOpen} onOpenChange={setCreateOpen} presetSaleId={saleId} />
-      <PurchaseSheet purchase={selected} onOpenChange={(open) => !open && setSelected(null)} />
+      <PurchaseSheet
+        purchase={selected}
+        onOpenChange={(open) => !open && setSelected(null)}
+        onRecordPayment={recordPayment}
+      />
+      <PaymentFormDialog
+        open={paymentVendor !== null}
+        onOpenChange={(open) => !open && setPaymentVendor(null)}
+        presetSaleId={saleId}
+        presetVendorId={paymentVendor ?? undefined}
+      />
     </section>
   );
 }
