@@ -427,6 +427,7 @@ export type Database = {
           created_at: string
           created_by: string
           enquiry_date: string
+          follow_up_date: string | null
           id: string
           lead_number: string
           notes: string | null
@@ -440,6 +441,7 @@ export type Database = {
           created_at?: string
           created_by?: string
           enquiry_date?: string
+          follow_up_date?: string | null
           id?: string
           lead_number: string
           notes?: string | null
@@ -453,6 +455,7 @@ export type Database = {
           created_at?: string
           created_by?: string
           enquiry_date?: string
+          follow_up_date?: string | null
           id?: string
           lead_number?: string
           notes?: string | null
@@ -1438,6 +1441,7 @@ export type Database = {
       vendors: {
         Row: {
           address: string | null
+          advance_rule: string | null
           created_at: string
           email: string | null
           gst_number: string | null
@@ -1445,11 +1449,13 @@ export type Database = {
           is_active: boolean
           name: string
           notes: string | null
+          payment_terms: string | null
           phone: string | null
           updated_at: string
         }
         Insert: {
           address?: string | null
+          advance_rule?: string | null
           created_at?: string
           email?: string | null
           gst_number?: string | null
@@ -1457,11 +1463,13 @@ export type Database = {
           is_active?: boolean
           name: string
           notes?: string | null
+          payment_terms?: string | null
           phone?: string | null
           updated_at?: string
         }
         Update: {
           address?: string | null
+          advance_rule?: string | null
           created_at?: string
           email?: string | null
           gst_number?: string | null
@@ -1469,6 +1477,7 @@ export type Database = {
           is_active?: boolean
           name?: string
           notes?: string | null
+          payment_terms?: string | null
           phone?: string | null
           updated_at?: string
         }
