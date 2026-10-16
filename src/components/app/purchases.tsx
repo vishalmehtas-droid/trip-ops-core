@@ -107,7 +107,7 @@ export function PurchasePaymentBadge({
 export function VendorTermsNote({
   vendor,
 }: {
-  vendor?: { payment_terms: string | null; advance_rule: string | null } | null;
+  vendor?: { payment_terms: string | null; advance_rule: string | null } | null | undefined;
 }) {
   if (!vendor || (!vendor.payment_terms && !vendor.advance_rule)) return null;
   return (
