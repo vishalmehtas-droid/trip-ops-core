@@ -77,6 +77,7 @@ type LeadDetail = {
   enquiry_date: string;
   assigned_to: string;
   source: string | null;
+  follow_up_date: string | null;
   status: LeadStatus;
   notes: string | null;
   created_by: string;
@@ -86,7 +87,7 @@ type LeadDetail = {
 };
 
 const LEAD_SELECT =
-  "id, lead_number, client_id, enquiry_date, assigned_to, source, status, notes, created_by, created_at, updated_at, client:clients(id, name, phone, is_active)";
+  "id, lead_number, client_id, enquiry_date, assigned_to, source, follow_up_date, status, notes, created_by, created_at, updated_at, client:clients(id, name, phone, is_active)";
 
 type AuditRow = {
   id: string;
@@ -102,6 +103,7 @@ type FormState = {
   enquiry_date: string;
   assigned_to: string;
   source: string;
+  follow_up_date: string;
   notes: string;
 };
 
