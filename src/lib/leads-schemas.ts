@@ -116,6 +116,7 @@ export const leadValuesSchema = z.object({
   enquiry_date: isoDate,
   assigned_to: z.string().uuid("Select a salesperson"),
   source: optionalText(120, "Source is too long"),
+  follow_up_date: optionalIsoDate,
   notes: optionalNotes,
 });
 

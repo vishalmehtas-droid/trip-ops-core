@@ -36,6 +36,7 @@ export const createLead = createServerFn({ method: "POST" })
         enquiry_date: data.enquiry_date,
         assigned_to: data.assigned_to,
         source: data.source,
+        follow_up_date: data.follow_up_date,
         notes: data.notes,
         status: "new",
         // The database generates the real number; this value is always discarded.
@@ -82,6 +83,7 @@ export const updateLead = createServerFn({ method: "POST" })
         enquiry_date: data.values.enquiry_date,
         assigned_to: data.values.assigned_to,
         source: data.values.source,
+        follow_up_date: data.values.follow_up_date,
         notes: data.values.notes,
       })
       .eq("id", data.id);
