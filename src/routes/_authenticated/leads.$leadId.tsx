@@ -515,6 +515,18 @@ function LeadDetailPage() {
               </Field>
             </div>
             <Field
+              label="Follow-up date"
+              htmlFor="edit-lead-follow-up"
+              error={errors["follow_up_date"]}
+            >
+              <Input
+                id="edit-lead-follow-up"
+                type="date"
+                value={form.follow_up_date}
+                onChange={(event) => setForm({ ...form, follow_up_date: event.target.value })}
+              />
+            </Field>
+            <Field
               label="Assigned to"
               htmlFor="edit-lead-assigned"
               required
