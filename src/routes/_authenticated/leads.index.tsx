@@ -398,6 +398,9 @@ function LeadsPage() {
                     Assigned to
                   </TableHead>
                   <TableHead className="text-[10px] uppercase tracking-wider">Source</TableHead>
+                  <TableHead className="text-[10px] uppercase tracking-wider">
+                    Follow-up
+                  </TableHead>
                   <TableHead className="text-[10px] uppercase tracking-wider">Status</TableHead>
                   <TableHead className="text-[10px] uppercase tracking-wider">Updated</TableHead>
                   <TableHead className="text-right text-[10px] uppercase tracking-wider">
@@ -419,6 +422,15 @@ function LeadsPage() {
                       {personNames.get(row.assigned_to) ?? "—"}
                     </TableCell>
                     <TableCell className="text-muted-foreground">{row.source ?? "—"}</TableCell>
+                    <TableCell
+                      className={
+                        row.follow_up_date && followUpDue(row)
+                          ? "font-semibold text-destructive"
+                          : "text-muted-foreground"
+                      }
+                    >
+                      {row.follow_up_date ? formatDate(row.follow_up_date) : "—"}
+                    </TableCell>
                     <TableCell>
                       <LeadStatusBadge status={row.status} />
                     </TableCell>
@@ -519,6 +531,18 @@ function LeadsPage() {
                 />
               </Field>
             </div>
+            <Field
+              label="Follow-up date"
+              htmlFor="lead-follow-up"
+              error={errors["follow_up_date"]}
+            >
+              <Input
+                id="lead-follow-up"
+                type="date"
+                value={form.follow_up_date}
+                onChange={(event) => setForm({ ...form, follow_up_date: event.target.value })}
+              />
+            </Field>
             <Field
               label="Assigned to"
               htmlFor="lead-assigned"
