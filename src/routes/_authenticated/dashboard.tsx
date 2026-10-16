@@ -3,6 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
   AlertCircle,
+  BellRing,
   Building2,
   CalendarClock,
   Clock3,
@@ -301,6 +302,25 @@ function DashboardPage() {
               icon={AlertCircle}
               tone="warm"
             />
+            {canReadLeads ? (
+              <Link
+                to="/leads"
+                search={{ followup: "due" }}
+                className="block transition-transform hover:-translate-y-0.5"
+              >
+                <SummaryCard
+                  label="Follow-ups due"
+                  value={followUpsDue}
+                  hint={
+                    ownFollowUpsOnly
+                      ? "Your leads overdue or due today"
+                      : "Leads overdue or due today"
+                  }
+                  icon={BellRing}
+                  tone="warm"
+                />
+              </Link>
+            ) : null}
           </section>
 
           <section className="grid gap-6 lg:grid-cols-[1.35fr_1fr]">
