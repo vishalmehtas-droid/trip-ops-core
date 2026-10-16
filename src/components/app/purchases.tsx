@@ -140,6 +140,8 @@ export function PurchasesTable({
             <TableHead className={HEAD}>Invoice</TableHead>
             <TableHead className={cn(HEAD, "text-right")}>Amount</TableHead>
             <TableHead className={cn(HEAD, "text-right")}>INR</TableHead>
+            <TableHead className={cn(HEAD, "text-right")}>Paid</TableHead>
+            <TableHead className={cn(HEAD, "text-right")}>Outstanding</TableHead>
             <TableHead className={HEAD}>Status</TableHead>
           </TableRow>
         </TableHeader>
@@ -167,6 +169,12 @@ export function PurchasesTable({
               </TableCell>
               <TableCell className="text-right tabular-nums">
                 {formatMoney(row.amount_inr)}
+              </TableCell>
+              <TableCell className="text-right tabular-nums">
+                {row.status === "recorded" ? formatMoney(row.paid) : "—"}
+              </TableCell>
+              <TableCell className="text-right tabular-nums">
+                {row.status === "recorded" ? formatMoney(row.outstanding) : "—"}
               </TableCell>
               <TableCell>
                 <PurchaseStatusBadge status={row.status} />
@@ -212,6 +220,7 @@ function emptyForm(saleId = ""): FormState {
 async function invalidatePurchases(queryClient: ReturnType<typeof useQueryClient>) {
   await queryClient.invalidateQueries({ queryKey: ["purchases"] });
   await queryClient.invalidateQueries({ queryKey: ["booking-variance"] });
+  await queryClient.invalidateQueries({ queryKey: ["vendor-payments"] });
   await queryClient.invalidateQueries({ queryKey: ["audit-log"] });
 }
 
@@ -264,7 +273,7 @@ export function PurchaseFormDialog({
   const bookingOptions: RecordOption[] = useMemo(
     () =>
       (bookings.data ?? [])
-        .filter((row) => row.status === "pending" || row.status === "confirmed")
+        .filter((row) => row.status !== "cancelled")
         .map((row) => ({
           id: row.id,
           label: `${row.booking_number} · ${row.client?.name ?? "—"}`,
@@ -470,8 +479,7 @@ export function PurchaseSheet({
   const [reason, setReason] = useState("");
   const [reasonError, setReasonError] = useState<string | undefined>();
 
-  const bookingOpen =
-    purchase?.sale?.status === "pending" || purchase?.sale?.status === "confirmed";
+  const bookingOpen = Boolean(purchase?.sale) && purchase?.sale?.status !== "cancelled";
   const canChange =
     hasPermission("purchases.manage") && purchase?.status === "recorded" && bookingOpen;
 
@@ -532,6 +540,12 @@ export function PurchaseSheet({
                 />
                 <DetailRow label="Rate to INR" value={purchase.exchange_rate} />
                 <DetailRow label="Amount (INR)" value={formatMoney(purchase.amount_inr)} />
+                {purchase.status === "recorded" ? (
+                  <>
+                    <DetailRow label="Paid to vendor" value={formatMoney(purchase.paid)} />
+                    <DetailRow label="Outstanding" value={formatMoney(purchase.outstanding)} />
+                  </>
+                ) : null}
                 <DetailRow
                   label="Notes"
                   value={

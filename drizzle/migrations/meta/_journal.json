@@ -57,6 +57,13 @@
       "when": 1792047331982,
       "tag": "0007_generated_number_defaults",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1792140608675,
+      "tag": "0008_vendor_payments_customer_receipts",
+      "breakpoints": true
     }
   ]
 }

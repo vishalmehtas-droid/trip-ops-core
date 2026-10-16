@@ -468,7 +468,7 @@ function SaleDetailPage() {
       {hasPermission("purchases.read") ? (
         <BookingPurchases
           saleId={sale.id}
-          bookingOpen={sale.status === "pending" || sale.status === "confirmed"}
+          bookingOpen={sale.status !== "cancelled"}
         />
       ) : null}
 
