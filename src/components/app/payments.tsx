@@ -196,7 +196,7 @@ type PaymentForm = {
   notes: string;
 };
 
-function emptyPaymentForm(saleId = ""): PaymentForm {
+function emptyPaymentForm(saleId = "", vendorId = ""): PaymentForm {
   return {
     vendor_id: vendorId,
     sale_id: saleId,
@@ -237,16 +237,18 @@ export function PaymentFormDialog({
   onOpenChange,
   payment,
   presetSaleId,
+  presetVendorId,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   payment?: PaymentRow | null;
   presetSaleId?: string;
+  presetVendorId?: string;
 }) {
   const queryClient = useQueryClient();
   const saveFn = useServerFn(saveVendorPayment);
   const openFn = useServerFn(listOpenPurchases);
-  const [form, setForm] = useState<PaymentForm>(emptyPaymentForm(presetSaleId));
+  const [form, setForm] = useState<PaymentForm>(emptyPaymentForm(presetSaleId, presetVendorId));
   const [alloc, setAlloc] = useState<Record<string, string>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [lastOpen, setLastOpen] = useState(false);
@@ -272,7 +274,7 @@ export function PaymentFormDialog({
         }
         setAlloc(initial);
       } else {
-        setForm(emptyPaymentForm(presetSaleId));
+        setForm(emptyPaymentForm(presetSaleId, presetVendorId));
         setAlloc({});
       }
     }
