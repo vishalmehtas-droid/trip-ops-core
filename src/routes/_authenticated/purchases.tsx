@@ -12,6 +12,7 @@ import {
   usePurchases,
   type PurchaseFilters,
 } from "@/components/app/purchases";
+import { PaymentFormDialog } from "@/components/app/payments";
 import { RecordCombobox, type RecordOption } from "@/components/app/sales-ui";
 import { EmptyState, ErrorState, TableSkeleton, UnauthorizedState } from "@/components/app/states";
 import { Button } from "@/components/ui/button";
@@ -47,9 +48,17 @@ function PurchasesPage() {
   const { hasPermission } = useAuth();
   const canRead = hasPermission("purchases.read");
   const canManage = hasPermission("purchases.manage");
+  const canRecordPayment = hasPermission("payments.manage");
   const [filters, setFilters] = useState<PurchaseFilters>({ status: "all" });
   const [createOpen, setCreateOpen] = useState(false);
   const [selected, setSelected] = useState<PurchaseRow | null>(null);
+  const [paymentPreset, setPaymentPreset] = useState<{ saleId: string; vendorId: string } | null>(
+    null,
+  );
+
+  const recordPayment = canRecordPayment
+    ? (row: PurchaseRow) => setPaymentPreset({ saleId: row.sale_id, vendorId: row.vendor_id })
+    : undefined;
 
   const purchases = usePurchases(filters, canRead);
   const bookings = useBookingOptions(canRead);
@@ -172,11 +181,25 @@ function PurchasesPage() {
           description="Record a supplier invoice against a booking, or adjust the filters."
         />
       ) : (
-        <PurchasesTable rows={purchases.data} onOpen={setSelected} />
+        <PurchasesTable
+          rows={purchases.data}
+          onOpen={setSelected}
+          onRecordPayment={recordPayment}
+        />
       )}
 
       <PurchaseFormDialog open={createOpen} onOpenChange={setCreateOpen} />
-      <PurchaseSheet purchase={current} onOpenChange={(open) => !open && setSelected(null)} />
+      <PurchaseSheet
+        purchase={current}
+        onOpenChange={(open) => !open && setSelected(null)}
+        onRecordPayment={recordPayment}
+      />
+      <PaymentFormDialog
+        open={paymentPreset !== null}
+        onOpenChange={(open) => !open && setPaymentPreset(null)}
+        presetSaleId={paymentPreset?.saleId}
+        presetVendorId={paymentPreset?.vendorId}
+      />
     </div>
   );
 }

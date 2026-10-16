@@ -246,7 +246,9 @@ export function PurchasesTable({
                 {row.status === "recorded" ? (
                   <div className="flex items-center gap-2">
                     <PurchasePaymentBadge row={row} />
-                    {onRecordPayment && toPaise(row.outstanding) > 0n ? (
+                    {onRecordPayment &&
+                    row.sale?.status !== "cancelled" &&
+                    toPaise(row.outstanding) > 0n ? (
                       <Button
                         variant="ghost"
                         size="sm"
