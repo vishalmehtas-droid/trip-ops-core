@@ -664,21 +664,24 @@ export function PurchaseSheet({
                     </Button>
                   ) : null}
                   {canChange ? (
-                  <Button size="sm" variant="outline" onClick={() => setEditOpen(true)}>
-                    Edit
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="text-destructive"
-                    onClick={() => {
-                      setReason("");
-                      setReasonError(undefined);
-                      setCancelOpen(true);
-                    }}
-                  >
-                    Cancel purchase
-                  </Button>
+                    <>
+                      <Button size="sm" variant="outline" onClick={() => setEditOpen(true)}>
+                        Edit
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-destructive"
+                        onClick={() => {
+                          setReason("");
+                          setReasonError(undefined);
+                          setCancelOpen(true);
+                        }}
+                      >
+                        Cancel purchase
+                      </Button>
+                    </>
+                  ) : null}
                 </div>
               ) : purchase.status === "recorded" && !bookingOpen ? (
                 <p className="mt-4 text-xs text-muted-foreground">
