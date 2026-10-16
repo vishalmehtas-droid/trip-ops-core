@@ -198,7 +198,7 @@ type PaymentForm = {
 
 function emptyPaymentForm(saleId = ""): PaymentForm {
   return {
-    vendor_id: "",
+    vendor_id: vendorId,
     sale_id: saleId,
     payment_type: "part",
     payment_date: todayIso(),
@@ -216,11 +216,17 @@ function useActiveVendors(enabled: boolean) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("vendors")
-        .select("id, name, phone")
+        .select("id, name, phone, payment_terms, advance_rule")
         .eq("is_active", true)
         .order("name");
       if (error) throw error;
-      return (data ?? []) as { id: string; name: string; phone: string | null }[];
+      return (data ?? []) as {
+        id: string;
+        name: string;
+        phone: string | null;
+        payment_terms: string | null;
+        advance_rule: string | null;
+      }[];
     },
   });
 }
