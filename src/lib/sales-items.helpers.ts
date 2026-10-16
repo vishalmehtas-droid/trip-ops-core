@@ -36,3 +36,16 @@ export async function assertVendorSelectable(
   if (!data) throw new Error("The selected vendor does not exist");
   if (!data.is_active) throw new Error("The selected vendor is inactive");
 }
+
+/** Money records (purchases, payments, receipts) are blocked only on cancelled bookings. */
+export async function assertSaleNotCancelled(supabase: Client, saleId: string): Promise<void> {
+  const { data, error } = await supabase
+    .from("sales")
+    .select("id, status")
+    .eq("id", saleId)
+    .maybeSingle();
+
+  if (error) throw new Error(error.message);
+  if (!data) throw new Error("Booking not found");
+  if (data.status === "cancelled") throw new Error("A cancelled booking can no longer be changed");
+}

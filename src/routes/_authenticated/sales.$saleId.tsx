@@ -10,6 +10,8 @@ import { DetailRow, Field, formatDate, formatDateTime } from "@/components/app/m
 import { BookingCosting } from "@/components/app/sale-costing";
 import { BookingComponents } from "@/components/app/sales-items";
 import { BookingPurchases } from "@/components/app/purchases";
+import { BookingVendorPayments } from "@/components/app/payments";
+import { BookingReceipts } from "@/components/app/receipts";
 import { RecordCombobox, SaleStatusBadge, type RecordOption } from "@/components/app/sales-ui";
 import { useQuickAdd } from "@/components/app/quick-add";
 import { ErrorState, LoadingState, UnauthorizedState } from "@/components/app/states";
@@ -468,8 +470,16 @@ function SaleDetailPage() {
       {hasPermission("purchases.read") ? (
         <BookingPurchases
           saleId={sale.id}
-          bookingOpen={sale.status === "pending" || sale.status === "confirmed"}
+          bookingOpen={sale.status !== "cancelled"}
         />
+      ) : null}
+
+      {hasPermission("payments.read") ? (
+        <BookingVendorPayments saleId={sale.id} bookingOpen={sale.status !== "cancelled"} />
+      ) : null}
+
+      {hasPermission("receipts.read") ? (
+        <BookingReceipts saleId={sale.id} bookingOpen={sale.status !== "cancelled"} />
       ) : null}
 
       <Dialog open={formOpen} onOpenChange={setFormOpen}>

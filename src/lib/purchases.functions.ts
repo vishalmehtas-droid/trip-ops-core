@@ -10,7 +10,7 @@ import {
   purchaseUpdateSchema,
   type PurchaseStatus,
 } from "./purchase-schemas";
-import { assertSaleEditable, assertVendorSelectable } from "./sales-items.helpers";
+import { assertSaleNotCancelled, assertVendorSelectable } from "./sales-items.helpers";
 
 /**
  * Purchase numbers, creators, timestamps, INR amounts and status rules are all
@@ -19,7 +19,7 @@ import { assertSaleEditable, assertVendorSelectable } from "./sales-items.helper
  */
 
 const PURCHASE_SELECT =
-  "id, purchase_number, sale_id, vendor_id, vendor_invoice_number, invoice_date, currency_code, exchange_rate::text, amount::text, amount_inr::text, notes, status, cancel_reason, created_by, created_at, updated_at, vendor:vendors(id, name, is_active), sale:sales(id, booking_number, status, client:clients(id, name))";
+  "id, purchase_number, sale_id, vendor_id, vendor_invoice_number, invoice_date, currency_code, exchange_rate::text, amount::text, amount_inr::text, notes, status, cancel_reason, created_by, created_at, updated_at, vendor:vendors(id, name, is_active), sale:sales(id, booking_number, status, client:clients(id, name)), allocations:vendor_payment_allocations(amount_inr::text, payment:vendor_payments(status))";
 
 export type PurchaseRow = {
   id: string;
@@ -45,7 +45,27 @@ export type PurchaseRow = {
     status: string;
     client: { id: string; name: string } | null;
   } | null;
+  /** Live vendor-payment allocations (recorded payments only). */
+  paid: string;
+  outstanding: string;
 };
+
+type PurchaseRaw = Omit<PurchaseRow, "paid" | "outstanding"> & {
+  allocations?: { amount_inr: string; payment: { status: string } | null }[];
+};
+
+function withPaid(row: PurchaseRaw): PurchaseRow {
+  const { allocations, ...rest } = row;
+  let paidPaise = 0n;
+  for (const a of allocations ?? []) {
+    if (a.payment?.status === "recorded") paidPaise += paise(a.amount_inr);
+  }
+  return {
+    ...rest,
+    paid: toDecimal(row.status === "recorded" ? paidPaise : 0n),
+    outstanding: toDecimal(row.status === "recorded" ? paise(row.amount_inr) - paidPaise : 0n),
+  };
+}
 
 export const listPurchases = createServerFn({ method: "POST" })
   .middleware([requireActiveUser])
@@ -64,7 +84,7 @@ export const listPurchases = createServerFn({ method: "POST" })
     if (data.to) query = query.lte("invoice_date", data.to);
     const { data: rows, error } = await query;
     if (error) throw new Error(error.message);
-    return (rows ?? []) as unknown as PurchaseRow[];
+    return ((rows ?? []) as unknown as PurchaseRaw[]).map(withPaid);
   });
 
 export const getPurchase = createServerFn({ method: "POST" })
@@ -79,7 +99,7 @@ export const getPurchase = createServerFn({ method: "POST" })
       .maybeSingle();
     if (error) throw new Error(error.message);
     if (!row) throw new Error("Purchase not found");
-    return row as unknown as PurchaseRow;
+    return withPaid(row as unknown as PurchaseRaw);
   });
 
 export const createPurchase = createServerFn({ method: "POST" })
@@ -87,7 +107,7 @@ export const createPurchase = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => purchaseCreateSchema.parse(input))
   .handler(async ({ data, context }) => {
     requirePermission(context, "purchases.manage");
-    await assertSaleEditable(context.supabase, data.sale_id);
+    await assertSaleNotCancelled(context.supabase, data.sale_id);
     await assertVendorSelectable(context.supabase, data.values.vendor_id);
     const { data: row, error } = await context.supabase
       .from("purchases")
@@ -120,7 +140,7 @@ export const updatePurchase = createServerFn({ method: "POST" })
     if (readError) throw new Error(readError.message);
     if (!existing) throw new Error("Purchase not found");
     if (existing.status === "cancelled") throw new Error("A cancelled purchase can't be changed");
-    await assertSaleEditable(context.supabase, existing.sale_id);
+    await assertSaleNotCancelled(context.supabase, existing.sale_id);
     if (data.values.vendor_id !== existing.vendor_id) {
       await assertVendorSelectable(context.supabase, data.values.vendor_id);
     }
@@ -153,7 +173,7 @@ export const cancelPurchase = createServerFn({ method: "POST" })
     if (readError) throw new Error(readError.message);
     if (!existing) throw new Error("Purchase not found");
     if (existing.status === "cancelled") throw new Error("This purchase is already cancelled");
-    await assertSaleEditable(context.supabase, existing.sale_id);
+    await assertSaleNotCancelled(context.supabase, existing.sale_id);
     const { error } = await context.supabase
       .from("purchases")
       .update({ status: "cancelled", cancel_reason: data.reason })

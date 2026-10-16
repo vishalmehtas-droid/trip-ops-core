@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { PageHeader } from "@/components/app/page-header";
 import { Field, MasterToolbar, formatDate } from "@/components/app/master-data";
 import { RecordCombobox, SaleStatusBadge, type RecordOption } from "@/components/app/sales-ui";
+import { ReceiptPaymentBadge, useReceivables } from "@/components/app/receipts";
 import { useQuickAdd } from "@/components/app/quick-add";
 import { EmptyState, ErrorState, TableSkeleton, UnauthorizedState } from "@/components/app/states";
 import { Badge } from "@/components/ui/badge";
@@ -123,6 +124,12 @@ function SalesPage() {
   );
   const destinationQuickAdd = useQuickAdd("destination", (id) =>
     setForm((current) => ({ ...current, destination_id: id })),
+  );
+
+  const receivables = useReceivables(canRead && hasPermission("receipts.read"));
+  const paymentStatusBySale = useMemo(
+    () => new Map((receivables.data?.bookings ?? []).map((b) => [b.sale_id, b.payment_status])),
+    [receivables.data],
   );
 
   const salesQuery = useQuery({
@@ -378,6 +385,7 @@ function SalesPage() {
                   </TableHead>
                   <TableHead className="text-[10px] uppercase tracking-wider">Travel</TableHead>
                   <TableHead className="text-[10px] uppercase tracking-wider">Status</TableHead>
+                  <TableHead className="text-[10px] uppercase tracking-wider">Payment</TableHead>
                   <TableHead className="text-[10px] uppercase tracking-wider">Created by</TableHead>
                   <TableHead className="text-[10px] uppercase tracking-wider">Created</TableHead>
                   <TableHead className="text-right text-[10px] uppercase tracking-wider">
@@ -401,6 +409,13 @@ function SalesPage() {
                     </TableCell>
                     <TableCell>
                       <SaleStatusBadge status={row.status} />
+                    </TableCell>
+                    <TableCell>
+                      {paymentStatusBySale.get(row.id) ? (
+                        <ReceiptPaymentBadge status={paymentStatusBySale.get(row.id)!} />
+                      ) : (
+                        <span className="text-xs text-muted-foreground">—</span>
+                      )}
                     </TableCell>
                     <TableCell className="text-muted-foreground">
                       {creatorNames.get(row.created_by) ?? "—"}

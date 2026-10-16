@@ -67,8 +67,20 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     label: "Finance",
     items: [
-      { label: "Receipts", to: "/receipts", icon: Receipt, phase: 3 },
-      { label: "Payments", to: "/payments", icon: Wallet, phase: 3 },
+      {
+        label: "Receipts",
+        to: "/receipts",
+        icon: Receipt,
+        phase: null,
+        permission: "receipts.read",
+      },
+      {
+        label: "Payments",
+        to: "/payments",
+        icon: Wallet,
+        phase: null,
+        permission: "payments.read",
+      },
     ],
   },
   {

@@ -314,6 +314,79 @@ export type Database = {
           },
         ]
       }
+      customer_receipts: {
+        Row: {
+          amount_inr: number
+          cancel_reason: string | null
+          created_at: string
+          created_by: string
+          id: string
+          method: string
+          notes: string | null
+          payment_type: string
+          receipt_date: string
+          receipt_number: string
+          reference: string | null
+          sale_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount_inr: number
+          cancel_reason?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          method: string
+          notes?: string | null
+          payment_type?: string
+          receipt_date?: string
+          receipt_number?: string
+          reference?: string | null
+          sale_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount_inr?: number
+          cancel_reason?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          method?: string
+          notes?: string | null
+          payment_type?: string
+          receipt_date?: string
+          receipt_number?: string
+          reference?: string | null
+          sale_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_receipts_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_receipts_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "user_directory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_receipts_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       destinations: {
         Row: {
           country: string | null
@@ -1237,6 +1310,131 @@ export type Database = {
         }
         Relationships: []
       }
+      vendor_payment_allocations: {
+        Row: {
+          amount_inr: number
+          created_at: string
+          id: string
+          payment_id: string
+          purchase_id: string
+          updated_at: string
+        }
+        Insert: {
+          amount_inr: number
+          created_at?: string
+          id?: string
+          payment_id: string
+          purchase_id: string
+          updated_at?: string
+        }
+        Update: {
+          amount_inr?: number
+          created_at?: string
+          id?: string
+          payment_id?: string
+          purchase_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_payment_allocations_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_payments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_payment_allocations_purchase_id_fkey"
+            columns: ["purchase_id"]
+            isOneToOne: false
+            referencedRelation: "purchases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendor_payments: {
+        Row: {
+          amount_inr: number
+          cancel_reason: string | null
+          created_at: string
+          created_by: string
+          id: string
+          method: string
+          notes: string | null
+          payment_date: string
+          payment_number: string
+          payment_type: string
+          reference: string | null
+          sale_id: string | null
+          status: string
+          updated_at: string
+          vendor_id: string
+        }
+        Insert: {
+          amount_inr: number
+          cancel_reason?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          method: string
+          notes?: string | null
+          payment_date?: string
+          payment_number?: string
+          payment_type?: string
+          reference?: string | null
+          sale_id?: string | null
+          status?: string
+          updated_at?: string
+          vendor_id: string
+        }
+        Update: {
+          amount_inr?: number
+          cancel_reason?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          method?: string
+          notes?: string | null
+          payment_date?: string
+          payment_number?: string
+          payment_type?: string
+          reference?: string | null
+          sale_id?: string | null
+          status?: string
+          updated_at?: string
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_payments_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_payments_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "user_directory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_payments_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "sales"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_payments_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vendors: {
         Row: {
           address: string | null
@@ -1323,6 +1521,10 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      save_vendor_payment: {
+        Args: { _allocations: Json; _id: string; _values: Json }
+        Returns: Json
       }
     }
     Enums: {
