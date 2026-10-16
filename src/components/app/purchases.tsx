@@ -609,6 +609,7 @@ export function PurchaseSheet({
                 <SheetTitle className="flex items-center gap-2 font-mono">
                   {purchase.purchase_number}
                   <PurchaseStatusBadge status={purchase.status} />
+                  <PurchasePaymentBadge row={purchase} />
                 </SheetTitle>
               </SheetHeader>
               <dl className="mt-4">
@@ -655,8 +656,14 @@ export function PurchaseSheet({
                 <DetailRow label="Recorded" value={formatDateTime(purchase.created_at)} />
                 <DetailRow label="Last updated" value={formatDateTime(purchase.updated_at)} />
               </dl>
-              {canChange ? (
-                <div className="mt-4 flex gap-2">
+              {canChange || canRecordPayment ? (
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {canRecordPayment ? (
+                    <Button size="sm" onClick={() => onRecordPayment(purchase)}>
+                      Record Payment
+                    </Button>
+                  ) : null}
+                  {canChange ? (
                   <Button size="sm" variant="outline" onClick={() => setEditOpen(true)}>
                     Edit
                   </Button>
