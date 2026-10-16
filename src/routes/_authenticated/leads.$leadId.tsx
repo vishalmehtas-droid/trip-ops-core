@@ -123,6 +123,7 @@ function LeadDetailPage() {
     enquiry_date: "",
     assigned_to: "",
     source: "",
+    follow_up_date: "",
     notes: "",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -278,6 +279,7 @@ function LeadDetailPage() {
       enquiry_date: lead.enquiry_date,
       assigned_to: lead.assigned_to,
       source: lead.source ?? "",
+      follow_up_date: lead.follow_up_date ?? "",
       notes: lead.notes ?? "",
     });
     setErrors({});
@@ -406,6 +408,24 @@ function LeadDetailPage() {
             value={personNames.get(lead.assigned_to) ?? "Unknown user"}
           />
           <DetailRow label="Source" value={lead.source} />
+          <DetailRow
+            label="Follow-up date"
+            value={
+              lead.follow_up_date ? (
+                <span
+                  className={
+                    lead.status !== "won" &&
+                    lead.status !== "lost" &&
+                    lead.follow_up_date <= new Date().toISOString().slice(0, 10)
+                      ? "font-semibold text-destructive"
+                      : undefined
+                  }
+                >
+                  {formatDate(lead.follow_up_date)}
+                </span>
+              ) : null
+            }
+          />
           <DetailRow label="Status" value={<LeadStatusBadge status={lead.status} />} />
           <DetailRow label="Notes" value={lead.notes} />
           <DetailRow
