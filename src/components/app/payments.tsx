@@ -417,9 +417,11 @@ export function PaymentFormDialog({
                   createLabel="Add new vendor"
                 />
               </Field>
-              <VendorTermsNote
-                vendor={(vendors.data ?? []).find((row) => row.id === form.vendor_id)}
-              />
+              <div className="sm:col-span-2">
+                <VendorTermsNote
+                  vendor={(vendors.data ?? []).find((row) => row.id === form.vendor_id)}
+                />
+              </div>
               <Field label="Booking (optional)" htmlFor="payment-booking" error={errors["sale_id"]}>
                 <RecordCombobox
                   id="payment-booking"
