@@ -183,10 +183,12 @@ export function PurchasesTable({
   rows,
   onOpen,
   showBooking = true,
+  onRecordPayment,
 }: {
   rows: PurchaseRow[];
   onOpen: (row: PurchaseRow) => void;
   showBooking?: boolean;
+  onRecordPayment?: (row: PurchaseRow) => void;
 }) {
   return (
     <div className="overflow-x-auto rounded-lg border border-border bg-surface">
@@ -202,6 +204,7 @@ export function PurchasesTable({
             <TableHead className={cn(HEAD, "text-right")}>Paid</TableHead>
             <TableHead className={cn(HEAD, "text-right")}>Outstanding</TableHead>
             <TableHead className={HEAD}>Status</TableHead>
+            <TableHead className={HEAD}>Payment</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -237,6 +240,28 @@ export function PurchasesTable({
               </TableCell>
               <TableCell>
                 <PurchaseStatusBadge status={row.status} />
+              </TableCell>
+              <TableCell>
+                {row.status === "recorded" ? (
+                  <div className="flex items-center gap-2">
+                    <PurchasePaymentBadge row={row} />
+                    {onRecordPayment && toPaise(row.outstanding) > 0n ? (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 px-2 text-xs"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          onRecordPayment(row);
+                        }}
+                      >
+                        Record Payment
+                      </Button>
+                    ) : null}
+                  </div>
+                ) : (
+                  "—"
+                )}
               </TableCell>
             </TableRow>
           ))}
