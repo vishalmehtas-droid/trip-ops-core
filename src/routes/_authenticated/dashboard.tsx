@@ -148,8 +148,11 @@ function SectionHeading({ title, action }: { title: string; action?: React.React
 }
 
 function DashboardPage() {
-  const { profile, hasPermission } = useAuth();
+  const { profile, hasPermission, hasRole, isAdmin, user } = useAuth();
   const canReadSales = hasPermission("sales.read");
+  const canReadLeads = hasPermission("leads.read");
+  // Sales users see only their own follow-ups; everyone else sees all leads.
+  const ownFollowUpsOnly = hasRole("sales") && !isAdmin;
 
   const salesQuery = useQuery({
     queryKey: ["dashboard", "sales"],
@@ -161,6 +164,25 @@ function DashboardPage() {
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as unknown as DashboardSale[];
+    },
+  });
+
+  const followUpsQuery = useQuery({
+    queryKey: ["dashboard", "follow-ups", ownFollowUpsOnly ? user?.id : "all"],
+    enabled: canReadLeads,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("leads")
+        .select("id, assigned_to, status, follow_up_date")
+        .not("follow_up_date", "is", null)
+        .not("status", "in", '("won","lost")');
+      if (error) throw error;
+      return (data ?? []) as {
+        id: string;
+        assigned_to: string;
+        status: string;
+        follow_up_date: string;
+      }[];
     },
   });
 
@@ -189,6 +211,11 @@ function DashboardPage() {
         .slice(0, 4),
     };
   }, [sales, today]);
+
+  const followUpsDue = (followUpsQuery.data ?? []).filter(
+    (lead) =>
+      lead.follow_up_date <= today && (!ownFollowUpsOnly || lead.assigned_to === user?.id),
+  ).length;
 
   const firstName = (profile?.name || profile?.email || "there").split(/[\s@]/)[0];
   const dateLabel = new Date().toLocaleDateString(undefined, {
