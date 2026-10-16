@@ -214,8 +214,7 @@ function DashboardPage() {
   }, [sales, today]);
 
   const followUpsDue = (followUpsQuery.data ?? []).filter(
-    (lead) =>
-      lead.follow_up_date <= today && (!ownFollowUpsOnly || lead.assigned_to === user?.id),
+    (lead) => lead.follow_up_date <= today && (!ownFollowUpsOnly || lead.assigned_to === user?.id),
   ).length;
 
   const firstName = (profile?.name || profile?.email || "there").split(/[\s@]/)[0];

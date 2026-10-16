@@ -398,9 +398,7 @@ function LeadsPage() {
                     Assigned to
                   </TableHead>
                   <TableHead className="text-[10px] uppercase tracking-wider">Source</TableHead>
-                  <TableHead className="text-[10px] uppercase tracking-wider">
-                    Follow-up
-                  </TableHead>
+                  <TableHead className="text-[10px] uppercase tracking-wider">Follow-up</TableHead>
                   <TableHead className="text-[10px] uppercase tracking-wider">Status</TableHead>
                   <TableHead className="text-[10px] uppercase tracking-wider">Updated</TableHead>
                   <TableHead className="text-right text-[10px] uppercase tracking-wider">
@@ -531,11 +529,7 @@ function LeadsPage() {
                 />
               </Field>
             </div>
-            <Field
-              label="Follow-up date"
-              htmlFor="lead-follow-up"
-              error={errors["follow_up_date"]}
-            >
+            <Field label="Follow-up date" htmlFor="lead-follow-up" error={errors["follow_up_date"]}>
               <Input
                 id="lead-follow-up"
                 type="date"
