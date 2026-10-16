@@ -761,6 +761,7 @@ export function BookingPurchases({
 }) {
   const { hasPermission } = useAuth();
   const canManage = hasPermission("purchases.manage") && bookingOpen;
+  const canRecordPayment = hasPermission("payments.manage") && bookingOpen;
   const purchases = usePurchases({ sale_id: saleId });
   const varianceFn = useServerFn(getBookingVariance);
   const variance = useQuery({
@@ -769,6 +770,11 @@ export function BookingPurchases({
   });
   const [createOpen, setCreateOpen] = useState(false);
   const [selected, setSelected] = useState<PurchaseRow | null>(null);
+  const [paymentVendor, setPaymentVendor] = useState<string | null>(null);
+
+  const recordPayment = canRecordPayment
+    ? (row: PurchaseRow) => setPaymentVendor(row.vendor_id)
+    : undefined;
 
   const v = variance.data;
 
@@ -796,7 +802,12 @@ export function BookingPurchases({
           description="Supplier invoices recorded against this booking appear here."
         />
       ) : (
-        <PurchasesTable rows={purchases.data} onOpen={setSelected} showBooking={false} />
+        <PurchasesTable
+          rows={purchases.data}
+          onOpen={setSelected}
+          showBooking={false}
+          onRecordPayment={recordPayment}
+        />
       )}
 
       <div className="space-y-3">
