@@ -225,7 +225,7 @@ function LeadsPage() {
         .filter(Boolean)
         .some((value) => value!.toLowerCase().includes(term));
     });
-  }, [leadsQuery.data, search, status, assignee]);
+  }, [leadsQuery.data, search, status, assignee, followUpFilter]);
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safePage = Math.min(page, pageCount - 1);
@@ -251,6 +251,7 @@ function LeadsPage() {
       enquiry_date: today(),
       assigned_to: user?.id ?? "",
       source: "",
+      follow_up_date: "",
       notes: "",
     });
     setErrors({});
@@ -342,6 +343,21 @@ function LeadsPage() {
                 {row.name || row.email}
               </SelectItem>
             ))}
+          </SelectContent>
+        </Select>
+        <Select
+          value={followUpFilter}
+          onValueChange={(value) => {
+            setFollowUpFilter(value as typeof followUpFilter);
+            setPage(0);
+          }}
+        >
+          <SelectTrigger className="w-[160px]" aria-label="Follow-up filter">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All follow-ups</SelectItem>
+            <SelectItem value="due">Follow-up due</SelectItem>
           </SelectContent>
         </Select>
       </MasterToolbar>
