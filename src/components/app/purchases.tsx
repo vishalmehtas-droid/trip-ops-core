@@ -35,6 +35,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { quoteFieldErrors } from "@/lib/quotation-display";
 import { formatMoney } from "@/lib/sale-costing-schemas";
+import { toPaise } from "@/lib/money";
 import {
   PURCHASE_STATUS_LABELS,
   purchaseCancelSchema,
@@ -71,6 +72,58 @@ export function PurchaseStatusBadge({ status }: { status: PurchaseStatus }) {
     >
       {PURCHASE_STATUS_LABELS[status]}
     </Badge>
+  );
+}
+
+/** Unpaid / Partly paid / Paid, derived from exact paise amounts. */
+export function PurchasePaymentBadge({
+  row,
+}: {
+  row: Pick<PurchaseRow, "status" | "paid" | "outstanding">;
+}) {
+  if (row.status !== "recorded") return null;
+  const paid = toPaise(row.paid);
+  const outstanding = toPaise(row.outstanding);
+  const label = outstanding <= 0n && paid > 0n ? "Paid" : paid <= 0n ? "Unpaid" : "Partly paid";
+  return (
+    <Badge
+      variant="outline"
+      className={cn(
+        "text-[10px] uppercase",
+        label === "Paid"
+          ? "border-success/40 text-success"
+          : label === "Partly paid"
+            ? "border-warning/40 text-warning"
+            : "border-destructive/40 text-destructive",
+      )}
+    >
+      {label}
+    </Badge>
+  );
+}
+
+/** Vendor payment terms shown inside payment/purchase dialogs. */
+export function VendorTermsNote({
+  vendor,
+}: {
+  vendor?: { payment_terms: string | null; advance_rule: string | null } | null;
+}) {
+  if (!vendor || (!vendor.payment_terms && !vendor.advance_rule)) return null;
+  return (
+    <div className="rounded-md border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+      {vendor.payment_terms ? (
+        <p>
+          <span className="font-semibold text-foreground">Payment terms: </span>
+          {vendor.payment_terms}
+        </p>
+      ) : null}
+      {vendor.advance_rule ? (
+        <p className={vendor.payment_terms ? "mt-0.5" : ""}>
+          <span className="font-semibold text-foreground">Advance: </span>
+          {vendor.advance_rule}
+        </p>
+      ) : null}
+    </div>
   );
 }
 
@@ -111,11 +164,17 @@ function useActiveVendors(enabled: boolean) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("vendors")
-        .select("id, name, phone")
+        .select("id, name, phone, payment_terms, advance_rule")
         .eq("is_active", true)
         .order("name");
       if (error) throw error;
-      return (data ?? []) as { id: string; name: string; phone: string | null }[];
+      return (data ?? []) as {
+        id: string;
+        name: string;
+        phone: string | null;
+        payment_terms: string | null;
+        advance_rule: string | null;
+      }[];
     },
   });
 }
