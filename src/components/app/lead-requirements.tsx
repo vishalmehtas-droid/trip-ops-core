@@ -10,6 +10,7 @@ import { RequirementStatusBadge } from "@/components/app/leads-ui";
 import { useQuickAdd } from "@/components/app/quick-add";
 import { SupplierQuotes } from "@/components/app/supplier-quotes";
 import { CustomerQuotes } from "@/components/app/customer-quotes";
+import { RequirementNextStep } from "./requirement-next-step";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -346,6 +347,7 @@ export function LeadRequirements({
                     </div>
                   ) : null}
                 </div>
+                <RequirementNextStep requirementId={row.id} />
                 <SupplierQuotes
                   leadId={leadId}
                   requirementId={row.id}
@@ -355,6 +357,7 @@ export function LeadRequirements({
                   canCreate={row.status === "draft" || row.status === "active"}
                 />
                 <CustomerQuotes
+                  defaultPersons={row.adults + row.children}
                   requirementId={row.id}
                   initialQuoteId={quoteToOpen}
                   canCreate={canManage && (row.status === "draft" || row.status === "active")}
