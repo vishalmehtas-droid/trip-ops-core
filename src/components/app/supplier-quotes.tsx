@@ -302,7 +302,10 @@ export function SupplierQuotes({
   const openQuote = quotes.find((q) => q.id === openId) ?? null;
 
   return (
-    <div id={`supplier-quotes-${requirementId}`} className="mt-3 scroll-mt-4 rounded-md border border-border">
+    <div
+      id={`supplier-quotes-${requirementId}`}
+      className="mt-3 scroll-mt-4 rounded-md border border-border"
+    >
       <div className="flex items-center justify-between gap-2 border-b border-border px-3 py-2">
         <h3 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
           Supplier quotes
@@ -550,7 +553,8 @@ function QuoteSheetBody({
 
   const saveLine = useMutation({
     mutationFn: (values: ReturnType<typeof quoteLineValuesSchema.parse>) => {
-      if (editingLineId === "new") return addLineFn({ data: { supplier_quote_id: quote.id, values } });
+      if (editingLineId === "new")
+        return addLineFn({ data: { supplier_quote_id: quote.id, values } });
       if (!editingLineId) throw new Error("Select a line");
       return updateLineFn({ data: { id: editingLineId, values } });
     },
@@ -677,12 +681,30 @@ function QuoteSheetBody({
               <Pencil className="size-3.5" />
               Edit details
             </Button>
-
           </div>
         ) : null}
         <div className="space-y-1 pt-2">
-          <Button size="sm" variant="outline" disabled={!editable || quote.status !== "received" || revise.isPending} onClick={() => setConfirmRevise(true)}>Create revision</Button>
-          {!editable || quote.status !== "received" ? <p className="text-xs text-muted-foreground">{quote.is_superseded ? "A newer revision already replaces this quote." : quote.status === "selected" ? "Selected quotes are final; revisions are unavailable." : quote.status === "rejected" ? "Rejected quotes are final; revisions are unavailable." : !canManage ? "You do not have permission to create revisions." : "Mark the quote as Received first."}</p> : null}
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={!editable || quote.status !== "received" || revise.isPending}
+            onClick={() => setConfirmRevise(true)}
+          >
+            Create revision
+          </Button>
+          {!editable || quote.status !== "received" ? (
+            <p className="text-xs text-muted-foreground">
+              {quote.is_superseded
+                ? "A newer revision already replaces this quote."
+                : quote.status === "selected"
+                  ? "Selected quotes are final; revisions are unavailable."
+                  : quote.status === "rejected"
+                    ? "Rejected quotes are final; revisions are unavailable."
+                    : !canManage
+                      ? "You do not have permission to create revisions."
+                      : "Mark the quote as Received first."}
+            </p>
+          ) : null}
         </div>
         <DetailRow
           label="Status"
@@ -939,7 +961,19 @@ function QuoteSheetBody({
                   onChange={(e) => setLineForm({ ...lineForm, quantity: e.target.value })}
                 />
               </Field>
-              <QuoteCurrencyField key={editingLineId} id="sql-cur" value={lineForm.currency} error={lineErrors["currency"]} onChange={(currency) => setLineForm({ ...lineForm, currency, exchange_rate: currency === "INR" ? "1" : lineForm.exchange_rate })} />
+              <QuoteCurrencyField
+                key={editingLineId}
+                id="sql-cur"
+                value={lineForm.currency}
+                error={lineErrors["currency"]}
+                onChange={(currency) =>
+                  setLineForm({
+                    ...lineForm,
+                    currency,
+                    exchange_rate: currency === "INR" ? "1" : lineForm.exchange_rate,
+                  })
+                }
+              />
               <Field
                 label="Unit amount"
                 htmlFor="sql-unit"
@@ -972,7 +1006,12 @@ function QuoteSheetBody({
                 />
               </Field>
             </div>
-            <QuoteLinePreview quantity={lineForm.quantity} currency={lineForm.currency} amount={lineForm.unit_amount} rate={isInr ? "1" : lineForm.exchange_rate} />
+            <QuoteLinePreview
+              quantity={lineForm.quantity}
+              currency={lineForm.currency}
+              amount={lineForm.unit_amount}
+              rate={isInr ? "1" : lineForm.exchange_rate}
+            />
           </div>
           <DialogFooter>
             <Button

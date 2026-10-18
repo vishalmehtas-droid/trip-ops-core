@@ -208,7 +208,9 @@ export function CustomerQuotes({
               Client and quote number are assigned automatically.
             </DialogDescription>
           </DialogHeader>
-          <div className="quote-dialog-body"><HeaderFields form={form} onChange={setForm} errors={errors} /></div>
+          <div className="quote-dialog-body">
+            <HeaderFields form={form} onChange={setForm} errors={errors} />
+          </div>
           <DialogFooter>
             <Button
               variant="outline"
@@ -451,10 +453,30 @@ function CustomerQuoteBody({
         ) : null}
       </dl>
       <div className="flex flex-wrap gap-2">
-        {booking ? <Button asChild size="sm" variant="outline"><Link to="/sales/$saleId" params={{ saleId: booking.id }}>Booking {booking.booking_number}</Link></Button> : <div className="space-y-1">
-          <Button size="sm" onClick={() => setConfirmConvert(true)} disabled={!canConvert || convert.isPending}>Convert to Booking</Button>
-          {!canConvert ? <p className="text-xs text-muted-foreground">{quote.status !== "accepted" ? "Accept the quote first." : "You do not have permission to convert quotes."}</p> : null}
-        </div>}
+        {booking ? (
+          <Button asChild size="sm" variant="outline">
+            <Link to="/sales/$saleId" params={{ saleId: booking.id }}>
+              Booking {booking.booking_number}
+            </Link>
+          </Button>
+        ) : (
+          <div className="space-y-1">
+            <Button
+              size="sm"
+              onClick={() => setConfirmConvert(true)}
+              disabled={!canConvert || convert.isPending}
+            >
+              Convert to Booking
+            </Button>
+            {!canConvert ? (
+              <p className="text-xs text-muted-foreground">
+                {quote.status !== "accepted"
+                  ? "Accept the quote first."
+                  : "You do not have permission to convert quotes."}
+              </p>
+            ) : null}
+          </div>
+        )}
         {editable ? (
           <Button
             size="sm"
@@ -484,8 +506,26 @@ function CustomerQuoteBody({
             )
           : null}
         <div className="space-y-1">
-          <Button size="sm" variant="outline" disabled={!canManage || !REVISABLE_STATUSES.includes(quote.status) || action.isPending} onClick={() => setPending("revision")}><Copy className="size-4" />Create revision</Button>
-          {!canManage || !REVISABLE_STATUSES.includes(quote.status) ? <p className="text-xs text-muted-foreground">{!canManage ? "You do not have permission to create revisions." : quote.status === "accepted" ? "Accepted quotes are final; revisions are unavailable." : quote.status === "superseded" ? "A newer revision already replaces this quote." : "Available once the quote is Sent."}</p> : null}
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={!canManage || !REVISABLE_STATUSES.includes(quote.status) || action.isPending}
+            onClick={() => setPending("revision")}
+          >
+            <Copy className="size-4" />
+            Create revision
+          </Button>
+          {!canManage || !REVISABLE_STATUSES.includes(quote.status) ? (
+            <p className="text-xs text-muted-foreground">
+              {!canManage
+                ? "You do not have permission to create revisions."
+                : quote.status === "accepted"
+                  ? "Accepted quotes are final; revisions are unavailable."
+                  : quote.status === "superseded"
+                    ? "A newer revision already replaces this quote."
+                    : "Available once the quote is Sent."}
+            </p>
+          ) : null}
         </div>
       </div>
       <CustomerQuoteLines
@@ -511,7 +551,9 @@ function CustomerQuoteBody({
               {quote.quote_number} · Rev {quote.revision_no}
             </DialogDescription>
           </DialogHeader>
-          <div className="quote-dialog-body"><HeaderFields form={form} onChange={setForm} errors={errors} /></div>
+          <div className="quote-dialog-body">
+            <HeaderFields form={form} onChange={setForm} errors={errors} />
+          </div>
           <DialogFooter>
             <Button
               variant="outline"
