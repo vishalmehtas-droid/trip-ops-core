@@ -24,6 +24,8 @@ export const Route = createFileRoute("/reset-password")({
         content: "Choose a new password for your Triptastic Holidays operations account.",
       },
       { name: "robots", content: "noindex" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: ResetPasswordPage,

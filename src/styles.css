@@ -176,3 +176,19 @@
     color: var(--color-foreground);
   }
 }
+
+.quote-dialog {
+  display: flex;
+  flex-direction: column;
+  width: calc(100% - 1rem);
+  max-height: calc(100dvh - 2rem);
+  overflow: hidden;
+}
+.quote-dialog > .quote-dialog-body {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.quote-dialog > :not(.quote-dialog-body) {
+  flex-shrink: 0;
+}

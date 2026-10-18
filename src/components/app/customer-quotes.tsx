@@ -79,10 +79,12 @@ export function CustomerQuotes({
   requirementId,
   canCreate,
   initialQuoteId,
+  defaultPersons,
 }: {
   requirementId: string;
   canCreate: boolean;
   initialQuoteId?: string | undefined;
+  defaultPersons: number;
 }) {
   const auth = useAuth();
   const canManage = auth.hasAnyRole(["admin", "sales"]) && auth.hasPermission("leads.manage");
@@ -199,14 +201,16 @@ export function CustomerQuotes({
         </div>
       )}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent>
+        <DialogContent className="quote-dialog">
           <DialogHeader>
             <DialogTitle>New Customer Quote</DialogTitle>
             <DialogDescription>
               Client and quote number are assigned automatically.
             </DialogDescription>
           </DialogHeader>
-          <HeaderFields form={form} onChange={setForm} errors={errors} />
+          <div className="quote-dialog-body">
+            <HeaderFields form={form} onChange={setForm} errors={errors} />
+          </div>
           <DialogFooter>
             <Button
               variant="outline"
@@ -225,15 +229,17 @@ export function CustomerQuotes({
         open={openId !== null && Boolean(quotes.data?.some((quote) => quote.id === openId))}
         onOpenChange={(open) => !open && setOpenId(null)}
       >
-        <SheetContent className="w-full overflow-y-auto sm:max-w-3xl">
+        <SheetContent className="w-full overflow-y-auto overscroll-contain pb-6 sm:max-w-3xl">
           {openId ? (
             <CustomerQuoteDetail
               key={openId}
               id={openId}
+              defaultPersons={defaultPersons}
               requirementId={requirementId}
               canManage={canManage}
               onChanged={invalidate}
               onOpen={setOpenId}
+              onViewSupplierQuotes={() => setOpenId(null)}
             />
           ) : null}
         </SheetContent>
@@ -274,12 +280,16 @@ function HeaderFields({
 }
 
 function CustomerQuoteDetail({
+  onViewSupplierQuotes,
+  defaultPersons,
   id,
   requirementId,
   canManage,
   onChanged,
   onOpen,
 }: {
+  onViewSupplierQuotes: () => void;
+  defaultPersons: number;
   id: string;
   requirementId: string;
   canManage: boolean;
@@ -303,6 +313,8 @@ function CustomerQuoteDetail({
         <ErrorState description={query.error.message} onRetry={() => void query.refetch()} />
       ) : (
         <CustomerQuoteBody
+          onViewSupplierQuotes={onViewSupplierQuotes}
+          defaultPersons={defaultPersons}
           data={query.data}
           requirementId={requirementId}
           canManage={canManage}
@@ -322,12 +334,16 @@ const actionLabels = {
 } as const;
 
 function CustomerQuoteBody({
+  onViewSupplierQuotes,
+  defaultPersons,
   data,
   requirementId,
   canManage,
   onChanged,
   onOpen,
 }: {
+  onViewSupplierQuotes: () => void;
+  defaultPersons: number;
   data: Awaited<ReturnType<typeof getCustomerQuote>>;
   requirementId: string;
   canManage: boolean;
@@ -443,11 +459,30 @@ function CustomerQuoteBody({
         ) : null}
       </dl>
       <div className="flex flex-wrap gap-2">
-        {canConvert ? (
-          <Button size="sm" onClick={() => setConfirmConvert(true)} disabled={convert.isPending}>
-            Convert to Booking
+        {booking ? (
+          <Button asChild size="sm" variant="outline">
+            <Link to="/sales/$saleId" params={{ saleId: booking.id }}>
+              Booking {booking.booking_number}
+            </Link>
           </Button>
-        ) : null}
+        ) : (
+          <div className="space-y-1">
+            <Button
+              size="sm"
+              onClick={() => setConfirmConvert(true)}
+              disabled={!canConvert || convert.isPending}
+            >
+              Convert to Booking
+            </Button>
+            {!canConvert ? (
+              <p className="text-xs text-muted-foreground">
+                {quote.status !== "accepted"
+                  ? "Accept the quote first."
+                  : "You do not have permission to convert quotes."}
+              </p>
+            ) : null}
+          </div>
+        )}
         {editable ? (
           <Button
             size="sm"
@@ -476,14 +511,32 @@ function CustomerQuoteBody({
               ) : null,
             )
           : null}
-        {canManage && REVISABLE_STATUSES.includes(quote.status) ? (
-          <Button size="sm" variant="outline" onClick={() => setPending("revision")}>
+        <div className="space-y-1">
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={!canManage || !REVISABLE_STATUSES.includes(quote.status) || action.isPending}
+            onClick={() => setPending("revision")}
+          >
             <Copy className="size-4" />
             Create revision
           </Button>
-        ) : null}
+          {!canManage || !REVISABLE_STATUSES.includes(quote.status) ? (
+            <p className="text-xs text-muted-foreground">
+              {!canManage
+                ? "You do not have permission to create revisions."
+                : quote.status === "accepted"
+                  ? "Accepted quotes are final; revisions are unavailable."
+                  : quote.status === "superseded"
+                    ? "A newer revision already replaces this quote."
+                    : "Available once the quote is Sent."}
+            </p>
+          ) : null}
+        </div>
       </div>
       <CustomerQuoteLines
+        onViewSupplierQuotes={onViewSupplierQuotes}
+        defaultPersons={defaultPersons}
         quoteId={quote.id}
         requirementId={requirementId}
         lines={lines}
@@ -498,14 +551,16 @@ function CustomerQuoteBody({
         onChanged={onChanged}
       />
       <Dialog open={headerOpen && editable} onOpenChange={setHeaderOpen}>
-        <DialogContent>
+        <DialogContent className="quote-dialog">
           <DialogHeader>
             <DialogTitle>Edit quote details</DialogTitle>
             <DialogDescription>
               {quote.quote_number} · Rev {quote.revision_no}
             </DialogDescription>
           </DialogHeader>
-          <HeaderFields form={form} onChange={setForm} errors={errors} />
+          <div className="quote-dialog-body">
+            <HeaderFields form={form} onChange={setForm} errors={errors} />
+          </div>
           <DialogFooter>
             <Button
               variant="outline"
