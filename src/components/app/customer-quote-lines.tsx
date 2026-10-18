@@ -3,6 +3,9 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Loader2, Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { QuoteCurrencyField, QuoteLinePreview } from "./quote-entry-fields";
+import { lineEntryTotal } from "@/lib/quote-entry-preview";
+import { PRICE_BASES, PRICE_BASIS_LABELS, type PriceBasis } from "@/lib/supplier-quote-schemas";
 import { Field } from "./master-data";
 import { EmptyState, ErrorState, LoadingState } from "./states";
 import { Button } from "@/components/ui/button";
@@ -62,12 +65,14 @@ const emptyForm = {
 };
 
 export function CustomerQuoteLines({
+  defaultPersons,
   quoteId,
   requirementId,
   lines,
   editable,
   onChanged,
 }: {
+  defaultPersons: number;
   quoteId: string;
   requirementId: string;
   lines: Line[];
@@ -82,6 +87,8 @@ export function CustomerQuoteLines({
   const [editing, setEditing] = useState<Line | "new" | null>(null);
   const [remove, setRemove] = useState<Line | null>(null);
   const [form, setForm] = useState(emptyForm);
+  const [entry, setEntry] = useState({ basis: "per_person" as PriceBasis, amount: "", rate: "1" });
+  const [entryDirty, setEntryDirty] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const suppliers = useQuery({
     queryKey: ["supplier-quotes", requirementId],
@@ -91,7 +98,7 @@ export function CustomerQuoteLines({
   const onError = (error: Error) => toast.error("Request rejected", { description: error.message });
   const save = useMutation({
     mutationFn: async () => {
-      const values = manualLineValuesSchema.parse(form);
+      const values = manualLineValuesSchema.parse(submissionForm());
       if (editing === "new")
         return addFn({ data: { source: "manual", customer_quote_id: quoteId, values } });
       if (!editing) throw new Error("Select a line");
@@ -127,9 +134,11 @@ export function CustomerQuoteLines({
   function edit(line: Line | "new") {
     setErrors({});
     setEditing(line);
+    setEntry({ basis: line === "new" ? "per_person" : "total", amount: line === "new" ? "" : line.currency === "INR" ? line.expected_cost_inr : "", rate: line === "new" || line.currency === "INR" ? "1" : "" });
+    setEntryDirty(line === "new");
     setForm(
       line === "new"
-        ? emptyForm
+        ? { ...emptyForm, quantity: String(Math.max(defaultPersons, 1)) }
         : {
             purchase_type: line.purchase_type,
             description: line.description,
@@ -139,8 +148,17 @@ export function CustomerQuoteLines({
           },
     );
   }
+  function submissionForm() {
+    if (!entryDirty) return form;
+    const total = lineEntryTotal(entry.basis === "total" ? "1" : form.quantity, entry.amount, form.currency === "INR" ? "1" : entry.rate);
+    return { ...form, expected_cost_inr: total ?? "invalid" };
+  }
   function submit() {
-    const parsed = manualLineValuesSchema.safeParse(form);
+    if (entryDirty && form.currency !== "INR" && (!/^\d+(\.\d+)?$/.test(entry.rate) || Number(entry.rate) <= 0)) {
+      setErrors({ exchange_rate: "Enter a rate greater than zero" });
+      return;
+    }
+    const parsed = manualLineValuesSchema.safeParse(submissionForm());
     if (!parsed.success) {
       setErrors(quoteFieldErrors(parsed.error.issues));
       return;
@@ -248,7 +266,10 @@ export function CustomerQuoteLines({
           ) : latestSupplierQuotes(suppliers.data ?? []).every(
               (quote) => quote.lines.length === 0,
             ) ? (
-            <EmptyState title="No eligible supplier lines" />
+            <div className="space-y-2 py-4">
+              <p className="text-sm text-muted-foreground">{latestSupplierQuotes(suppliers.data ?? []).length === 0 ? "Supplier lines must belong to a Requested, Received or Selected quote that is not superseded. No such quote is available for this requirement." : "The latest Requested, Received or Selected supplier quotes have no lines. Add a line to a Requested or Received quote first."}</p>
+              <Button asChild variant="link" className="h-auto p-0"><a href={`#supplier-quotes-${requirementId}`} onClick={() => setPickerOpen(false)}>View supplier quotes for this requirement</a></Button>
+            </div>
           ) : (
             <div className="divide-y divide-border">
               {latestSupplierQuotes(suppliers.data ?? []).flatMap((quote) =>
@@ -307,16 +328,16 @@ export function CustomerQuoteLines({
         open={editing !== null && editable}
         onOpenChange={(open) => !open && setEditing(null)}
       >
-        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
+        <DialogContent className="quote-dialog sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>{editing === "new" ? "Manual quote line" : "Edit quote line"}</DialogTitle>
             <DialogDescription>
               {sourced
                 ? "Supplier source and INR cost remain fixed."
-                : "Expected cost is the total line cost in INR."}
+                : "Only the total INR cost is saved; price basis, unit amount and rate are entry aids."}
             </DialogDescription>
           </DialogHeader>
-          <fieldset disabled={save.isPending} className="grid gap-4 sm:grid-cols-2">
+          <fieldset disabled={save.isPending} className="quote-dialog-body grid gap-4 sm:grid-cols-2">
             <Field label="Purchase type" htmlFor="cq-line-type" error={errors["purchase_type"]}>
               <Select
                 value={form.purchase_type}
@@ -345,14 +366,19 @@ export function CustomerQuoteLines({
                 </p>
               ) : null}
             </Field>
-            <Field label="Quantity" htmlFor="cq-line-qty" error={errors["quantity"]}>
+            {!sourced ? <Field label="Price basis" htmlFor="cq-line-basis"><Select value={entry.basis} onValueChange={(value) => {
+              const basis = value as PriceBasis;
+              setEntry({ ...entry, basis }); setEntryDirty(true);
+              if (basis === "per_person") setForm({ ...form, quantity: String(Math.max(defaultPersons, 1)) });
+            }}><SelectTrigger id="cq-line-basis"><SelectValue /></SelectTrigger><SelectContent>{PRICE_BASES.map((basis) => <SelectItem key={basis} value={basis}>{PRICE_BASIS_LABELS[basis]}</SelectItem>)}</SelectContent></Select></Field> : null}
+            <Field label={!sourced && entry.basis === "per_person" ? "No. of persons" : "Quantity"} htmlFor="cq-line-qty" error={errors["quantity"]}>
               <Input
                 id="cq-line-qty"
                 type="number"
                 min="1"
                 step="1"
                 value={form.quantity}
-                onChange={(event) => setForm({ ...form, quantity: event.target.value })}
+                onChange={(event) => { setForm({ ...form, quantity: event.target.value }); if (!sourced) setEntryDirty(true); }}
               />
             </Field>
             <div className="sm:col-span-2">
@@ -368,17 +394,12 @@ export function CustomerQuoteLines({
                 />
               </Field>
             </div>
-            <Field label="Currency" htmlFor="cq-line-currency" error={errors["currency"]}>
-              <Input
-                id="cq-line-currency"
-                maxLength={3}
-                disabled={sourced}
-                value={form.currency}
-                onChange={(event) =>
-                  setForm({ ...form, currency: event.target.value.toUpperCase() })
-                }
-              />
-            </Field>
+            <QuoteCurrencyField key={editing === "new" ? "new" : editing?.id} id="cq-line-currency" value={form.currency} disabled={sourced} error={errors["currency"]} onChange={(currency) => { setForm({ ...form, currency }); setEntry({ ...entry, rate: currency === "INR" ? "1" : entry.rate }); setEntryDirty(true); }} />
+            {!sourced ? <>
+              <Field label={entry.basis === "total" ? "Amount in currency" : "Unit amount"} htmlFor="cq-line-unit"><Input id="cq-line-unit" type="number" min="0" step="0.01" value={entry.amount} onChange={(event) => { setEntry({ ...entry, amount: event.target.value }); setEntryDirty(true); }} /></Field>
+              <Field label={`Rate to INR (₹ per 1 ${form.currency || "currency"})`} htmlFor="cq-line-rate" error={errors["exchange_rate"]}><Input id="cq-line-rate" type="number" min="0" step="0.0001" readOnly={form.currency === "INR"} value={form.currency === "INR" ? "1" : entry.rate} onChange={(event) => { setEntry({ ...entry, rate: event.target.value }); setEntryDirty(true); }} /></Field>
+              <div className="sm:col-span-2"><QuoteLinePreview quantity={entry.basis === "total" ? "1" : form.quantity} currency={form.currency} amount={entry.amount} rate={form.currency === "INR" ? "1" : entry.rate} /></div>
+            </> : null}
             <Field
               label="Expected cost INR"
               htmlFor="cq-line-cost"
@@ -389,8 +410,8 @@ export function CustomerQuoteLines({
                 type="number"
                 min="0"
                 step="0.01"
-                disabled={sourced}
-                value={form.expected_cost_inr}
+                readOnly
+                value={entryDirty && !sourced ? lineEntryTotal(entry.basis === "total" ? "1" : form.quantity, entry.amount, form.currency === "INR" ? "1" : entry.rate) ?? "" : form.expected_cost_inr}
                 onChange={(event) => setForm({ ...form, expected_cost_inr: event.target.value })}
               />
             </Field>
