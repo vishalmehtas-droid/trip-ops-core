@@ -263,7 +263,7 @@ export function CustomerQuoteLines({
         </div>
       )}
       <Dialog open={pickerOpen && editable} onOpenChange={setPickerOpen}>
-        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-3xl">
+        <DialogContent className="max-h-[calc(100dvh-2rem)] w-[calc(100%-1rem)] overflow-y-auto overscroll-contain sm:max-w-3xl">
           <DialogHeader>
             <DialogTitle>Add from supplier quotes</DialogTitle>
             <DialogDescription>
@@ -287,7 +287,13 @@ export function CustomerQuoteLines({
                   : "The latest Requested, Received or Selected supplier quotes have no lines. Add a line to a Requested or Received quote first."}
               </p>
               <Button asChild variant="link" className="h-auto p-0">
-                <a href={`#supplier-quotes-${requirementId}`} onClick={() => { setPickerOpen(false); onViewSupplierQuotes(); }}>
+                <a
+                  href={`#supplier-quotes-${requirementId}`}
+                  onClick={() => {
+                    setPickerOpen(false);
+                    onViewSupplierQuotes();
+                  }}
+                >
                   View supplier quotes for this requirement
                 </a>
               </Button>

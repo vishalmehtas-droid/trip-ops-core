@@ -239,6 +239,7 @@ export function CustomerQuotes({
               canManage={canManage}
               onChanged={invalidate}
               onOpen={setOpenId}
+              onViewSupplierQuotes={() => setOpenId(null)}
             />
           ) : null}
         </SheetContent>
@@ -279,6 +280,7 @@ function HeaderFields({
 }
 
 function CustomerQuoteDetail({
+  onViewSupplierQuotes,
   defaultPersons,
   id,
   requirementId,
@@ -286,6 +288,7 @@ function CustomerQuoteDetail({
   onChanged,
   onOpen,
 }: {
+  onViewSupplierQuotes: () => void;
   defaultPersons: number;
   id: string;
   requirementId: string;
@@ -310,6 +313,7 @@ function CustomerQuoteDetail({
         <ErrorState description={query.error.message} onRetry={() => void query.refetch()} />
       ) : (
         <CustomerQuoteBody
+          onViewSupplierQuotes={onViewSupplierQuotes}
           defaultPersons={defaultPersons}
           data={query.data}
           requirementId={requirementId}
@@ -330,6 +334,7 @@ const actionLabels = {
 } as const;
 
 function CustomerQuoteBody({
+  onViewSupplierQuotes,
   defaultPersons,
   data,
   requirementId,
@@ -337,6 +342,7 @@ function CustomerQuoteBody({
   onChanged,
   onOpen,
 }: {
+  onViewSupplierQuotes: () => void;
   defaultPersons: number;
   data: Awaited<ReturnType<typeof getCustomerQuote>>;
   requirementId: string;
@@ -529,6 +535,7 @@ function CustomerQuoteBody({
         </div>
       </div>
       <CustomerQuoteLines
+        onViewSupplierQuotes={onViewSupplierQuotes}
         defaultPersons={defaultPersons}
         quoteId={quote.id}
         requirementId={requirementId}
