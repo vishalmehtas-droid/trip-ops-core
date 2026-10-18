@@ -8,6 +8,7 @@ import { DetailRow, Field, formatDate } from "@/components/app/master-data";
 import { RecordCombobox, type RecordOption } from "@/components/app/sales-ui";
 import { useQuickAdd } from "@/components/app/quick-add";
 import { EmptyState, ErrorState, LoadingState } from "@/components/app/states";
+import { QuoteCurrencyField, QuoteLinePreview } from "./quote-entry-fields";
 import { SupplierQuoteComparison } from "@/components/app/supplier-quote-comparison";
 import {
   AlertDialog,
@@ -301,7 +302,7 @@ export function SupplierQuotes({
   const openQuote = quotes.find((q) => q.id === openId) ?? null;
 
   return (
-    <div className="mt-3 rounded-md border border-border">
+    <div id={`supplier-quotes-${requirementId}`} className="mt-3 scroll-mt-4 rounded-md border border-border">
       <div className="flex items-center justify-between gap-2 border-b border-border px-3 py-2">
         <h3 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
           Supplier quotes
@@ -377,12 +378,12 @@ export function SupplierQuotes({
       )}
 
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+        <DialogContent className="quote-dialog sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>New Supplier Quote</DialogTitle>
             <DialogDescription>The quote number is assigned automatically.</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4">
+          <div className="quote-dialog-body grid gap-4">
             <Field label="Vendor" htmlFor="sq-vendor" required error={errors["vendor_id"]}>
               <RecordCombobox
                 id="sq-vendor"
@@ -436,7 +437,7 @@ export function SupplierQuotes({
       </Dialog>
 
       <Sheet open={openQuote !== null} onOpenChange={(open) => !open && setOpenId(null)}>
-        <SheetContent className="w-full overflow-y-auto sm:max-w-3xl">
+        <SheetContent className="w-full overflow-y-auto overscroll-contain pb-6 sm:max-w-3xl">
           {openQuote ? (
             <QuoteSheetBody
               quote={openQuote}
@@ -465,7 +466,7 @@ type LineForm = {
   exchange_rate: string;
 };
 const EMPTY_LINE: LineForm = {
-  price_basis: "total",
+  price_basis: "per_person",
   option_label: "",
   not_in_total: false,
   purchase_type: "hotel",
@@ -548,10 +549,11 @@ function QuoteSheetBody({
   });
 
   const saveLine = useMutation({
-    mutationFn: (values: ReturnType<typeof quoteLineValuesSchema.parse>) =>
-      editingLineId === "new"
-        ? addLineFn({ data: { supplier_quote_id: quote.id, values } })
-        : updateLineFn({ data: { id: editingLineId!, values } }),
+    mutationFn: (values: ReturnType<typeof quoteLineValuesSchema.parse>) => {
+      if (editingLineId === "new") return addLineFn({ data: { supplier_quote_id: quote.id, values } });
+      if (!editingLineId) throw new Error("Select a line");
+      return updateLineFn({ data: { id: editingLineId, values } });
+    },
     onSuccess: async () => {
       await onChanged();
       toast.success("Line saved");
@@ -576,7 +578,7 @@ function QuoteSheetBody({
   function startEdit(line: Line | null) {
     setLineErrors({});
     if (!line) {
-      setLineForm(EMPTY_LINE);
+      setLineForm({ ...EMPTY_LINE, quantity: String(Math.max(persons, 1)) });
       setEditingLineId("new");
       return;
     }
@@ -675,13 +677,13 @@ function QuoteSheetBody({
               <Pencil className="size-3.5" />
               Edit details
             </Button>
-            {quote.status === "received" ? (
-              <Button size="sm" variant="outline" onClick={() => setConfirmRevise(true)}>
-                Create revision
-              </Button>
-            ) : null}
+
           </div>
         ) : null}
+        <div className="space-y-1 pt-2">
+          <Button size="sm" variant="outline" disabled={!editable || quote.status !== "received" || revise.isPending} onClick={() => setConfirmRevise(true)}>Create revision</Button>
+          {!editable || quote.status !== "received" ? <p className="text-xs text-muted-foreground">{quote.is_superseded ? "A newer revision already replaces this quote." : quote.status === "selected" ? "Selected quotes are final; revisions are unavailable." : quote.status === "rejected" ? "Rejected quotes are final; revisions are unavailable." : !canManage ? "You do not have permission to create revisions." : "Mark the quote as Received first."}</p> : null}
+        </div>
         <DetailRow
           label="Status"
           value={
@@ -827,12 +829,12 @@ function QuoteSheetBody({
       <QuoteFiles quoteId={quote.id} canUpload={canManage && !quote.is_superseded} />
 
       <Dialog open={editingLineId !== null} onOpenChange={(o) => !o && setEditingLineId(null)}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="quote-dialog sm:max-w-md">
           <DialogHeader>
             <DialogTitle>{editingLineId === "new" ? "Add line" : "Edit line"}</DialogTitle>
             <DialogDescription>The INR amount is calculated by the database.</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4">
+          <div className="quote-dialog-body grid gap-4">
             <div className="grid gap-4 sm:grid-cols-2">
               <Field
                 label="Purchase type"
@@ -937,21 +939,7 @@ function QuoteSheetBody({
                   onChange={(e) => setLineForm({ ...lineForm, quantity: e.target.value })}
                 />
               </Field>
-              <Field label="Currency" htmlFor="sql-cur" required error={lineErrors["currency"]}>
-                <Input
-                  id="sql-cur"
-                  maxLength={3}
-                  value={lineForm.currency}
-                  onChange={(e) => {
-                    const currency = e.target.value.toUpperCase();
-                    setLineForm({
-                      ...lineForm,
-                      currency,
-                      exchange_rate: currency === "INR" ? "1" : lineForm.exchange_rate,
-                    });
-                  }}
-                />
-              </Field>
+              <QuoteCurrencyField key={editingLineId} id="sql-cur" value={lineForm.currency} error={lineErrors["currency"]} onChange={(currency) => setLineForm({ ...lineForm, currency, exchange_rate: currency === "INR" ? "1" : lineForm.exchange_rate })} />
               <Field
                 label="Unit amount"
                 htmlFor="sql-unit"
@@ -968,7 +956,7 @@ function QuoteSheetBody({
                 />
               </Field>
               <Field
-                label="Exchange rate"
+                label={`Rate to INR (₹ per 1 ${lineForm.currency || "currency"})`}
                 htmlFor="sql-rate"
                 required
                 error={lineErrors["exchange_rate"]}
@@ -978,12 +966,13 @@ function QuoteSheetBody({
                   type="number"
                   min={0}
                   step="0.0001"
-                  disabled={isInr}
+                  readOnly={isInr}
                   value={isInr ? "1" : lineForm.exchange_rate}
                   onChange={(e) => setLineForm({ ...lineForm, exchange_rate: e.target.value })}
                 />
               </Field>
             </div>
+            <QuoteLinePreview quantity={lineForm.quantity} currency={lineForm.currency} amount={lineForm.unit_amount} rate={isInr ? "1" : lineForm.exchange_rate} />
           </div>
           <DialogFooter>
             <Button
@@ -1026,12 +1015,12 @@ function QuoteSheetBody({
       </AlertDialog>
 
       <Dialog open={headerOpen} onOpenChange={setHeaderOpen}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+        <DialogContent className="quote-dialog sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>Edit quote details</DialogTitle>
             <DialogDescription>The vendor cannot be changed.</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4">
+          <div className="quote-dialog-body grid gap-4">
             <Field label="Valid until" htmlFor="sq-edit-valid">
               <Input
                 id="sq-edit-valid"
