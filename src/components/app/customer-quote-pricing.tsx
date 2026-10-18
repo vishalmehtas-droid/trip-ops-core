@@ -111,7 +111,7 @@ export function CustomerQuotePricing({
   }
   return (
     <section className="space-y-4 border-t border-border pt-5">
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="sticky top-0 z-10 flex flex-wrap items-center justify-between gap-2 border-b border-border bg-background py-2">
         <h3 className="text-sm font-semibold">Pricing</h3>
         {editable ? (
           <Button size="sm" onClick={submit} disabled={!dirty || save.isPending || !preview}>

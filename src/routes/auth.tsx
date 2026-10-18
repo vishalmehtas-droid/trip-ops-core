@@ -26,6 +26,8 @@ export const Route = createFileRoute("/auth")({
         content: "Secure sign-in for the Triptastic Holidays internal operations system.",
       },
       { name: "robots", content: "noindex" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: AuthPage,

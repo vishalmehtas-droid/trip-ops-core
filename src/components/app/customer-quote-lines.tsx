@@ -71,6 +71,7 @@ export function CustomerQuoteLines({
   lines,
   editable,
   onChanged,
+  onViewSupplierQuotes,
 }: {
   defaultPersons: number;
   quoteId: string;
@@ -78,6 +79,7 @@ export function CustomerQuoteLines({
   lines: Line[];
   editable: boolean;
   onChanged: () => Promise<void>;
+  onViewSupplierQuotes: () => void;
 }) {
   const addFn = useServerFn(addCustomerQuoteLine);
   const updateFn = useServerFn(updateCustomerQuoteLine);
@@ -285,7 +287,7 @@ export function CustomerQuoteLines({
                   : "The latest Requested, Received or Selected supplier quotes have no lines. Add a line to a Requested or Received quote first."}
               </p>
               <Button asChild variant="link" className="h-auto p-0">
-                <a href={`#supplier-quotes-${requirementId}`} onClick={() => setPickerOpen(false)}>
+                <a href={`#supplier-quotes-${requirementId}`} onClick={() => { setPickerOpen(false); onViewSupplierQuotes(); }}>
                   View supplier quotes for this requirement
                 </a>
               </Button>
