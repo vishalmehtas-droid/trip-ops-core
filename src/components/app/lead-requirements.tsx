@@ -369,7 +369,7 @@ export function LeadRequirements({
       )}
 
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+        <DialogContent className="quote-dialog sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>{editingId ? "Edit requirement" : "Add requirement"}</DialogTitle>
             <DialogDescription>
@@ -377,7 +377,7 @@ export function LeadRequirements({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="grid gap-4">
+          <div className="quote-dialog-body grid gap-4">
             <Field
               label="Destinations"
               htmlFor="requirement-destination"
