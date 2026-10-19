@@ -289,7 +289,12 @@ export function SupplierQuotes({
   const create = useMutation({
     mutationFn: (values: ReturnType<typeof quoteHeaderSchema.parse>) =>
       createFn({
-        data: { lead_id: leadId, requirement_id: requirementId, values, mark_received: markReceived },
+        data: {
+          lead_id: leadId,
+          requirement_id: requirementId,
+          values,
+          mark_received: markReceived,
+        },
       }),
     onSuccess: async () => {
       await invalidate();
@@ -311,7 +316,8 @@ export function SupplierQuotes({
     onError: (error: Error) => toast.error("Request rejected", { description: error.message }),
   });
   const createCustomerQuote = useMutation({
-    mutationFn: (supplierQuoteId: string) => fromSupplierFn({ data: { supplier_quote_id: supplierQuoteId } }),
+    mutationFn: (supplierQuoteId: string) =>
+      fromSupplierFn({ data: { supplier_quote_id: supplierQuoteId } }),
     onSuccess: async (result) => {
       await queryClient.invalidateQueries({ queryKey: ["customer-quotes", requirementId] });
       setConfirmFromSupplier(null);

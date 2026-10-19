@@ -214,7 +214,9 @@ export const convertCustomerQuoteToBooking = createServerFn({ method: "POST" })
 /** Creates a Draft customer quote from a Received supplier quote, copying its totalled lines. */
 export const createCustomerQuoteFromSupplierQuote = createServerFn({ method: "POST" })
   .middleware([requireActiveUser])
-  .inputValidator((input: unknown) => z.object({ supplier_quote_id: z.string().uuid() }).parse(input))
+  .inputValidator((input: unknown) =>
+    z.object({ supplier_quote_id: z.string().uuid() }).parse(input),
+  )
   .handler(async ({ data, context }) => {
     requirePermission(context, "leads.manage");
     const { data: sq, error: sqError } = await context.supabase
