@@ -238,7 +238,11 @@ function LeadsPage() {
       await queryClient.invalidateQueries({ queryKey: ["audit-log"] });
       toast.success("Lead created");
       setFormOpen(false);
-      void navigate({ to: "/leads/$leadId", params: { leadId: result.id } });
+      void navigate({
+        to: "/leads/$leadId",
+        params: { leadId: result.id },
+        search: { add: "requirement" },
+      });
     },
     onError: (error: Error) => {
       toast.error("Request rejected", { description: error.message });

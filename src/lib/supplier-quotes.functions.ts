@@ -87,6 +87,13 @@ export const createSupplierQuote = createServerFn({ method: "POST" })
       .select("id")
       .single();
     if (error) throw new Error(error.message);
+    if (data.mark_received) {
+      const { error: statusError } = await context.supabase
+        .from("supplier_quotes")
+        .update({ status: "received" })
+        .eq("id", row.id);
+      if (statusError) throw new Error(statusError.message);
+    }
     return { id: row.id };
   });
 

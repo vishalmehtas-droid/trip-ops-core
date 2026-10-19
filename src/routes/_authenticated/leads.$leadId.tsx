@@ -45,13 +45,21 @@ import {
 import { changeLeadStatus, updateLead } from "@/lib/leads.functions";
 
 export const Route = createFileRoute("/_authenticated/leads/$leadId")({
-  validateSearch: (search: Record<string, unknown>): { quote?: string } => {
-    const quote =
-      typeof search["quote"] === "string" &&
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(search["quote"])
-        ? search["quote"]
+  validateSearch: (
+    search: Record<string, unknown>,
+  ): { quote?: string; sq?: string; add?: string } => {
+    const uuid = (value: unknown) =>
+      typeof value === "string" &&
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value)
+        ? value
         : undefined;
-    return quote ? { quote } : {};
+    const result: { quote?: string; sq?: string; add?: string } = {};
+    const quote = uuid(search["quote"]);
+    const sq = uuid(search["sq"]);
+    if (quote) result.quote = quote;
+    if (sq) result.sq = sq;
+    if (search["add"] === "requirement") result.add = "requirement";
+    return result;
   },
   head: () => ({
     meta: [
@@ -109,7 +117,7 @@ type FormState = {
 
 function LeadDetailPage() {
   const { leadId } = Route.useParams();
-  const { quote: quoteToOpen } = Route.useSearch();
+  const { quote: quoteToOpen, sq: supplierQuoteToOpen, add } = Route.useSearch();
   const { hasPermission } = useAuth();
   const canRead = hasPermission("leads.read");
   const canManage = hasPermission("leads.manage");
@@ -440,7 +448,9 @@ function LeadDetailPage() {
       <LeadRequirements
         leadId={lead.id}
         canManage={canManage && !isClosed}
+        autoOpen={add === "requirement"}
         quoteToOpen={quoteToOpen}
+        supplierQuoteToOpen={supplierQuoteToOpen}
       />
 
       {canReadAudit ? (

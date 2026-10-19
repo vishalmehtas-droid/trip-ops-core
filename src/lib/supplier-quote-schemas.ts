@@ -79,6 +79,8 @@ export const quoteCreateSchema = z.object({
   lead_id: uuid,
   requirement_id: uuid,
   values: quoteHeaderSchema,
+  /** When true the quote is created and marked Received in the same action. */
+  mark_received: z.boolean().default(false),
 });
 
 export const quoteUpdateSchema = z.object({

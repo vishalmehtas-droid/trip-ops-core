@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { useNavigate } from "@tanstack/react-router";
 import { ArrowDown, ArrowUp, Loader2, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 
@@ -109,13 +110,16 @@ export function LeadRequirements({
   canManage,
   autoOpen,
   quoteToOpen,
+  supplierQuoteToOpen,
 }: {
   leadId: string;
   canManage: boolean;
   autoOpen?: boolean;
   quoteToOpen?: string | undefined;
+  supplierQuoteToOpen?: string | undefined;
 }) {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [formOpen, setFormOpen] = useState(Boolean(autoOpen));
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
@@ -289,10 +293,18 @@ export function LeadRequirements({
       {requirementsQuery.isPending ? (
         <p className="px-4 py-6 text-sm text-muted-foreground">Loading requirements…</p>
       ) : rows.length === 0 ? (
-        <p className="px-4 py-6 text-sm text-muted-foreground">
-          No requirements captured yet. Add the destinations, dates and party size the customer
-          asked about.
-        </p>
+        <div className="space-y-3 px-4 py-6">
+          <p className="text-sm text-muted-foreground">
+            No requirements captured yet. Add the destinations, dates and party size the customer
+            asked about.
+          </p>
+          {canManage ? (
+            <Button size="sm" onClick={openCreate}>
+              <Plus className="size-4" />
+              Add requirement
+            </Button>
+          ) : null}
+        </div>
       ) : (
         <ul className="divide-y divide-border">
           {rows.map((row) => {
@@ -347,7 +359,23 @@ export function LeadRequirements({
                     </div>
                   ) : null}
                 </div>
-                <RequirementNextStep requirementId={row.id} />
+                <RequirementNextStep
+                  requirementId={row.id}
+                  onOpenCustomerQuote={(id) =>
+                    void navigate({
+                      to: "/leads/$leadId",
+                      params: { leadId },
+                      search: { quote: id },
+                    })
+                  }
+                  onOpenSupplierQuote={(id) =>
+                    void navigate({
+                      to: "/leads/$leadId",
+                      params: { leadId },
+                      search: { sq: id },
+                    })
+                  }
+                />
                 <SupplierQuotes
                   leadId={leadId}
                   requirementId={row.id}
@@ -355,6 +383,7 @@ export function LeadRequirements({
                   defaultChildren={row.children}
                   canManage={canManage}
                   canCreate={row.status === "draft" || row.status === "active"}
+                  quoteToOpen={supplierQuoteToOpen}
                 />
                 <CustomerQuotes
                   defaultPersons={row.adults + row.children}

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Link, useNavigate } from "@tanstack/react-router";
@@ -46,7 +46,14 @@ import {
   changeCustomerQuoteStatus,
   createCustomerQuoteRevision,
   convertCustomerQuoteToBooking,
+  acceptCustomerQuoteAndConvert,
 } from "@/lib/customer-quotes.functions";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   customerQuoteHeaderSchema,
   CUSTOMER_QUOTE_STATUS_LABELS,
@@ -95,6 +102,31 @@ export function CustomerQuotes({
   const [openId, setOpenId] = useState<string | null>(initialQuoteId ?? null);
   const [form, setForm] = useState({ valid_until: "", notes: "" });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [confirmAcceptConvert, setConfirmAcceptConvert] = useState<string | null>(null);
+  const navigate = useNavigate();
+  const acceptConvertFn = useServerFn(acceptCustomerQuoteAndConvert);
+  useEffect(() => {
+    if (initialQuoteId) setOpenId(initialQuoteId);
+  }, [initialQuoteId]);
+  const acceptConvert = useMutation({
+    mutationFn: (id: string) => acceptConvertFn({ data: { id } }),
+    onSuccess: async (result) => {
+      await invalidate();
+      setConfirmAcceptConvert(null);
+      if (result.booking_id) {
+        toast.success("Quote accepted and booking created");
+        await navigate({ to: "/sales/$saleId", params: { saleId: result.booking_id } });
+      } else {
+        toast.error("Quote accepted, but the booking was not created", {
+          description: `${result.message} Use Convert to Booking to retry.`,
+        });
+      }
+    },
+    onError: (error: Error) => {
+      setConfirmAcceptConvert(null);
+      toast.error("Request rejected", { description: error.message });
+    },
+  });
   const quotes = useQuery({
     queryKey: ["customer-quotes", requirementId],
     queryFn: () => listFn({ data: { requirement_id: requirementId } }),
@@ -166,6 +198,7 @@ export function CustomerQuotes({
                 <th className="p-3">Status</th>
                 <th className="p-3">Valid until</th>
                 <th className="p-3 text-right">Customer payable</th>
+                {canManage ? <th className="p-3 text-right">Next step</th> : null}
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -194,6 +227,45 @@ export function CustomerQuotes({
                   <td className="whitespace-nowrap p-3 text-right tabular-nums">
                     {formatMoney(quote.customer_payable)}
                   </td>
+                  {canManage ? (
+                    <td className="whitespace-nowrap p-3 text-right">
+                      {(() => {
+                        const rowBooking = Array.isArray(quote.booking)
+                          ? quote.booking[0]
+                          : quote.booking;
+                        if (rowBooking) {
+                          return (
+                            <Button
+                              asChild
+                              size="sm"
+                              variant="outline"
+                              onClick={(event) => event.stopPropagation()}
+                            >
+                              <Link to="/sales/$saleId" params={{ saleId: rowBooking.id }}>
+                                Booking {rowBooking.booking_number}
+                              </Link>
+                            </Button>
+                          );
+                        }
+                        if (quote.status === "draft" || quote.status === "sent") {
+                          return (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              disabled={acceptConvert.isPending}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                setConfirmAcceptConvert(quote.id);
+                              }}
+                            >
+                              Accept &amp; book
+                            </Button>
+                          );
+                        }
+                        return null;
+                      })()}
+                    </td>
+                  ) : null}
                 </tr>
               ))}
             </tbody>
@@ -225,6 +297,34 @@ export function CustomerQuotes({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <AlertDialog
+        open={confirmAcceptConvert !== null}
+        onOpenChange={(open) => !open && setConfirmAcceptConvert(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Accept this quote and create the booking?</AlertDialogTitle>
+            <AlertDialogDescription>
+              The quote is marked Accepted and converted with the existing booking conversion. If
+              the conversion fails, the quote stays Accepted and you can retry with Convert to
+              Booking.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={acceptConvert.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={acceptConvert.isPending}
+              onClick={(event) => {
+                event.preventDefault();
+                if (confirmAcceptConvert) acceptConvert.mutate(confirmAcceptConvert);
+              }}
+            >
+              {acceptConvert.isPending ? <Loader2 className="size-4 animate-spin" /> : null}
+              Accept and create booking
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       <Sheet
         open={openId !== null && Boolean(quotes.data?.some((quote) => quote.id === openId))}
         onOpenChange={(open) => !open && setOpenId(null)}
@@ -328,7 +428,7 @@ function CustomerQuoteDetail({
 
 const actionLabels = {
   sent: "Send",
-  accepted: "Accept",
+  accepted: "Mark as accepted",
   rejected: "Reject",
   expired: "Expire",
 } as const;
@@ -377,6 +477,24 @@ function CustomerQuoteBody({
       setConfirmConvert(false);
       toast.success("Booking created from quote");
       await navigate({ to: "/sales/$saleId", params: { saleId: result.id } });
+    },
+    onError,
+  });
+  const acceptConvertFn = useServerFn(acceptCustomerQuoteAndConvert);
+  const [confirmAcceptConvert, setConfirmAcceptConvert] = useState(false);
+  const acceptConvert = useMutation({
+    mutationFn: () => acceptConvertFn({ data: { id: quote.id } }),
+    onSuccess: async (result) => {
+      await onChanged();
+      setConfirmAcceptConvert(false);
+      if (result.booking_id) {
+        toast.success("Quote accepted and booking created");
+        await navigate({ to: "/sales/$saleId", params: { saleId: result.booking_id } });
+      } else {
+        toast.error("Quote accepted, but the booking was not created", {
+          description: `${result.message} Use Convert to Booking to retry.`,
+        });
+      }
     },
     onError,
   });
@@ -638,6 +756,80 @@ function CustomerQuoteBody({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <AlertDialog
+        open={confirmAcceptConvert}
+        onOpenChange={(open) => !acceptConvert.isPending && setConfirmAcceptConvert(open)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Accept this quote and create the booking?</AlertDialogTitle>
+            <AlertDialogDescription>
+              The quote is marked Accepted and converted with the existing booking conversion. If
+              the conversion fails, the quote stays Accepted and you can retry with Convert to
+              Booking.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={acceptConvert.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={acceptConvert.isPending}
+              onClick={(event) => {
+                event.preventDefault();
+                acceptConvert.mutate();
+              }}
+            >
+              {acceptConvert.isPending ? <Loader2 className="size-4 animate-spin" /> : null}
+              Accept and create booking
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      {canManage ? (
+        <div className="sticky bottom-0 -mx-1 border-t border-border bg-surface px-1 py-3">
+          {booking ? (
+            <Button asChild size="sm" className="w-full">
+              <Link to="/sales/$saleId" params={{ saleId: booking.id }}>
+                Open booking {booking.booking_number}
+              </Link>
+            </Button>
+          ) : quote.status === "accepted" ? (
+            <Button
+              size="sm"
+              className="w-full"
+              disabled={!canConvert || convert.isPending}
+              onClick={() => setConfirmConvert(true)}
+            >
+              Convert to Booking
+            </Button>
+          ) : quote.status === "draft" || quote.status === "sent" ? (
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                className="flex-1"
+                disabled={acceptConvert.isPending}
+                onClick={() => setConfirmAcceptConvert(true)}
+              >
+                Accept and create booking
+              </Button>
+              {quote.status === "draft" ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button size="sm" variant="outline" aria-label="More actions">
+                      …
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => setPending("sent")}>Send</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setPending("accepted")}>
+                      Mark as accepted
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
     </div>
   );
 }

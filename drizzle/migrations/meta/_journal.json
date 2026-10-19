@@ -71,6 +71,13 @@
       "when": 1792149555657,
       "tag": "0009_lead_follow_up_and_vendor_terms",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1792395230448,
+      "tag": "0010_customer_quote_draft_to_accepted",
+      "breakpoints": true
     }
   ]
 }

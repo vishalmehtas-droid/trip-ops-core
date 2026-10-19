@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
 
 import { requireActiveUser, requirePermission } from "./authz-middleware";
 import {
@@ -208,6 +209,109 @@ export const convertCustomerQuoteToBooking = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     if (!id) throw new Error("Booking conversion returned no booking");
     return { id };
+  });
+
+/** Creates a Draft customer quote from a Received supplier quote, copying its totalled lines. */
+export const createCustomerQuoteFromSupplierQuote = createServerFn({ method: "POST" })
+  .middleware([requireActiveUser])
+  .inputValidator((input: unknown) =>
+    z.object({ supplier_quote_id: z.string().uuid() }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    requirePermission(context, "leads.manage");
+    const { data: sq, error: sqError } = await context.supabase
+      .from("supplier_quotes")
+      .select("id, lead_id, requirement_id, status, is_superseded")
+      .eq("id", data.supplier_quote_id)
+      .maybeSingle();
+    if (sqError) throw new Error(sqError.message);
+    if (!sq) throw new Error("Supplier quote not found");
+    if (sq.is_superseded) throw new Error("A newer revision replaces this quote");
+    if (sq.status !== "received") throw new Error("Mark the supplier quote as Received first");
+    const { data: lead, error: leadError } = await context.supabase
+      .from("leads")
+      .select("client_id")
+      .eq("id", sq.lead_id)
+      .maybeSingle();
+    if (leadError) throw new Error(leadError.message);
+    if (!lead) throw new Error("Lead not found");
+    const { data: quote, error: quoteError } = await context.supabase
+      .from("customer_quotes")
+      .insert({
+        lead_id: sq.lead_id,
+        requirement_id: sq.requirement_id,
+        quote_number: "pending",
+        client_id: lead.client_id,
+        created_by: context.userId,
+      })
+      .select("id")
+      .single();
+    if (quoteError) throw new Error(quoteError.message);
+    const { data: lines, error: linesError } = await context.supabase
+      .from("supplier_quote_lines")
+      .select("id, purchase_type, description, quantity, currency")
+      .eq("supplier_quote_id", sq.id)
+      .eq("not_in_total", false)
+      .order("sort_order");
+    if (linesError) throw new Error(linesError.message);
+    if (lines && lines.length > 0) {
+      const { error: insertError } = await context.supabase.from("customer_quote_lines").insert(
+        lines.map((line, index) => ({
+          customer_quote_id: quote.id,
+          source_supplier_quote_line_id: line.id,
+          purchase_type: line.purchase_type,
+          description: line.description,
+          quantity: line.quantity,
+          currency: line.currency,
+          // Replaced by the database with the supplier line's INR amount (snapshot).
+          expected_cost_inr: 0,
+          sort_order: index,
+        })),
+      );
+      if (insertError) throw new Error(insertError.message);
+    }
+    return { id: quote.id };
+  });
+
+/**
+ * Accepts a Draft or Sent quote and converts it with the existing conversion.
+ * A failed conversion leaves the quote Accepted and reports the reason.
+ */
+export const acceptCustomerQuoteAndConvert = createServerFn({ method: "POST" })
+  .middleware([requireActiveUser])
+  .inputValidator((input: unknown) => customerQuoteIdSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    requirePermission(context, "leads.manage");
+    requirePermission(context, "sales.manage");
+    if (!context.roles.some((role) => role === "admin" || role === "sales")) {
+      throw new Error("Forbidden: Admin or Sales access is required");
+    }
+    const { data: existing, error: readError } = await context.supabase
+      .from("customer_quotes")
+      .select("id, status")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (readError) throw new Error(readError.message);
+    if (!existing) throw new Error("Customer quote not found");
+    if (existing.status === "draft" || existing.status === "sent") {
+      const { error } = await context.supabase
+        .from("customer_quotes")
+        .update({ status: "accepted" })
+        .eq("id", data.id);
+      if (error) throw new Error(error.message);
+    } else if (existing.status !== "accepted") {
+      throw new Error(`Cannot accept a ${existing.status} quote`);
+    }
+    const { data: id, error } = await context.supabase.rpc("convert_customer_quote_to_booking", {
+      _quote_id: data.id,
+    });
+    if (error || !id) {
+      return {
+        booking_id: null,
+        message: error?.message ?? "Booking conversion returned no booking",
+      };
+    }
+    return { booking_id: id as string, message: null };
   });
 
 export const addCustomerQuoteLine = createServerFn({ method: "POST" })

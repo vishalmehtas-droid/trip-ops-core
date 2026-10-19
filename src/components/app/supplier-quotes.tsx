@@ -1,6 +1,7 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { useNavigate } from "@tanstack/react-router";
 import { ExternalLink, Loader2, Paperclip, Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -71,6 +72,7 @@ import {
   SUPPLIER_QUOTE_TRANSITIONS,
   type SupplierQuoteStatus,
 } from "@/lib/supplier-quote-schemas";
+import { createCustomerQuoteFromSupplierQuote } from "@/lib/customer-quotes.functions";
 import {
   addSupplierQuoteLine,
   createSupplierQuote,
@@ -230,6 +232,7 @@ export function SupplierQuotes({
   defaultChildren,
   canManage,
   canCreate,
+  quoteToOpen,
 }: {
   leadId: string;
   requirementId: string;
@@ -237,6 +240,7 @@ export function SupplierQuotes({
   defaultChildren: number;
   canManage: boolean;
   canCreate: boolean;
+  quoteToOpen?: string | undefined;
 }) {
   const queryClient = useQueryClient();
   const listFn = useServerFn(listSupplierQuotes);
@@ -245,8 +249,13 @@ export function SupplierQuotes({
 
   const [createOpen, setCreateOpen] = useState(false);
   const [form, setForm] = useState({ vendor_id: "", ...detailsFrom({}) });
+  const [markReceived, setMarkReceived] = useState(true);
+  const [confirmFromSupplier, setConfirmFromSupplier] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [openId, setOpenId] = useState<string | null>(null);
+  useEffect(() => {
+    if (quoteToOpen) setOpenId(quoteToOpen);
+  }, [quoteToOpen]);
 
   const quotesQuery = useQuery({
     queryKey,
@@ -279,13 +288,50 @@ export function SupplierQuotes({
 
   const create = useMutation({
     mutationFn: (values: ReturnType<typeof quoteHeaderSchema.parse>) =>
-      createFn({ data: { lead_id: leadId, requirement_id: requirementId, values } }),
+      createFn({
+        data: {
+          lead_id: leadId,
+          requirement_id: requirementId,
+          values,
+          mark_received: markReceived,
+        },
+      }),
     onSuccess: async () => {
       await invalidate();
       toast.success("Supplier quote created");
       setCreateOpen(false);
     },
     onError: (error: Error) => toast.error("Request rejected", { description: error.message }),
+  });
+
+  const updateFn = useServerFn(updateSupplierQuote);
+  const fromSupplierFn = useServerFn(createCustomerQuoteFromSupplierQuote);
+  const navigate = useNavigate();
+  const markReceivedRow = useMutation({
+    mutationFn: (id: string) => updateFn({ data: { id, status: "received" } }),
+    onSuccess: async () => {
+      await invalidate();
+      toast.success("Quote marked Received");
+    },
+    onError: (error: Error) => toast.error("Request rejected", { description: error.message }),
+  });
+  const createCustomerQuote = useMutation({
+    mutationFn: (supplierQuoteId: string) =>
+      fromSupplierFn({ data: { supplier_quote_id: supplierQuoteId } }),
+    onSuccess: async (result) => {
+      await queryClient.invalidateQueries({ queryKey: ["customer-quotes", requirementId] });
+      setConfirmFromSupplier(null);
+      toast.success("Customer quote created — set pricing and send");
+      await navigate({
+        to: "/leads/$leadId",
+        params: { leadId },
+        search: { quote: result.id },
+      });
+    },
+    onError: (error: Error) => {
+      setConfirmFromSupplier(null);
+      toast.error("Customer quote not created", { description: error.message });
+    },
   });
 
   function submitCreate() {
@@ -321,6 +367,7 @@ export function SupplierQuotes({
                   vendor_id: "",
                   ...detailsFrom({ adults: defaultAdults, children: defaultChildren }),
                 });
+                setMarkReceived(true);
                 setErrors({});
                 setCreateOpen(true);
               }}
@@ -353,6 +400,7 @@ export function SupplierQuotes({
               <th className="px-3 py-2 font-medium">Status</th>
               <th className="px-3 py-2 font-medium">Valid until</th>
               <th className="px-3 py-2 text-right font-medium">Total INR</th>
+              {canManage ? <th className="px-3 py-2 text-right font-medium">Next step</th> : null}
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
@@ -374,6 +422,35 @@ export function SupplierQuotes({
                 </td>
                 <td className="px-3 py-2">{formatDate(quote.valid_until)}</td>
                 <td className="px-3 py-2 text-right tabular-nums">{inr(quoteTotal(quote))}</td>
+                {canManage ? (
+                  <td className="px-3 py-2 text-right">
+                    {quote.is_superseded ? null : quote.status === "requested" ? (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={markReceivedRow.isPending}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          markReceivedRow.mutate(quote.id);
+                        }}
+                      >
+                        Mark received
+                      </Button>
+                    ) : quote.status === "received" ? (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={createCustomerQuote.isPending}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          setConfirmFromSupplier(quote.id);
+                        }}
+                      >
+                        Create customer quote
+                      </Button>
+                    ) : null}
+                  </td>
+                ) : null}
               </tr>
             ))}
           </tbody>
@@ -422,6 +499,20 @@ export function SupplierQuotes({
               onChange={(v) => setForm({ ...form, ...v })}
               errors={errors}
             />
+            <label className="flex items-start gap-2 text-sm" htmlFor="sq-received">
+              <Checkbox
+                id="sq-received"
+                checked={markReceived}
+                onCheckedChange={(checked) => setMarkReceived(checked === true)}
+              />
+              <span>
+                Quote already received
+                <span className="block text-xs text-muted-foreground">
+                  Marks it Received straight away so lines can be added. Untick if you are only
+                  requesting prices.
+                </span>
+              </span>
+            </label>
           </div>
           <DialogFooter>
             <Button
@@ -447,10 +538,40 @@ export function SupplierQuotes({
               canManage={canManage}
               onChanged={invalidate}
               defaultPersons={defaultAdults + defaultChildren}
+              onCreateCustomerQuote={(id) => setConfirmFromSupplier(id)}
+              customerQuotePending={createCustomerQuote.isPending}
             />
           ) : null}
         </SheetContent>
       </Sheet>
+
+      <AlertDialog
+        open={confirmFromSupplier !== null}
+        onOpenChange={(open) => !open && setConfirmFromSupplier(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Create customer quote from this quote?</AlertDialogTitle>
+            <AlertDialogDescription>
+              A Draft customer quote is created with this quote's lines (excluding alternatives and
+              add-ons) and their INR cost snapshots. Only pricing is left to set.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={createCustomerQuote.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={createCustomerQuote.isPending}
+              onClick={(event) => {
+                event.preventDefault();
+                if (confirmFromSupplier) createCustomerQuote.mutate(confirmFromSupplier);
+              }}
+            >
+              {createCustomerQuote.isPending ? <Loader2 className="size-4 animate-spin" /> : null}
+              Create customer quote
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {vendorQuickAdd.quickAddDialog}
     </div>
@@ -485,11 +606,15 @@ function QuoteSheetBody({
   canManage,
   onChanged,
   defaultPersons,
+  onCreateCustomerQuote,
+  customerQuotePending,
 }: {
   quote: Quote;
   canManage: boolean;
   onChanged: () => Promise<void>;
   defaultPersons: number;
+  onCreateCustomerQuote: (supplierQuoteId: string) => void;
+  customerQuotePending: boolean;
 }) {
   const updateFn = useServerFn(updateSupplierQuote);
   const addLineFn = useServerFn(addSupplierQuoteLine);
@@ -706,6 +831,17 @@ function QuoteSheetBody({
             </p>
           ) : null}
         </div>
+        {canManage && !quote.is_superseded && quote.status === "received" ? (
+          <div className="pt-2">
+            <Button
+              size="sm"
+              disabled={customerQuotePending}
+              onClick={() => onCreateCustomerQuote(quote.id)}
+            >
+              Create customer quote from this quote
+            </Button>
+          </div>
+        ) : null}
         <DetailRow
           label="Status"
           value={
@@ -723,11 +859,13 @@ function QuoteSheetBody({
                   <SelectItem value={quote.status}>
                     {SUPPLIER_QUOTE_STATUS_LABELS[quote.status]}
                   </SelectItem>
-                  {transitions.map((s) => (
-                    <SelectItem key={s} value={s}>
-                      {SUPPLIER_QUOTE_STATUS_LABELS[s]}
-                    </SelectItem>
-                  ))}
+                  {transitions
+                    .filter((s) => s !== "selected")
+                    .map((s) => (
+                      <SelectItem key={s} value={s}>
+                        {SUPPLIER_QUOTE_STATUS_LABELS[s]}
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
             ) : (
@@ -849,6 +987,31 @@ function QuoteSheetBody({
       </div>
 
       <QuoteFiles quoteId={quote.id} canUpload={canManage && !quote.is_superseded} />
+
+      {canManage && !quote.is_superseded ? (
+        <div className="sticky bottom-0 mt-6 border-t border-border bg-surface px-4 py-3">
+          {quote.status === "requested" ? (
+            <Button
+              size="sm"
+              className="w-full"
+              disabled={statusMutation.isPending}
+              onClick={() => setPendingStatus("received")}
+            >
+              {statusMutation.isPending ? <Loader2 className="size-4 animate-spin" /> : null}
+              Mark received
+            </Button>
+          ) : quote.status === "received" ? (
+            <Button
+              size="sm"
+              className="w-full"
+              disabled={customerQuotePending}
+              onClick={() => onCreateCustomerQuote(quote.id)}
+            >
+              Create customer quote from this quote
+            </Button>
+          ) : null}
+        </div>
+      ) : null}
 
       <Dialog open={editingLineId !== null} onOpenChange={(o) => !o && setEditingLineId(null)}>
         <DialogContent className="quote-dialog sm:max-w-md">
