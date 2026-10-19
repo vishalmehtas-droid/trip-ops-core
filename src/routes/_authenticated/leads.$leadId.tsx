@@ -117,7 +117,7 @@ type FormState = {
 
 function LeadDetailPage() {
   const { leadId } = Route.useParams();
-  const { quote: quoteToOpen } = Route.useSearch();
+  const { quote: quoteToOpen, sq: supplierQuoteToOpen, add } = Route.useSearch();
   const { hasPermission } = useAuth();
   const canRead = hasPermission("leads.read");
   const canManage = hasPermission("leads.manage");
@@ -448,7 +448,9 @@ function LeadDetailPage() {
       <LeadRequirements
         leadId={lead.id}
         canManage={canManage && !isClosed}
+        autoOpen={add === "requirement"}
         quoteToOpen={quoteToOpen}
+        supplierQuoteToOpen={supplierQuoteToOpen}
       />
 
       {canReadAudit ? (
