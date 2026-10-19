@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Link, useNavigate } from "@tanstack/react-router";
@@ -46,7 +46,14 @@ import {
   changeCustomerQuoteStatus,
   createCustomerQuoteRevision,
   convertCustomerQuoteToBooking,
+  acceptCustomerQuoteAndConvert,
 } from "@/lib/customer-quotes.functions";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   customerQuoteHeaderSchema,
   CUSTOMER_QUOTE_STATUS_LABELS,
@@ -328,7 +335,7 @@ function CustomerQuoteDetail({
 
 const actionLabels = {
   sent: "Send",
-  accepted: "Accept",
+  accepted: "Mark as accepted",
   rejected: "Reject",
   expired: "Expire",
 } as const;
