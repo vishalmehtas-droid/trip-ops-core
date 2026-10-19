@@ -756,6 +756,80 @@ function CustomerQuoteBody({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <AlertDialog
+        open={confirmAcceptConvert}
+        onOpenChange={(open) => !acceptConvert.isPending && setConfirmAcceptConvert(open)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Accept this quote and create the booking?</AlertDialogTitle>
+            <AlertDialogDescription>
+              The quote is marked Accepted and converted with the existing booking conversion. If
+              the conversion fails, the quote stays Accepted and you can retry with Convert to
+              Booking.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={acceptConvert.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={acceptConvert.isPending}
+              onClick={(event) => {
+                event.preventDefault();
+                acceptConvert.mutate();
+              }}
+            >
+              {acceptConvert.isPending ? <Loader2 className="size-4 animate-spin" /> : null}
+              Accept and create booking
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      {canManage ? (
+        <div className="sticky bottom-0 -mx-1 border-t border-border bg-surface px-1 py-3">
+          {booking ? (
+            <Button asChild size="sm" className="w-full">
+              <Link to="/sales/$saleId" params={{ saleId: booking.id }}>
+                Open booking {booking.booking_number}
+              </Link>
+            </Button>
+          ) : quote.status === "accepted" ? (
+            <Button
+              size="sm"
+              className="w-full"
+              disabled={!canConvert || convert.isPending}
+              onClick={() => setConfirmConvert(true)}
+            >
+              Convert to Booking
+            </Button>
+          ) : quote.status === "draft" || quote.status === "sent" ? (
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                className="flex-1"
+                disabled={acceptConvert.isPending}
+                onClick={() => setConfirmAcceptConvert(true)}
+              >
+                Accept and create booking
+              </Button>
+              {quote.status === "draft" ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button size="sm" variant="outline" aria-label="More actions">
+                      …
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => setPending("sent")}>Send</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setPending("accepted")}>
+                      Mark as accepted
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
     </div>
   );
 }
