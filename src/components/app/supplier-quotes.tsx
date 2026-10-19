@@ -595,11 +595,15 @@ function QuoteSheetBody({
   canManage,
   onChanged,
   defaultPersons,
+  onCreateCustomerQuote,
+  customerQuotePending,
 }: {
   quote: Quote;
   canManage: boolean;
   onChanged: () => Promise<void>;
   defaultPersons: number;
+  onCreateCustomerQuote: (supplierQuoteId: string) => void;
+  customerQuotePending: boolean;
 }) {
   const updateFn = useServerFn(updateSupplierQuote);
   const addLineFn = useServerFn(addSupplierQuoteLine);
@@ -833,11 +837,13 @@ function QuoteSheetBody({
                   <SelectItem value={quote.status}>
                     {SUPPLIER_QUOTE_STATUS_LABELS[quote.status]}
                   </SelectItem>
-                  {transitions.map((s) => (
-                    <SelectItem key={s} value={s}>
-                      {SUPPLIER_QUOTE_STATUS_LABELS[s]}
-                    </SelectItem>
-                  ))}
+                  {transitions
+                    .filter((s) => s !== "selected")
+                    .map((s) => (
+                      <SelectItem key={s} value={s}>
+                        {SUPPLIER_QUOTE_STATUS_LABELS[s]}
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
             ) : (
