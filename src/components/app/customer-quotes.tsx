@@ -480,6 +480,24 @@ function CustomerQuoteBody({
     },
     onError,
   });
+  const acceptConvertFn = useServerFn(acceptCustomerQuoteAndConvert);
+  const [confirmAcceptConvert, setConfirmAcceptConvert] = useState(false);
+  const acceptConvert = useMutation({
+    mutationFn: () => acceptConvertFn({ data: { id: quote.id } }),
+    onSuccess: async (result) => {
+      await onChanged();
+      setConfirmAcceptConvert(false);
+      if (result.booking_id) {
+        toast.success("Quote accepted and booking created");
+        await navigate({ to: "/sales/$saleId", params: { saleId: result.booking_id } });
+      } else {
+        toast.error("Quote accepted, but the booking was not created", {
+          description: `${result.message} Use Convert to Booking to retry.`,
+        });
+      }
+    },
+    onError,
+  });
   const save = useMutation({
     mutationFn: () =>
       updateFn({ data: { id: quote.id, values: customerQuoteHeaderSchema.parse(form) } }),
