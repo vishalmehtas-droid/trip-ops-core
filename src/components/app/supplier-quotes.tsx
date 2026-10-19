@@ -820,6 +820,17 @@ function QuoteSheetBody({
             </p>
           ) : null}
         </div>
+        {canManage && !quote.is_superseded && quote.status === "received" ? (
+          <div className="pt-2">
+            <Button
+              size="sm"
+              disabled={customerQuotePending}
+              onClick={() => onCreateCustomerQuote(quote.id)}
+            >
+              Create customer quote from this quote
+            </Button>
+          </div>
+        ) : null}
         <DetailRow
           label="Status"
           value={
@@ -965,6 +976,31 @@ function QuoteSheetBody({
       </div>
 
       <QuoteFiles quoteId={quote.id} canUpload={canManage && !quote.is_superseded} />
+
+      {canManage && !quote.is_superseded ? (
+        <div className="sticky bottom-0 mt-6 border-t border-border bg-surface px-4 py-3">
+          {quote.status === "requested" ? (
+            <Button
+              size="sm"
+              className="w-full"
+              disabled={statusMutation.isPending}
+              onClick={() => setPendingStatus("received")}
+            >
+              {statusMutation.isPending ? <Loader2 className="size-4 animate-spin" /> : null}
+              Mark received
+            </Button>
+          ) : quote.status === "received" ? (
+            <Button
+              size="sm"
+              className="w-full"
+              disabled={customerQuotePending}
+              onClick={() => onCreateCustomerQuote(quote.id)}
+            >
+              Create customer quote from this quote
+            </Button>
+          ) : null}
+        </div>
+      ) : null}
 
       <Dialog open={editingLineId !== null} onOpenChange={(o) => !o && setEditingLineId(null)}>
         <DialogContent className="quote-dialog sm:max-w-md">
