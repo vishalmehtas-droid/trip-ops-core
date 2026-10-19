@@ -121,7 +121,7 @@ export const createPurchase = createServerFn({ method: "POST" })
         amount: data.values.amount,
         notes: data.values.notes,
       })
-      .select("id, purchase_number")
+      .select("id, purchase_number, amount_inr::text")
       .single();
     if (error) throw new Error(error.message);
     return row;

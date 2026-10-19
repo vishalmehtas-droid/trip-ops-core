@@ -12,6 +12,7 @@ import {
   usePurchases,
   type PurchaseFilters,
 } from "@/components/app/purchases";
+import { PayPurchaseDialog } from "@/components/app/money-shortcuts";
 import { PaymentFormDialog } from "@/components/app/payments";
 import { RecordCombobox, type RecordOption } from "@/components/app/sales-ui";
 import { EmptyState, ErrorState, TableSkeleton, UnauthorizedState } from "@/components/app/states";
@@ -56,9 +57,9 @@ function PurchasesPage() {
     null,
   );
 
-  const recordPayment = canRecordPayment
-    ? (row: PurchaseRow) => setPaymentPreset({ saleId: row.sale_id, vendorId: row.vendor_id })
-    : undefined;
+  const [payPurchase, setPayPurchase] = useState<PurchaseRow | null>(null);
+
+  const recordPayment = canRecordPayment ? (row: PurchaseRow) => setPayPurchase(row) : undefined;
 
   const purchases = usePurchases(filters, canRead);
   const bookings = useBookingOptions(canRead);
@@ -193,6 +194,14 @@ function PurchasesPage() {
         purchase={current}
         onOpenChange={(open) => !open && setSelected(null)}
         onRecordPayment={recordPayment}
+      />
+      <PayPurchaseDialog
+        purchase={payPurchase}
+        onOpenChange={(open) => !open && setPayPurchase(null)}
+        onOpenFullForm={(row) => {
+          setPayPurchase(null);
+          setPaymentPreset({ saleId: row.sale_id, vendorId: row.vendor_id });
+        }}
       />
       <PaymentFormDialog
         open={paymentPreset !== null}

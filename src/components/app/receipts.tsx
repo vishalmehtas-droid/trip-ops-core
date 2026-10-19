@@ -6,6 +6,7 @@ import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { DetailRow, Field, formatDate, formatDateTime } from "@/components/app/master-data";
+import { QuickReceiptDialog } from "@/components/app/money-shortcuts";
 import { MONEY_HEAD, MoneyStatusBadge, SummaryStat, todayIso } from "@/components/app/payments";
 import { RecordCombobox, type RecordOption } from "@/components/app/sales-ui";
 import { EmptyState, ErrorState, TableSkeleton } from "@/components/app/states";
@@ -565,6 +566,7 @@ export function BookingReceipts({ saleId, bookingOpen }: { saleId: string; booki
   });
   const receipts = useReceipts({ sale_id: saleId });
   const [createOpen, setCreateOpen] = useState(false);
+  const [quickOpen, setQuickOpen] = useState(false);
   const [selected, setSelected] = useState<ReceiptRow | null>(null);
   const current = selected
     ? (receipts.data?.find((row) => row.id === selected.id) ?? selected)
@@ -579,9 +581,16 @@ export function BookingReceipts({ saleId, bookingOpen }: { saleId: string; booki
           {s ? <ReceiptPaymentBadge status={s.payment_status} /> : null}
         </h2>
         {canManage ? (
-          <Button size="sm" onClick={() => setCreateOpen(true)}>
-            New Receipt
-          </Button>
+          <div className="flex gap-2">
+            {s && toPaise(s.outstanding) > 0n ? (
+              <Button size="sm" variant="outline" onClick={() => setQuickOpen(true)}>
+                Mark paid in full
+              </Button>
+            ) : null}
+            <Button size="sm" onClick={() => setQuickOpen(true)}>
+              New Receipt
+            </Button>
+          </div>
         ) : null}
       </div>
       {summary.isPending ? (
@@ -608,6 +617,15 @@ export function BookingReceipts({ saleId, bookingOpen }: { saleId: string; booki
       ) : (
         <ReceiptsTable rows={receipts.data} onOpen={setSelected} showBooking={false} />
       )}
+      <QuickReceiptDialog
+        saleId={saleId}
+        open={quickOpen}
+        onOpenChange={setQuickOpen}
+        onOpenFullForm={() => {
+          setQuickOpen(false);
+          setCreateOpen(true);
+        }}
+      />
       <ReceiptFormDialog open={createOpen} onOpenChange={setCreateOpen} presetSaleId={saleId} />
       <ReceiptSheet receipt={current} onOpenChange={(open) => !open && setSelected(null)} />
     </section>

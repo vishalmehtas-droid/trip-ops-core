@@ -6,7 +6,20 @@ import { Loader2, Plus } from "lucide-react";
 import { toast } from "sonner";
 
 import { DetailRow, Field, formatDate, formatDateTime } from "@/components/app/master-data";
+import {
+  PayPurchaseDialog,
+  QuickMoneyFields,
+  emptyQuickMoney,
+  quickMoneyErrors,
+  type QuickMoneyForm,
+} from "@/components/app/money-shortcuts";
 import { PaymentFormDialog } from "@/components/app/payments";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { saveVendorPayment } from "@/lib/payments.functions";
+import { lineEntryTotal, formatEntryInr } from "@/lib/quote-entry-preview";
+import { vendorPaymentType } from "@/lib/money-shortcuts";
+import type { PaymentMethod } from "@/lib/payment-schemas";
 import { useQuickAdd } from "@/components/app/quick-add";
 import { RecordCombobox, type RecordOption } from "@/components/app/sales-ui";
 import { EmptyState, ErrorState, TableSkeleton } from "@/components/app/states";
@@ -185,11 +198,13 @@ export function PurchasesTable({
   onOpen,
   showBooking = true,
   onRecordPayment,
+  onPayInFull,
 }: {
   rows: PurchaseRow[];
   onOpen: (row: PurchaseRow) => void;
   showBooking?: boolean;
   onRecordPayment?: ((row: PurchaseRow) => void) | undefined;
+  onPayInFull?: ((row: PurchaseRow) => void) | undefined;
 }) {
   return (
     <div className="overflow-x-auto rounded-lg border border-border bg-surface">
@@ -261,6 +276,21 @@ export function PurchasesTable({
                         Record Payment
                       </Button>
                     ) : null}
+                    {onPayInFull &&
+                    row.sale?.status !== "cancelled" &&
+                    toPaise(row.outstanding) > 0n ? (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 px-2 text-xs"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          onPayInFull(row);
+                        }}
+                      >
+                        Mark paid in full
+                      </Button>
+                    ) : null}
                   </div>
                 ) : (
                   "—"
@@ -324,16 +354,27 @@ export function PurchaseFormDialog({
   presetSaleId?: string;
 }) {
   const queryClient = useQueryClient();
+  const { hasPermission } = useAuth();
   const createFn = useServerFn(createPurchase);
   const updateFn = useServerFn(updatePurchase);
+  const payFn = useServerFn(saveVendorPayment);
   const [form, setForm] = useState<FormState>(emptyForm(presetSaleId));
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [lastOpen, setLastOpen] = useState(false);
+  const [alsoPay, setAlsoPay] = useState(false);
+  const [pay, setPay] = useState<QuickMoneyForm>(emptyQuickMoney());
+  const [payDirty, setPayDirty] = useState(false);
+  const [payErrors, setPayErrors] = useState<Record<string, string>>({});
+  const canAlsoPay = !purchase && hasPermission("payments.manage");
 
   if (open !== lastOpen) {
     setLastOpen(open);
     if (open) {
       setErrors({});
+      setAlsoPay(false);
+      setPay(emptyQuickMoney());
+      setPayDirty(false);
+      setPayErrors({});
       setForm(
         purchase
           ? {
@@ -389,15 +430,54 @@ export function PurchaseFormDialog({
     mutationFn: async () => {
       const values = purchaseValuesSchema.parse(form);
       if (purchase) return updateFn({ data: { id: purchase.id, values } });
-      return createFn({ data: { sale_id: form.sale_id, values } });
+      const created = await createFn({ data: { sale_id: form.sale_id, values } });
+      if (!canAlsoPay || !alsoPay) return { ...created, paymentNumber: null, paymentError: null };
+      const purchaseInr = (created as { amount_inr: string }).amount_inr;
+      const amount = payDirty ? pay.amount_inr.trim() : purchaseInr;
+      try {
+        const payment = await payFn({
+          data: {
+            id: null,
+            values: {
+              vendor_id: values.vendor_id,
+              sale_id: form.sale_id,
+              payment_type: vendorPaymentType(toPaise(amount), toPaise(purchaseInr)),
+              payment_date: pay.date,
+              amount_inr: amount,
+              method: pay.method as PaymentMethod,
+              reference: pay.reference,
+              notes: null,
+            },
+            allocations: [{ purchase_id: created.id, amount_inr: amount }],
+          },
+        });
+        return { ...created, paymentNumber: payment.payment_number, paymentError: null };
+      } catch (error) {
+        return {
+          ...created,
+          paymentNumber: null,
+          paymentError: error instanceof Error ? error.message : "Unknown error",
+        };
+      }
     },
     onSuccess: async (result) => {
       await invalidatePurchases(queryClient);
-      toast.success(
-        purchase
-          ? "Purchase updated"
-          : `Purchase ${(result as { purchase_number?: string }).purchase_number ?? ""} recorded`,
-      );
+      const r = result as {
+        purchase_number?: string;
+        paymentNumber?: string | null;
+        paymentError?: string | null;
+      };
+      if (purchase) toast.success("Purchase updated");
+      else if (r.paymentError)
+        toast.warning(`Purchase ${r.purchase_number ?? ""} recorded, but the payment was not`, {
+          description: `${r.paymentError} Use Record Payment on the purchase to try again.`,
+          duration: 10000,
+        });
+      else if (r.paymentNumber)
+        toast.success(
+          `Purchase ${r.purchase_number ?? ""} and payment ${r.paymentNumber} recorded`,
+        );
+      else toast.success(`Purchase ${r.purchase_number ?? ""} recorded`);
       onOpenChange(false);
     },
     onError: (error: Error) => toast.error("Request rejected", { description: error.message }),
@@ -408,7 +488,12 @@ export function PurchaseFormDialog({
     if (!purchase && !form.sale_id) next["sale_id"] = "Select a booking";
     const parsed = purchaseValuesSchema.safeParse(form);
     if (!parsed.success) Object.assign(next, quoteFieldErrors(parsed.error.issues));
-    if (Object.keys(next).length > 0) {
+    const nextPay =
+      canAlsoPay && alsoPay
+        ? quickMoneyErrors(payDirty ? pay : { ...pay, amount_inr: previewInr ?? "" }, null)
+        : {};
+    setPayErrors(nextPay);
+    if (Object.keys(next).length > 0 || Object.keys(nextPay).length > 0) {
       setErrors(next);
       return;
     }
@@ -417,6 +502,7 @@ export function PurchaseFormDialog({
   }
 
   const isInr = form.currency_code.trim().toUpperCase() === "INR";
+  const previewInr = lineEntryTotal("1", form.amount, isInr ? "1" : form.exchange_rate);
 
   return (
     <>
@@ -536,6 +622,39 @@ export function PurchaseFormDialog({
                 onChange={(event) => setForm({ ...form, notes: event.target.value })}
               />
             </Field>
+            {canAlsoPay ? (
+              <div className="space-y-3 rounded-md border border-border p-3">
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="purchase-also-pay"
+                    checked={alsoPay}
+                    onCheckedChange={(value) => setAlsoPay(value === true)}
+                  />
+                  <Label htmlFor="purchase-also-pay" className="text-sm">
+                    Also record payment to the vendor
+                  </Label>
+                </div>
+                {alsoPay ? (
+                  <>
+                    <QuickMoneyFields
+                      idPrefix="purchase-pay"
+                      form={payDirty ? pay : { ...pay, amount_inr: previewInr ?? "" }}
+                      onChange={(next) => {
+                        if (next.amount_inr !== (payDirty ? pay.amount_inr : (previewInr ?? "")))
+                          setPayDirty(true);
+                        setPay(next);
+                      }}
+                      errors={payErrors}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      {payDirty
+                        ? "Final if it equals the purchase INR amount, otherwise Part."
+                        : `Defaults to the purchase INR amount${previewInr ? ` (${formatEntryInr(previewInr)})` : ""}, recorded as Final.`}
+                    </p>
+                  </>
+                ) : null}
+              </div>
+            ) : null}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => onOpenChange(false)}>
@@ -543,7 +662,11 @@ export function PurchaseFormDialog({
             </Button>
             <Button onClick={submit} disabled={save.isPending}>
               {save.isPending ? <Loader2 className="size-4 animate-spin" /> : null}
-              {purchase ? "Save changes" : "Record purchase"}
+              {purchase
+                ? "Save changes"
+                : alsoPay && canAlsoPay
+                  ? "Record purchase and payment"
+                  : "Record purchase"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -774,10 +897,9 @@ export function BookingPurchases({
   const [createOpen, setCreateOpen] = useState(false);
   const [selected, setSelected] = useState<PurchaseRow | null>(null);
   const [paymentVendor, setPaymentVendor] = useState<string | null>(null);
+  const [payPurchase, setPayPurchase] = useState<PurchaseRow | null>(null);
 
-  const recordPayment = canRecordPayment
-    ? (row: PurchaseRow) => setPaymentVendor(row.vendor_id)
-    : undefined;
+  const recordPayment = canRecordPayment ? (row: PurchaseRow) => setPayPurchase(row) : undefined;
 
   const v = variance.data;
 
@@ -810,6 +932,7 @@ export function BookingPurchases({
           onOpen={setSelected}
           showBooking={false}
           onRecordPayment={recordPayment}
+          onPayInFull={recordPayment}
         />
       )}
 
@@ -898,6 +1021,14 @@ export function BookingPurchases({
         purchase={selected}
         onOpenChange={(open) => !open && setSelected(null)}
         onRecordPayment={recordPayment}
+      />
+      <PayPurchaseDialog
+        purchase={payPurchase}
+        onOpenChange={(open) => !open && setPayPurchase(null)}
+        onOpenFullForm={(row) => {
+          setPayPurchase(null);
+          setPaymentVendor(row.vendor_id);
+        }}
       />
       <PaymentFormDialog
         open={paymentVendor !== null}

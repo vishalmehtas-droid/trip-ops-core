@@ -8,3 +8,4 @@
 - [x] Quote entry currency/rate controls, person defaults and live amount preview (presentation only).
 - [x] Visible revision/conversion actions, supplier-picker reasons and requirement next-step hints.
 - [x] Mobile quote dialogs and panels scroll with visible save actions; verify without database tests or UI click-through.
+- [x] Money shortcuts: purchase + payment in one step, compact Pay this purchase / New receipt dialogs, Mark paid in full.
