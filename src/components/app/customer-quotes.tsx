@@ -102,6 +102,31 @@ export function CustomerQuotes({
   const [openId, setOpenId] = useState<string | null>(initialQuoteId ?? null);
   const [form, setForm] = useState({ valid_until: "", notes: "" });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [confirmAcceptConvert, setConfirmAcceptConvert] = useState<string | null>(null);
+  const navigate = useNavigate();
+  const acceptConvertFn = useServerFn(acceptCustomerQuoteAndConvert);
+  useEffect(() => {
+    if (initialQuoteId) setOpenId(initialQuoteId);
+  }, [initialQuoteId]);
+  const acceptConvert = useMutation({
+    mutationFn: (id: string) => acceptConvertFn({ data: { id } }),
+    onSuccess: async (result) => {
+      await invalidate();
+      setConfirmAcceptConvert(null);
+      if (result.booking_id) {
+        toast.success("Quote accepted and booking created");
+        await navigate({ to: "/sales/$saleId", params: { saleId: result.booking_id } });
+      } else {
+        toast.error("Quote accepted, but the booking was not created", {
+          description: `${result.message} Use Convert to Booking to retry.`,
+        });
+      }
+    },
+    onError: (error: Error) => {
+      setConfirmAcceptConvert(null);
+      toast.error("Request rejected", { description: error.message });
+    },
+  });
   const quotes = useQuery({
     queryKey: ["customer-quotes", requirementId],
     queryFn: () => listFn({ data: { requirement_id: requirementId } }),
