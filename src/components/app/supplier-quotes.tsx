@@ -72,9 +72,9 @@ import {
   SUPPLIER_QUOTE_TRANSITIONS,
   type SupplierQuoteStatus,
 } from "@/lib/supplier-quote-schemas";
+import { createCustomerQuoteFromSupplierQuote } from "@/lib/customer-quotes.functions";
 import {
   addSupplierQuoteLine,
-  createCustomerQuoteFromSupplierQuote,
   createSupplierQuote,
   createSupplierQuoteRevision,
   getSupplierQuoteFileUrl,
