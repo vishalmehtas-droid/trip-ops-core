@@ -527,10 +527,40 @@ export function SupplierQuotes({
               canManage={canManage}
               onChanged={invalidate}
               defaultPersons={defaultAdults + defaultChildren}
+              onCreateCustomerQuote={(id) => setConfirmFromSupplier(id)}
+              customerQuotePending={createCustomerQuote.isPending}
             />
           ) : null}
         </SheetContent>
       </Sheet>
+
+      <AlertDialog
+        open={confirmFromSupplier !== null}
+        onOpenChange={(open) => !open && setConfirmFromSupplier(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Create customer quote from this quote?</AlertDialogTitle>
+            <AlertDialogDescription>
+              A Draft customer quote is created with this quote's lines (excluding alternatives and
+              add-ons) and their INR cost snapshots. Only pricing is left to set.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={createCustomerQuote.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={createCustomerQuote.isPending}
+              onClick={(event) => {
+                event.preventDefault();
+                if (confirmFromSupplier) createCustomerQuote.mutate(confirmFromSupplier);
+              }}
+            >
+              {createCustomerQuote.isPending ? <Loader2 className="size-4 animate-spin" /> : null}
+              Create customer quote
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {vendorQuickAdd.quickAddDialog}
     </div>
