@@ -297,6 +297,34 @@ export function CustomerQuotes({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <AlertDialog
+        open={confirmAcceptConvert !== null}
+        onOpenChange={(open) => !open && setConfirmAcceptConvert(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Accept this quote and create the booking?</AlertDialogTitle>
+            <AlertDialogDescription>
+              The quote is marked Accepted and converted with the existing booking conversion. If
+              the conversion fails, the quote stays Accepted and you can retry with Convert to
+              Booking.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={acceptConvert.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={acceptConvert.isPending}
+              onClick={(event) => {
+                event.preventDefault();
+                if (confirmAcceptConvert) acceptConvert.mutate(confirmAcceptConvert);
+              }}
+            >
+              {acceptConvert.isPending ? <Loader2 className="size-4 animate-spin" /> : null}
+              Accept and create booking
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       <Sheet
         open={openId !== null && Boolean(quotes.data?.some((quote) => quote.id === openId))}
         onOpenChange={(open) => !open && setOpenId(null)}
