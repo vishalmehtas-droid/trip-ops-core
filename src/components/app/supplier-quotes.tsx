@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useNavigate } from "@tanstack/react-router";
@@ -232,6 +232,7 @@ export function SupplierQuotes({
   defaultChildren,
   canManage,
   canCreate,
+  quoteToOpen,
 }: {
   leadId: string;
   requirementId: string;
@@ -239,6 +240,7 @@ export function SupplierQuotes({
   defaultChildren: number;
   canManage: boolean;
   canCreate: boolean;
+  quoteToOpen?: string | undefined;
 }) {
   const queryClient = useQueryClient();
   const listFn = useServerFn(listSupplierQuotes);
@@ -251,6 +253,9 @@ export function SupplierQuotes({
   const [confirmFromSupplier, setConfirmFromSupplier] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [openId, setOpenId] = useState<string | null>(null);
+  useEffect(() => {
+    if (quoteToOpen) setOpenId(quoteToOpen);
+  }, [quoteToOpen]);
 
   const quotesQuery = useQuery({
     queryKey,
