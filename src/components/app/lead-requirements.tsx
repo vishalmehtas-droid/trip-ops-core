@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { useNavigate } from "@tanstack/react-router";
 import { ArrowDown, ArrowUp, Loader2, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 
@@ -118,6 +119,7 @@ export function LeadRequirements({
   supplierQuoteToOpen?: string | undefined;
 }) {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [formOpen, setFormOpen] = useState(Boolean(autoOpen));
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
