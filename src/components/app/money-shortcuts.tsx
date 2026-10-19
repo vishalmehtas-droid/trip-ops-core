@@ -337,8 +337,7 @@ export function QuickReceiptDialog({
         <DialogHeader>
           <DialogTitle>New receipt</DialogTitle>
           <DialogDescription>
-            Money received from the client for this booking. It can't exceed the outstanding
-            amount.
+            Money received from the client for this booking. It can't exceed the outstanding amount.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4">
