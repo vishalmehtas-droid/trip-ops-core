@@ -79,7 +79,7 @@ export function QuickMoneyFields({
   return (
     <div className="grid gap-4 sm:grid-cols-2">
       <Field
-        label="Amount paid (INR)"
+        label="Amount (INR)"
         htmlFor={`${idPrefix}-amount`}
         required
         error={errors["amount_inr"]}
