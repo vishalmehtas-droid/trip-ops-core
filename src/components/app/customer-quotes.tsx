@@ -198,6 +198,7 @@ export function CustomerQuotes({
                 <th className="p-3">Status</th>
                 <th className="p-3">Valid until</th>
                 <th className="p-3 text-right">Customer payable</th>
+                {canManage ? <th className="p-3 text-right">Next step</th> : null}
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -226,6 +227,45 @@ export function CustomerQuotes({
                   <td className="whitespace-nowrap p-3 text-right tabular-nums">
                     {formatMoney(quote.customer_payable)}
                   </td>
+                  {canManage ? (
+                    <td className="whitespace-nowrap p-3 text-right">
+                      {(() => {
+                        const rowBooking = Array.isArray(quote.booking)
+                          ? quote.booking[0]
+                          : quote.booking;
+                        if (rowBooking) {
+                          return (
+                            <Button
+                              asChild
+                              size="sm"
+                              variant="outline"
+                              onClick={(event) => event.stopPropagation()}
+                            >
+                              <Link to="/sales/$saleId" params={{ saleId: rowBooking.id }}>
+                                Booking {rowBooking.booking_number}
+                              </Link>
+                            </Button>
+                          );
+                        }
+                        if (quote.status === "draft" || quote.status === "sent") {
+                          return (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              disabled={acceptConvert.isPending}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                setConfirmAcceptConvert(quote.id);
+                              }}
+                            >
+                              Accept &amp; book
+                            </Button>
+                          );
+                        }
+                        return null;
+                      })()}
+                    </td>
+                  ) : null}
                 </tr>
               ))}
             </tbody>
