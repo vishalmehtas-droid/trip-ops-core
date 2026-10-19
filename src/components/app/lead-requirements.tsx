@@ -109,11 +109,13 @@ export function LeadRequirements({
   canManage,
   autoOpen,
   quoteToOpen,
+  supplierQuoteToOpen,
 }: {
   leadId: string;
   canManage: boolean;
   autoOpen?: boolean;
   quoteToOpen?: string | undefined;
+  supplierQuoteToOpen?: string | undefined;
 }) {
   const queryClient = useQueryClient();
   const [formOpen, setFormOpen] = useState(Boolean(autoOpen));
@@ -289,10 +291,18 @@ export function LeadRequirements({
       {requirementsQuery.isPending ? (
         <p className="px-4 py-6 text-sm text-muted-foreground">Loading requirements…</p>
       ) : rows.length === 0 ? (
-        <p className="px-4 py-6 text-sm text-muted-foreground">
-          No requirements captured yet. Add the destinations, dates and party size the customer
-          asked about.
-        </p>
+        <div className="space-y-3 px-4 py-6">
+          <p className="text-sm text-muted-foreground">
+            No requirements captured yet. Add the destinations, dates and party size the customer
+            asked about.
+          </p>
+          {canManage ? (
+            <Button size="sm" onClick={openCreate}>
+              <Plus className="size-4" />
+              Add requirement
+            </Button>
+          ) : null}
+        </div>
       ) : (
         <ul className="divide-y divide-border">
           {rows.map((row) => {
@@ -347,7 +357,23 @@ export function LeadRequirements({
                     </div>
                   ) : null}
                 </div>
-                <RequirementNextStep requirementId={row.id} />
+                <RequirementNextStep
+                  requirementId={row.id}
+                  onOpenCustomerQuote={(id) =>
+                    void navigate({
+                      to: "/leads/$leadId",
+                      params: { leadId },
+                      search: { quote: id },
+                    })
+                  }
+                  onOpenSupplierQuote={(id) =>
+                    void navigate({
+                      to: "/leads/$leadId",
+                      params: { leadId },
+                      search: { sq: id },
+                    })
+                  }
+                />
                 <SupplierQuotes
                   leadId={leadId}
                   requirementId={row.id}
@@ -355,6 +381,7 @@ export function LeadRequirements({
                   defaultChildren={row.children}
                   canManage={canManage}
                   canCreate={row.status === "draft" || row.status === "active"}
+                  quoteToOpen={supplierQuoteToOpen}
                 />
                 <CustomerQuotes
                   defaultPersons={row.adults + row.children}
