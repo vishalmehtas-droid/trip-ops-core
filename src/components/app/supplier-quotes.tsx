@@ -356,6 +356,7 @@ export function SupplierQuotes({
                   vendor_id: "",
                   ...detailsFrom({ adults: defaultAdults, children: defaultChildren }),
                 });
+                setMarkReceived(true);
                 setErrors({});
                 setCreateOpen(true);
               }}
@@ -388,6 +389,7 @@ export function SupplierQuotes({
               <th className="px-3 py-2 font-medium">Status</th>
               <th className="px-3 py-2 font-medium">Valid until</th>
               <th className="px-3 py-2 text-right font-medium">Total INR</th>
+              {canManage ? <th className="px-3 py-2 text-right font-medium">Next step</th> : null}
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
@@ -409,6 +411,35 @@ export function SupplierQuotes({
                 </td>
                 <td className="px-3 py-2">{formatDate(quote.valid_until)}</td>
                 <td className="px-3 py-2 text-right tabular-nums">{inr(quoteTotal(quote))}</td>
+                {canManage ? (
+                  <td className="px-3 py-2 text-right">
+                    {quote.is_superseded ? null : quote.status === "requested" ? (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={markReceivedRow.isPending}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          markReceivedRow.mutate(quote.id);
+                        }}
+                      >
+                        Mark received
+                      </Button>
+                    ) : quote.status === "received" ? (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={createCustomerQuote.isPending}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          setConfirmFromSupplier(quote.id);
+                        }}
+                      >
+                        Create customer quote
+                      </Button>
+                    ) : null}
+                  </td>
+                ) : null}
               </tr>
             ))}
           </tbody>
@@ -457,6 +488,20 @@ export function SupplierQuotes({
               onChange={(v) => setForm({ ...form, ...v })}
               errors={errors}
             />
+            <label className="flex items-start gap-2 text-sm" htmlFor="sq-received">
+              <Checkbox
+                id="sq-received"
+                checked={markReceived}
+                onCheckedChange={(checked) => setMarkReceived(checked === true)}
+              />
+              <span>
+                Quote already received
+                <span className="block text-xs text-muted-foreground">
+                  Marks it Received straight away so lines can be added. Untick if you are only
+                  requesting prices.
+                </span>
+              </span>
+            </label>
           </div>
           <DialogFooter>
             <Button
