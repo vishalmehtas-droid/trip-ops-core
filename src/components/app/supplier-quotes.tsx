@@ -245,6 +245,8 @@ export function SupplierQuotes({
 
   const [createOpen, setCreateOpen] = useState(false);
   const [form, setForm] = useState({ vendor_id: "", ...detailsFrom({}) });
+  const [markReceived, setMarkReceived] = useState(true);
+  const [confirmFromSupplier, setConfirmFromSupplier] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [openId, setOpenId] = useState<string | null>(null);
 
@@ -279,13 +281,44 @@ export function SupplierQuotes({
 
   const create = useMutation({
     mutationFn: (values: ReturnType<typeof quoteHeaderSchema.parse>) =>
-      createFn({ data: { lead_id: leadId, requirement_id: requirementId, values } }),
+      createFn({
+        data: { lead_id: leadId, requirement_id: requirementId, values, mark_received: markReceived },
+      }),
     onSuccess: async () => {
       await invalidate();
       toast.success("Supplier quote created");
       setCreateOpen(false);
     },
     onError: (error: Error) => toast.error("Request rejected", { description: error.message }),
+  });
+
+  const updateFn = useServerFn(updateSupplierQuote);
+  const fromSupplierFn = useServerFn(createCustomerQuoteFromSupplierQuote);
+  const navigate = useNavigate();
+  const markReceivedRow = useMutation({
+    mutationFn: (id: string) => updateFn({ data: { id, status: "received" } }),
+    onSuccess: async () => {
+      await invalidate();
+      toast.success("Quote marked Received");
+    },
+    onError: (error: Error) => toast.error("Request rejected", { description: error.message }),
+  });
+  const createCustomerQuote = useMutation({
+    mutationFn: (supplierQuoteId: string) => fromSupplierFn({ data: { supplier_quote_id: supplierQuoteId } }),
+    onSuccess: async (result) => {
+      await queryClient.invalidateQueries({ queryKey: ["customer-quotes", requirementId] });
+      setConfirmFromSupplier(null);
+      toast.success("Customer quote created — set pricing and send");
+      await navigate({
+        to: "/leads/$leadId",
+        params: { leadId },
+        search: { quote: result.id },
+      });
+    },
+    onError: (error: Error) => {
+      setConfirmFromSupplier(null);
+      toast.error("Customer quote not created", { description: error.message });
+    },
   });
 
   function submitCreate() {
