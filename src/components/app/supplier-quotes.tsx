@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { useNavigate } from "@tanstack/react-router";
 import { ExternalLink, Loader2, Paperclip, Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -73,6 +74,7 @@ import {
 } from "@/lib/supplier-quote-schemas";
 import {
   addSupplierQuoteLine,
+  createCustomerQuoteFromSupplierQuote,
   createSupplierQuote,
   createSupplierQuoteRevision,
   getSupplierQuoteFileUrl,
