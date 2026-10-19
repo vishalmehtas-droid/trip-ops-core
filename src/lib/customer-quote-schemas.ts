@@ -24,7 +24,7 @@ export const CUSTOMER_QUOTE_STATUS_LABELS: Record<CustomerQuoteStatus, string> =
 
 /** Mirrors app.guard_customer_quote_update. Superseded is set only by a revision. */
 export const CUSTOMER_QUOTE_TRANSITIONS: Record<CustomerQuoteStatus, CustomerQuoteStatus[]> = {
-  draft: ["sent"],
+  draft: ["sent", "accepted"],
   sent: ["accepted", "rejected", "expired"],
   accepted: [],
   rejected: [],
