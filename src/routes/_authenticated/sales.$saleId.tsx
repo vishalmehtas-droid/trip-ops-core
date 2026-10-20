@@ -12,6 +12,7 @@ import { BookingComponents } from "@/components/app/sales-items";
 import { BookingPurchases } from "@/components/app/purchases";
 import { BookingVendorPayments } from "@/components/app/payments";
 import { BookingReceipts } from "@/components/app/receipts";
+import { BookingInvoiceAction } from "@/components/app/invoices";
 import { RecordCombobox, SaleStatusBadge, type RecordOption } from "@/components/app/sales-ui";
 import { useQuickAdd } from "@/components/app/quick-add";
 import { ErrorState, LoadingState, UnauthorizedState } from "@/components/app/states";
@@ -466,6 +467,10 @@ function SaleDetailPage() {
         billingType={sale.billing_type}
         canManage={canManage && !isLocked}
       />
+
+      <div className="flex justify-end">
+        <BookingInvoiceAction saleId={sale.id} cancelled={sale.status === "cancelled"} />
+      </div>
 
       {hasPermission("purchases.read") ? (
         <BookingPurchases saleId={sale.id} bookingOpen={sale.status !== "cancelled"} />

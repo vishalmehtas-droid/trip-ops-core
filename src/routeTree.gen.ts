@@ -24,6 +24,8 @@ import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedUsersRouteImport } from './routes/_authenticated/users'
 import { Route as AuthenticatedVendorsRouteImport } from './routes/_authenticated/vendors'
 import { Route as QTokenRouteImport } from './routes/q.$token'
+import { Route as AuthenticatedInvoicesIndexRouteImport } from './routes/_authenticated/invoices.index'
+import { Route as AuthenticatedInvoicesInvoiceIdRouteImport } from './routes/_authenticated/invoices.$invoiceId'
 import { Route as AuthenticatedLeadsIndexRouteImport } from './routes/_authenticated/leads.index'
 import { Route as AuthenticatedLeadsLeadIdRouteImport } from './routes/_authenticated/leads.$leadId'
 import { Route as AuthenticatedReportsCashflowRouteImport } from './routes/_authenticated/reports.cashflow'
@@ -109,6 +111,18 @@ const QTokenRoute = QTokenRouteImport.update({
   path: '/q/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedInvoicesIndexRoute =
+  AuthenticatedInvoicesIndexRouteImport.update({
+    id: '/invoices/',
+    path: '/invoices/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedInvoicesInvoiceIdRoute =
+  AuthenticatedInvoicesInvoiceIdRouteImport.update({
+    id: '/invoices/$invoiceId',
+    path: '/invoices/$invoiceId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedLeadsIndexRoute = AuthenticatedLeadsIndexRouteImport.update({
   id: '/leads/',
   path: '/leads/',
@@ -176,6 +190,7 @@ export interface FileRoutesByFullPath {
   '/users': typeof AuthenticatedUsersRoute
   '/vendors': typeof AuthenticatedVendorsRoute
   '/q/$token': typeof QTokenRoute
+  '/invoices/$invoiceId': typeof AuthenticatedInvoicesInvoiceIdRoute
   '/leads/$leadId': typeof AuthenticatedLeadsLeadIdRoute
   '/reports/cashflow': typeof AuthenticatedReportsCashflowRoute
   '/reports/client-ledger': typeof AuthenticatedReportsClientLedgerRoute
@@ -183,6 +198,7 @@ export interface FileRoutesByFullPath {
   '/reports/profitability': typeof AuthenticatedReportsProfitabilityRoute
   '/reports/vendor-ledger': typeof AuthenticatedReportsVendorLedgerRoute
   '/sales/$saleId': typeof AuthenticatedSalesSaleIdRoute
+  '/invoices/': typeof AuthenticatedInvoicesIndexRoute
   '/leads/': typeof AuthenticatedLeadsIndexRoute
   '/sales/': typeof AuthenticatedSalesIndexRoute
 }
@@ -201,6 +217,7 @@ export interface FileRoutesByTo {
   '/users': typeof AuthenticatedUsersRoute
   '/vendors': typeof AuthenticatedVendorsRoute
   '/q/$token': typeof QTokenRoute
+  '/invoices/$invoiceId': typeof AuthenticatedInvoicesInvoiceIdRoute
   '/leads/$leadId': typeof AuthenticatedLeadsLeadIdRoute
   '/reports/cashflow': typeof AuthenticatedReportsCashflowRoute
   '/reports/client-ledger': typeof AuthenticatedReportsClientLedgerRoute
@@ -208,6 +225,7 @@ export interface FileRoutesByTo {
   '/reports/profitability': typeof AuthenticatedReportsProfitabilityRoute
   '/reports/vendor-ledger': typeof AuthenticatedReportsVendorLedgerRoute
   '/sales/$saleId': typeof AuthenticatedSalesSaleIdRoute
+  '/invoices': typeof AuthenticatedInvoicesIndexRoute
   '/leads': typeof AuthenticatedLeadsIndexRoute
   '/sales': typeof AuthenticatedSalesIndexRoute
 }
@@ -228,6 +246,7 @@ export interface FileRoutesById {
   '/_authenticated/users': typeof AuthenticatedUsersRoute
   '/_authenticated/vendors': typeof AuthenticatedVendorsRoute
   '/q/$token': typeof QTokenRoute
+  '/_authenticated/invoices/$invoiceId': typeof AuthenticatedInvoicesInvoiceIdRoute
   '/_authenticated/leads/$leadId': typeof AuthenticatedLeadsLeadIdRoute
   '/_authenticated/reports/cashflow': typeof AuthenticatedReportsCashflowRoute
   '/_authenticated/reports/client-ledger': typeof AuthenticatedReportsClientLedgerRoute
@@ -235,6 +254,7 @@ export interface FileRoutesById {
   '/_authenticated/reports/profitability': typeof AuthenticatedReportsProfitabilityRoute
   '/_authenticated/reports/vendor-ledger': typeof AuthenticatedReportsVendorLedgerRoute
   '/_authenticated/sales/$saleId': typeof AuthenticatedSalesSaleIdRoute
+  '/_authenticated/invoices/': typeof AuthenticatedInvoicesIndexRoute
   '/_authenticated/leads/': typeof AuthenticatedLeadsIndexRoute
   '/_authenticated/sales/': typeof AuthenticatedSalesIndexRoute
 }
@@ -255,6 +275,7 @@ export interface FileRouteTypes {
     | '/users'
     | '/vendors'
     | '/q/$token'
+    | '/invoices/$invoiceId'
     | '/leads/$leadId'
     | '/reports/cashflow'
     | '/reports/client-ledger'
@@ -262,6 +283,7 @@ export interface FileRouteTypes {
     | '/reports/profitability'
     | '/reports/vendor-ledger'
     | '/sales/$saleId'
+    | '/invoices/'
     | '/leads/'
     | '/sales/'
   fileRoutesByTo: FileRoutesByTo
@@ -280,6 +302,7 @@ export interface FileRouteTypes {
     | '/users'
     | '/vendors'
     | '/q/$token'
+    | '/invoices/$invoiceId'
     | '/leads/$leadId'
     | '/reports/cashflow'
     | '/reports/client-ledger'
@@ -287,6 +310,7 @@ export interface FileRouteTypes {
     | '/reports/profitability'
     | '/reports/vendor-ledger'
     | '/sales/$saleId'
+    | '/invoices'
     | '/leads'
     | '/sales'
   id:
@@ -306,6 +330,7 @@ export interface FileRouteTypes {
     | '/_authenticated/users'
     | '/_authenticated/vendors'
     | '/q/$token'
+    | '/_authenticated/invoices/$invoiceId'
     | '/_authenticated/leads/$leadId'
     | '/_authenticated/reports/cashflow'
     | '/_authenticated/reports/client-ledger'
@@ -313,6 +338,7 @@ export interface FileRouteTypes {
     | '/_authenticated/reports/profitability'
     | '/_authenticated/reports/vendor-ledger'
     | '/_authenticated/sales/$saleId'
+    | '/_authenticated/invoices/'
     | '/_authenticated/leads/'
     | '/_authenticated/sales/'
   fileRoutesById: FileRoutesById
@@ -432,6 +458,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof QTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/invoices/': {
+      id: '/_authenticated/invoices/'
+      path: '/invoices'
+      fullPath: '/invoices/'
+      preLoaderRoute: typeof AuthenticatedInvoicesIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/invoices/$invoiceId': {
+      id: '/_authenticated/invoices/$invoiceId'
+      path: '/invoices/$invoiceId'
+      fullPath: '/invoices/$invoiceId'
+      preLoaderRoute: typeof AuthenticatedInvoicesInvoiceIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/leads/': {
       id: '/_authenticated/leads/'
       path: '/leads'
@@ -509,6 +549,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedUsersRoute: typeof AuthenticatedUsersRoute
   AuthenticatedVendorsRoute: typeof AuthenticatedVendorsRoute
+  AuthenticatedInvoicesInvoiceIdRoute: typeof AuthenticatedInvoicesInvoiceIdRoute
   AuthenticatedLeadsLeadIdRoute: typeof AuthenticatedLeadsLeadIdRoute
   AuthenticatedReportsCashflowRoute: typeof AuthenticatedReportsCashflowRoute
   AuthenticatedReportsClientLedgerRoute: typeof AuthenticatedReportsClientLedgerRoute
@@ -516,6 +557,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedReportsProfitabilityRoute: typeof AuthenticatedReportsProfitabilityRoute
   AuthenticatedReportsVendorLedgerRoute: typeof AuthenticatedReportsVendorLedgerRoute
   AuthenticatedSalesSaleIdRoute: typeof AuthenticatedSalesSaleIdRoute
+  AuthenticatedInvoicesIndexRoute: typeof AuthenticatedInvoicesIndexRoute
   AuthenticatedLeadsIndexRoute: typeof AuthenticatedLeadsIndexRoute
   AuthenticatedSalesIndexRoute: typeof AuthenticatedSalesIndexRoute
 }
@@ -531,6 +573,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedUsersRoute: AuthenticatedUsersRoute,
   AuthenticatedVendorsRoute: AuthenticatedVendorsRoute,
+  AuthenticatedInvoicesInvoiceIdRoute: AuthenticatedInvoicesInvoiceIdRoute,
   AuthenticatedLeadsLeadIdRoute: AuthenticatedLeadsLeadIdRoute,
   AuthenticatedReportsCashflowRoute: AuthenticatedReportsCashflowRoute,
   AuthenticatedReportsClientLedgerRoute: AuthenticatedReportsClientLedgerRoute,
@@ -539,6 +582,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
     AuthenticatedReportsProfitabilityRoute,
   AuthenticatedReportsVendorLedgerRoute: AuthenticatedReportsVendorLedgerRoute,
   AuthenticatedSalesSaleIdRoute: AuthenticatedSalesSaleIdRoute,
+  AuthenticatedInvoicesIndexRoute: AuthenticatedInvoicesIndexRoute,
   AuthenticatedLeadsIndexRoute: AuthenticatedLeadsIndexRoute,
   AuthenticatedSalesIndexRoute: AuthenticatedSalesIndexRoute,
 }
