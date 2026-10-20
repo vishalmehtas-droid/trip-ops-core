@@ -13,6 +13,8 @@ import {
   customerQuotePricingSchema,
   customerQuoteStatusSchema,
   customerQuoteUpdateSchema,
+  customerQuoteContentUpdateSchema,
+  customerQuoteShareSchema,
   type CustomerQuoteStatus,
 } from "./customer-quote-schemas";
 
@@ -23,7 +25,7 @@ import {
  */
 
 const HEADER_SELECT =
-  "id, quote_number, lead_id, requirement_id, client_id, revision_no, previous_quote_id, status, valid_until, notes, created_at, updated_at, client:clients(id, name), booking:sales!sales_customer_quote_id_fkey(id, booking_number)";
+  "id, quote_number, lead_id, requirement_id, client_id, revision_no, previous_quote_id, status, valid_until, notes, created_at, updated_at, public_title, summary, itinerary, inclusions, exclusions, terms, share_token, share_enabled, view_count, last_viewed_at, client:clients(id, name, phone, email), booking:sales!sales_customer_quote_id_fkey(id, booking_number)";
 const LINE_SELECT =
   "id, customer_quote_id, source_supplier_quote_line_id, purchase_type, description, quantity, currency, expected_cost_inr, sort_order";
 const PRICING_SELECT =
@@ -221,7 +223,9 @@ export const createCustomerQuoteFromSupplierQuote = createServerFn({ method: "PO
     requirePermission(context, "leads.manage");
     const { data: sq, error: sqError } = await context.supabase
       .from("supplier_quotes")
-      .select("id, lead_id, requirement_id, status, is_superseded")
+      .select(
+        "id, lead_id, requirement_id, status, is_superseded, inclusions, exclusions, itinerary_notes",
+      )
       .eq("id", data.supplier_quote_id)
       .maybeSingle();
     if (sqError) throw new Error(sqError.message);
@@ -243,6 +247,9 @@ export const createCustomerQuoteFromSupplierQuote = createServerFn({ method: "PO
         quote_number: "pending",
         client_id: lead.client_id,
         created_by: context.userId,
+        inclusions: sq.inclusions,
+        exclusions: sq.exclusions,
+        itinerary: sq.itinerary_notes,
       })
       .select("id")
       .single();
@@ -414,4 +421,48 @@ export const setCustomerQuotePricing = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     if (!rows?.length) throw new Error("Pricing record not found");
     return { id: data.customer_quote_id };
+  });
+
+/** Customer-facing text; the database allows edits only while the quote is Draft. */
+export const updateCustomerQuoteContent = createServerFn({ method: "POST" })
+  .middleware([requireActiveUser])
+  .inputValidator((input: unknown) => customerQuoteContentUpdateSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    requirePermission(context, "leads.manage");
+    const { data: rows, error } = await context.supabase
+      .from("customer_quotes")
+      .update(data.values)
+      .eq("id", data.id)
+      .select("id");
+    if (error) throw new Error(error.message);
+    if (!rows?.length) throw new Error("Customer quote not found");
+    return { id: data.id };
+  });
+
+/** Enables or disables the share link. Sharing a Draft first marks it Sent (existing rules). */
+export const setCustomerQuoteShare = createServerFn({ method: "POST" })
+  .middleware([requireActiveUser])
+  .inputValidator((input: unknown) => customerQuoteShareSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    requirePermission(context, "leads.manage");
+    const { data: existing, error: readError } = await context.supabase
+      .from("customer_quotes")
+      .select("id, status")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (readError) throw new Error(readError.message);
+    if (!existing) throw new Error("Customer quote not found");
+    if (data.enabled && existing.status === "draft") {
+      const { error } = await context.supabase
+        .from("customer_quotes")
+        .update({ status: "sent" })
+        .eq("id", data.id);
+      if (error) throw new Error(error.message);
+    }
+    const { error } = await context.supabase
+      .from("customer_quotes")
+      .update({ share_enabled: data.enabled })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { id: data.id };
   });

@@ -19,3 +19,4 @@
 - Purchases: numbers, creator, INR amount and cancel rules are set by DB triggers; variance totals are aggregated in exact paise from text-cast numerics on the server — never floats.
 - Booking numbers (BK-xxxxxx) are assigned only by a DB insert trigger and are immutable; display them instead of UUIDs.
 - Vendor payments/receipts: numbers, creator, allocation caps (payment amount, purchase INR, same vendor/booking) and the receipt cap at customer payable are enforced by DB triggers; payments save atomically via the save_vendor_payment RPC; cancelled records stay and are excluded from totals; purchases, payments and receipts are blocked only on cancelled bookings.
+- Shared customer quotes are read only through the anon-executable get_shared_customer_quote RPC, which returns a customer-safe whitelist and records views; never expose customer_quotes to anon directly.

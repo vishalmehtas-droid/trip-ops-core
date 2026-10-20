@@ -23,6 +23,7 @@ import { Route as AuthenticatedReceiptsRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedUsersRouteImport } from './routes/_authenticated/users'
 import { Route as AuthenticatedVendorsRouteImport } from './routes/_authenticated/vendors'
+import { Route as QTokenRouteImport } from './routes/q.$token'
 import { Route as AuthenticatedLeadsIndexRouteImport } from './routes/_authenticated/leads.index'
 import { Route as AuthenticatedLeadsLeadIdRouteImport } from './routes/_authenticated/leads.$leadId'
 import { Route as AuthenticatedReportsCashflowRouteImport } from './routes/_authenticated/reports.cashflow'
@@ -103,6 +104,11 @@ const AuthenticatedVendorsRoute = AuthenticatedVendorsRouteImport.update({
   path: '/vendors',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const QTokenRoute = QTokenRouteImport.update({
+  id: '/q/$token',
+  path: '/q/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedLeadsIndexRoute = AuthenticatedLeadsIndexRouteImport.update({
   id: '/leads/',
   path: '/leads/',
@@ -169,6 +175,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof AuthenticatedSettingsRoute
   '/users': typeof AuthenticatedUsersRoute
   '/vendors': typeof AuthenticatedVendorsRoute
+  '/q/$token': typeof QTokenRoute
   '/leads/$leadId': typeof AuthenticatedLeadsLeadIdRoute
   '/reports/cashflow': typeof AuthenticatedReportsCashflowRoute
   '/reports/client-ledger': typeof AuthenticatedReportsClientLedgerRoute
@@ -193,6 +200,7 @@ export interface FileRoutesByTo {
   '/settings': typeof AuthenticatedSettingsRoute
   '/users': typeof AuthenticatedUsersRoute
   '/vendors': typeof AuthenticatedVendorsRoute
+  '/q/$token': typeof QTokenRoute
   '/leads/$leadId': typeof AuthenticatedLeadsLeadIdRoute
   '/reports/cashflow': typeof AuthenticatedReportsCashflowRoute
   '/reports/client-ledger': typeof AuthenticatedReportsClientLedgerRoute
@@ -219,6 +227,7 @@ export interface FileRoutesById {
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/users': typeof AuthenticatedUsersRoute
   '/_authenticated/vendors': typeof AuthenticatedVendorsRoute
+  '/q/$token': typeof QTokenRoute
   '/_authenticated/leads/$leadId': typeof AuthenticatedLeadsLeadIdRoute
   '/_authenticated/reports/cashflow': typeof AuthenticatedReportsCashflowRoute
   '/_authenticated/reports/client-ledger': typeof AuthenticatedReportsClientLedgerRoute
@@ -245,6 +254,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/users'
     | '/vendors'
+    | '/q/$token'
     | '/leads/$leadId'
     | '/reports/cashflow'
     | '/reports/client-ledger'
@@ -269,6 +279,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/users'
     | '/vendors'
+    | '/q/$token'
     | '/leads/$leadId'
     | '/reports/cashflow'
     | '/reports/client-ledger'
@@ -294,6 +305,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings'
     | '/_authenticated/users'
     | '/_authenticated/vendors'
+    | '/q/$token'
     | '/_authenticated/leads/$leadId'
     | '/_authenticated/reports/cashflow'
     | '/_authenticated/reports/client-ledger'
@@ -310,6 +322,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  QTokenRoute: typeof QTokenRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -411,6 +424,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/vendors'
       preLoaderRoute: typeof AuthenticatedVendorsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/q/$token': {
+      id: '/q/$token'
+      path: '/q/$token'
+      fullPath: '/q/$token'
+      preLoaderRoute: typeof QTokenRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/leads/': {
       id: '/_authenticated/leads/'
@@ -531,6 +551,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  QTokenRoute: QTokenRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

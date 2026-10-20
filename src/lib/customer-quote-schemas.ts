@@ -112,3 +112,43 @@ export const customerQuotePricingSchema = z.object({
   billing_type: z.enum(BILLING_TYPES),
   values: salePricingValuesSchema,
 });
+
+const customerText = z
+  .string()
+  .trim()
+  .max(8000, "At most 8000 characters")
+  .nullish()
+  .transform((v) => (v ? v : null));
+
+export const CUSTOMER_CONTENT_FIELDS = [
+  "public_title",
+  "summary",
+  "itinerary",
+  "inclusions",
+  "exclusions",
+  "terms",
+] as const;
+export type CustomerContentField = (typeof CUSTOMER_CONTENT_FIELDS)[number];
+
+export const customerQuoteContentSchema = z.object({
+  public_title: customerText,
+  summary: customerText,
+  itinerary: customerText,
+  inclusions: customerText,
+  exclusions: customerText,
+  terms: customerText,
+});
+export const customerQuoteContentUpdateSchema = z.object({
+  id: uuid,
+  values: customerQuoteContentSchema,
+});
+export const customerQuoteShareSchema = z.object({ id: uuid, enabled: z.boolean() });
+export const sharedQuoteTokenSchema = z.object({
+  token: z
+    .string()
+    .trim()
+    .min(32)
+    .max(128)
+    .regex(/^[A-Za-z0-9]+$/),
+  track: z.boolean().default(true),
+});
