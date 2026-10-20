@@ -785,6 +785,11 @@ export function PaymentSheet({
 
               {canChange ? (
                 <div className="mt-4 flex gap-2">
+                  {toPaise(payment.unallocated) > 0n ? (
+                    <Button size="sm" onClick={() => setEditOpen(true)}>
+                      Link to purchase ({formatMoney(payment.unallocated)} unallocated)
+                    </Button>
+                  ) : null}
                   <Button size="sm" variant="outline" onClick={() => setEditOpen(true)}>
                     Edit / allocate
                   </Button>
