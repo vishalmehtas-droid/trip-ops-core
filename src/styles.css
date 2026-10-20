@@ -192,3 +192,24 @@
 .quote-dialog > :not(.quote-dialog-body) {
   flex-shrink: 0;
 }
+
+@media print {
+  @page {
+    size: A4;
+    margin: 14mm;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .shared-quote {
+    min-height: auto;
+    background: transparent;
+  }
+  .shared-quote > div {
+    max-width: none;
+    padding: 0;
+  }
+  .shared-quote-section {
+    break-inside: avoid;
+  }
+}
