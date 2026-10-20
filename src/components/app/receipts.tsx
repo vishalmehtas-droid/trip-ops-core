@@ -1,3 +1,4 @@
+import { AccountSelect } from "@/components/app/account-select";
 import { useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -177,6 +178,7 @@ type ReceiptForm = {
 function emptyReceiptForm(saleId = ""): ReceiptForm {
   return {
     sale_id: saleId,
+    account_id: "",
     payment_type: "part",
     receipt_date: todayIso(),
     amount_inr: "",
@@ -212,7 +214,8 @@ export function ReceiptFormDialog({
       setForm(
         receipt
           ? {
-              sale_id: receipt.sale_id,
+              sale_id: receipt.sale_id ?? "",
+              account_id: receipt.account_id,
               payment_type: receipt.payment_type,
               receipt_date: receipt.receipt_date,
               amount_inr: receipt.amount_inr,
@@ -262,7 +265,7 @@ export function ReceiptFormDialog({
 
   function submit() {
     const next: Record<string, string> = {};
-    if (!form.sale_id) next["sale_id"] = "Select a booking";
+    if (!form.sale_id && !receipt) next["sale_id"] = "Select a booking";
     const parsed = receiptValuesSchema.safeParse(form);
     if (!parsed.success) Object.assign(next, quoteFieldErrors(parsed.error.issues));
     if (
@@ -325,6 +328,15 @@ export function ReceiptFormDialog({
               </div>
             </div>
           ) : null}
+          <Field label="Received into account" htmlFor="receipt-account" required error={errors["account_id"]}>
+            <AccountSelect
+              id="receipt-account"
+              value={form.account_id}
+              onChange={(value) => setForm((current) => ({ ...current, account_id: value }))}
+              currentName={receipt?.account?.name}
+              autoDefault={!receipt}
+            />
+          </Field>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Type" htmlFor="receipt-type">
               <Select
