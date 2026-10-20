@@ -82,6 +82,7 @@ export type Database = {
           phone: string | null
           referred_by: string | null
           source: string | null
+          state: string | null
           updated_at: string
         }
         Insert: {
@@ -97,6 +98,7 @@ export type Database = {
           phone?: string | null
           referred_by?: string | null
           source?: string | null
+          state?: string | null
           updated_at?: string
         }
         Update: {
@@ -112,7 +114,68 @@ export type Database = {
           phone?: string | null
           referred_by?: string | null
           source?: string | null
+          state?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      company_settings: {
+        Row: {
+          address: string | null
+          bank_account_name: string | null
+          bank_account_number: string | null
+          bank_ifsc: string | null
+          bank_name: string | null
+          created_at: string
+          email: string | null
+          gstin: string | null
+          id: boolean
+          invoice_prefix: string
+          legal_name: string | null
+          logo_path: string | null
+          phone: string | null
+          state: string | null
+          trade_name: string | null
+          updated_at: string
+          upi_id: string | null
+        }
+        Insert: {
+          address?: string | null
+          bank_account_name?: string | null
+          bank_account_number?: string | null
+          bank_ifsc?: string | null
+          bank_name?: string | null
+          created_at?: string
+          email?: string | null
+          gstin?: string | null
+          id?: boolean
+          invoice_prefix?: string
+          legal_name?: string | null
+          logo_path?: string | null
+          phone?: string | null
+          state?: string | null
+          trade_name?: string | null
+          updated_at?: string
+          upi_id?: string | null
+        }
+        Update: {
+          address?: string | null
+          bank_account_name?: string | null
+          bank_account_number?: string | null
+          bank_ifsc?: string | null
+          bank_name?: string | null
+          created_at?: string
+          email?: string | null
+          gstin?: string | null
+          id?: boolean
+          invoice_prefix?: string
+          legal_name?: string | null
+          logo_path?: string | null
+          phone?: string | null
+          state?: string | null
+          trade_name?: string | null
+          updated_at?: string
+          upi_id?: string | null
         }
         Relationships: []
       }
@@ -473,6 +536,124 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      invoice_counters: {
+        Row: {
+          financial_year: string
+          last_number: number
+        }
+        Insert: {
+          financial_year: string
+          last_number?: number
+        }
+        Update: {
+          financial_year?: string
+          last_number?: number
+        }
+        Relationships: []
+      }
+      invoices: {
+        Row: {
+          cancel_reason: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
+          client_id: string
+          client_name: string
+          created_at: string
+          created_by: string
+          financial_year: string
+          id: string
+          invoice_date: string
+          invoice_number: string
+          sale_id: string
+          sequence_no: number
+          snapshot: Json
+          status: string
+          total_payable: number
+          updated_at: string
+        }
+        Insert: {
+          cancel_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          client_id: string
+          client_name: string
+          created_at?: string
+          created_by: string
+          financial_year: string
+          id?: string
+          invoice_date: string
+          invoice_number: string
+          sale_id: string
+          sequence_no: number
+          snapshot: Json
+          status?: string
+          total_payable: number
+          updated_at?: string
+        }
+        Update: {
+          cancel_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          client_id?: string
+          client_name?: string
+          created_at?: string
+          created_by?: string
+          financial_year?: string
+          id?: string
+          invoice_date?: string
+          invoice_number?: string
+          sale_id?: string
+          sequence_no?: number
+          snapshot?: Json
+          status?: string
+          total_payable?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_cancelled_by_fkey"
+            columns: ["cancelled_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_cancelled_by_fkey"
+            columns: ["cancelled_by"]
+            isOneToOne: false
+            referencedRelation: "user_directory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "user_directory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "sales"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       leads: {
         Row: {
@@ -1556,6 +1737,10 @@ export type Database = {
       }
     }
     Functions: {
+      cancel_invoice: {
+        Args: { _invoice_id: string; _reason: string }
+        Returns: undefined
+      }
       convert_customer_quote_to_booking: {
         Args: { _quote_id: string }
         Returns: string
@@ -1589,6 +1774,7 @@ export type Database = {
         Args: { _token: string; _track?: boolean }
         Returns: Json
       }
+      issue_invoice: { Args: { _sale_id: string }; Returns: string }
       save_vendor_payment: {
         Args: { _allocations: Json; _id: string; _values: Json }
         Returns: Json
