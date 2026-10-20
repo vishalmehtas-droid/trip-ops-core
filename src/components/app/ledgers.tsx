@@ -47,7 +47,10 @@ export function ClientLedgerReport({ scoped, userId }: { scoped: boolean; userId
     enabled: scoped && Boolean(userId),
     queryKey: ["sales", "own-client-ids", userId],
     queryFn: async () => {
-      const { data, error } = await supabase.from("sales").select("client_id").eq("created_by", userId);
+      const { data, error } = await supabase
+        .from("sales")
+        .select("client_id")
+        .eq("created_by", userId);
       if (error) throw error;
       return new Set(((data ?? []) as { client_id: string }[]).map((row) => row.client_id));
     },
@@ -114,10 +117,22 @@ function csvCell(value: string): string {
 }
 
 function exportCsv(result: LedgerResult, kind: "client" | "vendor") {
-  const lines = [["Date", "Type", "Reference", "Details", "Debit (INR)", "Credit (INR)", "Balance (INR)"].join(",")];
+  const lines = [
+    ["Date", "Type", "Reference", "Details", "Debit (INR)", "Credit (INR)", "Balance (INR)"].join(
+      ",",
+    ),
+  ];
   for (const row of result.rows) {
     lines.push(
-      [row.date, KIND_LABELS[row.kind], row.reference, row.detail ?? "", row.debit, row.credit, row.balance]
+      [
+        row.date,
+        KIND_LABELS[row.kind],
+        row.reference,
+        row.detail ?? "",
+        row.debit,
+        row.credit,
+        row.balance,
+      ]
         .map(csvCell)
         .join(","),
     );

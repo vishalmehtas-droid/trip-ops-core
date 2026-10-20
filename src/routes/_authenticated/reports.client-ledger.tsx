@@ -23,11 +23,15 @@ export const Route = createFileRoute("/_authenticated/reports/client-ledger")({
 function ReportsClientLedgerPage() {
   const { roles, isAdmin, user } = useAuth();
   const allowed =
-    isAdmin || roles.some((role) => role === "accounts" || role === "sales" || role === "operations");
+    isAdmin ||
+    roles.some((role) => role === "accounts" || role === "sales" || role === "operations");
   if (!allowed) {
     return (
       <div className="space-y-6">
-        <PageHeader title="Client Ledger" description="Statement of client invoices and receipts." />
+        <PageHeader
+          title="Client Ledger"
+          description="Statement of client invoices and receipts."
+        />
         <UnauthorizedState description="Ledger reports are available to Admin, Accounts, Sales and Operations." />
       </div>
     );
