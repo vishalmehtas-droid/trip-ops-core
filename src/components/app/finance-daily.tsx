@@ -223,9 +223,9 @@ export function DailyEntry() {
             <h2 className="mb-2 text-sm font-semibold">Account balances</h2>
             <div className="grid gap-2 sm:grid-cols-2">
               {entries.data.balances.map((a) => (
-                <Link key={a.id} to="/finance/accounts/$accountId" params={{ accountId: a.id }}>
+                <div key={a.id}>
                   <SummaryStat label={accountLabel(a)} value={formatMoney(a.balance)} />
-                </Link>
+                </div>
               ))}
             </div>
           </div>
