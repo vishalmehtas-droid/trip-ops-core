@@ -33,13 +33,17 @@ function Logo() {
 }
 
 function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
-  const { hasPermission } = useAuth();
+  const { hasPermission, roles } = useAuth();
 
   // Navigation visibility is a convenience only — every protected page verifies
   // authorization independently, and the database enforces it regardless.
   const groups = NAV_GROUPS.map((group) => ({
     ...group,
-    items: group.items.filter((item) => !item.permission || hasPermission(item.permission)),
+    items: group.items.filter(
+      (item) =>
+        (!item.permission || hasPermission(item.permission)) &&
+        (!item.roles || item.roles.some((role) => roles.includes(role))),
+    ),
   })).filter((group) => group.items.length > 0);
 
   return (
@@ -175,7 +179,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="min-h-screen bg-background font-sans text-foreground">
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-border bg-surface lg:flex">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-border bg-surface lg:flex print:hidden">
         <div className="flex h-14 items-center border-b border-border px-4">
           <Logo />
         </div>
@@ -187,8 +191,8 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </aside>
 
-      <div className="lg:pl-64">
-        <header className="sticky top-0 z-20 flex h-14 items-center justify-between gap-3 border-b border-border bg-surface/95 px-4 backdrop-blur">
+      <div className="lg:pl-64 print:pl-0">
+        <header className="sticky top-0 z-20 flex h-14 items-center justify-between gap-3 border-b border-border bg-surface/95 px-4 backdrop-blur print:hidden">
           <div className="flex min-w-0 items-center gap-3">
             <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
               <SheetTrigger asChild>

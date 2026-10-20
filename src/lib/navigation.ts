@@ -18,6 +18,8 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
+import type { AppRole } from "@/hooks/use-auth";
+
 export type NavItem = {
   label: string;
   to: string;
@@ -26,6 +28,8 @@ export type NavItem = {
   phase: number | null;
   /** When set, the item is only listed for users holding this permission. */
   permission?: string;
+  /** When set, the item is only listed for users holding one of these roles. */
+  roles?: AppRole[];
 };
 
 export type NavGroup = {
@@ -112,8 +116,20 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     label: "Reports",
     items: [
-      { label: "Client Ledger", to: "/reports/client-ledger", icon: BookOpenCheck, phase: 4 },
-      { label: "Vendor Ledger", to: "/reports/vendor-ledger", icon: BookOpenCheck, phase: 4 },
+      {
+        label: "Client Ledger",
+        to: "/reports/client-ledger",
+        icon: BookOpenCheck,
+        phase: null,
+        roles: ["admin", "accounts", "sales", "operations"],
+      },
+      {
+        label: "Vendor Ledger",
+        to: "/reports/vendor-ledger",
+        icon: BookOpenCheck,
+        phase: null,
+        roles: ["admin", "accounts"],
+      },
       { label: "Cashflow", to: "/reports/cashflow", icon: CircleDollarSign, phase: 4 },
       { label: "Profitability", to: "/reports/profitability", icon: FileBarChart, phase: 4 },
       { label: "GST", to: "/reports/gst", icon: Landmark, phase: 4 },

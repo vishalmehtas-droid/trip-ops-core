@@ -1,6 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import { PlaceholderPage } from "@/components/app/placeholder-page";
+import { VendorLedgerReport } from "@/components/app/ledgers";
+import { PageHeader } from "@/components/app/page-header";
+import { UnauthorizedState } from "@/components/app/states";
+import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/_authenticated/reports/vendor-ledger")({
   head: () => ({
@@ -9,6 +12,8 @@ export const Route = createFileRoute("/_authenticated/reports/vendor-ledger")({
       { name: "description", content: "Statement of vendor bills and payments." },
       { property: "og:title", content: "Vendor Ledger — Triptastic Ops" },
       { property: "og:description", content: "Statement of vendor bills and payments." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -16,12 +21,14 @@ export const Route = createFileRoute("/_authenticated/reports/vendor-ledger")({
 });
 
 function ReportsVendorLedgerPage() {
-  return (
-    <PlaceholderPage
-      title="Vendor Ledger"
-      description="Statement of vendor bills and payments."
-      phase={4}
-      scope={["Opening", "Movements", "Closing"]}
-    />
-  );
+  const { roles, isAdmin } = useAuth();
+  if (!isAdmin && !roles.includes("accounts")) {
+    return (
+      <div className="space-y-6">
+        <PageHeader title="Vendor Ledger" description="Statement of vendor bills and payments." />
+        <UnauthorizedState description="The vendor ledger is available to Admin and Accounts only." />
+      </div>
+    );
+  }
+  return <VendorLedgerReport />;
 }
