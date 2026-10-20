@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 
 import { requireActiveUser } from "./authz-middleware";
 import { fromPaise, toPaise } from "./money";
-import { clientLedgerSchema, vendorLedgerSchema } from "./report-schemas";
+import { canAccessLedger, clientLedgerSchema, vendorLedgerSchema } from "./report-schemas";
 
 /**
  * Ledger reports are read-only aggregations over existing tables. All queries
@@ -80,10 +80,10 @@ export const getClientLedger = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => clientLedgerSchema.parse(input))
   .handler(async ({ data, context }) => {
     const { supabase, userId, roles, isAdmin } = context;
-    const fullAccess = isAdmin || roles.includes("accounts");
-    if (!fullAccess && !roles.includes("sales") && !roles.includes("operations")) {
+    if (!canAccessLedger("client", roles, isAdmin)) {
       throw new Error("Forbidden: ledger reports are not available for your role");
     }
+    const fullAccess = isAdmin || roles.includes("accounts");
     if (!fullAccess) {
       const { data: own, error } = await supabase
         .from("sales")
@@ -187,7 +187,7 @@ export const getVendorLedger = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => vendorLedgerSchema.parse(input))
   .handler(async ({ data, context }) => {
     const { supabase, roles, isAdmin } = context;
-    if (!isAdmin && !roles.includes("accounts")) {
+    if (!canAccessLedger("vendor", roles, isAdmin)) {
       throw new Error("Forbidden: the vendor ledger is available to Admin and Accounts only");
     }
 

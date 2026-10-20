@@ -16,3 +16,16 @@ export const vendorLedgerSchema = z.object({
   from: optionalDate,
   to: optionalDate,
 });
+
+export type LedgerKind = "client" | "vendor";
+
+/**
+ * Report visibility: Admin and Accounts see both ledgers; Sales and Operations
+ * see the Client Ledger only (further limited to clients with their bookings
+ * in the server function); Viewer has no access.
+ */
+export function canAccessLedger(kind: LedgerKind, roles: string[], isAdmin: boolean): boolean {
+  if (isAdmin || roles.includes("accounts")) return true;
+  if (kind === "client") return roles.includes("sales") || roles.includes("operations");
+  return false;
+}
