@@ -252,46 +252,76 @@ export type Database = {
           client_id: string
           created_at: string
           created_by: string
+          exclusions: string | null
           id: string
+          inclusions: string | null
+          itinerary: string | null
+          last_viewed_at: string | null
           lead_id: string
           notes: string | null
           previous_quote_id: string | null
+          public_title: string | null
           quote_number: string
           requirement_id: string
           revision_no: number
+          share_enabled: boolean
+          share_token: string
           status: Database["public"]["Enums"]["customer_quote_status"]
+          summary: string | null
+          terms: string | null
           updated_at: string
           valid_until: string | null
+          view_count: number
         }
         Insert: {
           client_id: string
           created_at?: string
           created_by: string
+          exclusions?: string | null
           id?: string
+          inclusions?: string | null
+          itinerary?: string | null
+          last_viewed_at?: string | null
           lead_id: string
           notes?: string | null
           previous_quote_id?: string | null
+          public_title?: string | null
           quote_number: string
           requirement_id: string
           revision_no?: number
+          share_enabled?: boolean
+          share_token?: string
           status?: Database["public"]["Enums"]["customer_quote_status"]
+          summary?: string | null
+          terms?: string | null
           updated_at?: string
           valid_until?: string | null
+          view_count?: number
         }
         Update: {
           client_id?: string
           created_at?: string
           created_by?: string
+          exclusions?: string | null
           id?: string
+          inclusions?: string | null
+          itinerary?: string | null
+          last_viewed_at?: string | null
           lead_id?: string
           notes?: string | null
           previous_quote_id?: string | null
+          public_title?: string | null
           quote_number?: string
           requirement_id?: string
           revision_no?: number
+          share_enabled?: boolean
+          share_token?: string
           status?: Database["public"]["Enums"]["customer_quote_status"]
+          summary?: string | null
+          terms?: string | null
           updated_at?: string
           valid_until?: string | null
+          view_count?: number
         }
         Relationships: [
           {
@@ -1554,6 +1584,10 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      get_shared_customer_quote: {
+        Args: { _token: string; _track?: boolean }
+        Returns: Json
       }
       save_vendor_payment: {
         Args: { _allocations: Json; _id: string; _values: Json }
