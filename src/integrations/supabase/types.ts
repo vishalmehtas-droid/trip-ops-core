@@ -71,7 +71,9 @@ export type Database = {
       clients: {
         Row: {
           address: string | null
+          city: string | null
           created_at: string
+          created_by: string | null
           email: string | null
           gst_number: string | null
           id: string
@@ -87,7 +89,9 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          city?: string | null
           created_at?: string
+          created_by?: string | null
           email?: string | null
           gst_number?: string | null
           id?: string
@@ -103,7 +107,9 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          city?: string | null
           created_at?: string
+          created_by?: string | null
           email?: string | null
           gst_number?: string | null
           id?: string
@@ -117,7 +123,22 @@ export type Database = {
           state?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "clients_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clients_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "user_directory"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       company_settings: {
         Row: {
@@ -1677,7 +1698,9 @@ export type Database = {
         Row: {
           address: string | null
           advance_rule: string | null
+          city: string | null
           created_at: string
+          created_by: string | null
           email: string | null
           gst_number: string | null
           id: string
@@ -1691,7 +1714,9 @@ export type Database = {
         Insert: {
           address?: string | null
           advance_rule?: string | null
+          city?: string | null
           created_at?: string
+          created_by?: string | null
           email?: string | null
           gst_number?: string | null
           id?: string
@@ -1705,7 +1730,9 @@ export type Database = {
         Update: {
           address?: string | null
           advance_rule?: string | null
+          city?: string | null
           created_at?: string
+          created_by?: string | null
           email?: string | null
           gst_number?: string | null
           id?: string
@@ -1716,7 +1743,22 @@ export type Database = {
           phone?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "vendors_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendors_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "user_directory"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
@@ -1774,6 +1816,8 @@ export type Database = {
         Args: { _token: string; _track?: boolean }
         Returns: Json
       }
+      import_clients: { Args: { _rows: Json }; Returns: number }
+      import_vendors: { Args: { _rows: Json }; Returns: number }
       issue_invoice: { Args: { _sale_id: string }; Returns: string }
       save_vendor_payment: {
         Args: { _allocations: Json; _id: string; _values: Json }
