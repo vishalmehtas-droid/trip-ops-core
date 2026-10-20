@@ -58,7 +58,7 @@ export function ClientLedgerReport({ scoped, userId }: { scoped: boolean; userId
       (clients.data ?? [])
         .filter((party) => !scoped || (ownClientIds.data?.has(party.id) ?? false))
         .map((party) => ({ id: party.id, label: party.name })),
-    [clients.data, ownClientsMap(ownClientIds.data), scoped],
+    [clients.data, ownClientIds.data, scoped],
   );
   return (
     <LedgerView
@@ -79,10 +79,6 @@ export function ClientLedgerReport({ scoped, userId }: { scoped: boolean; userId
       }
     />
   );
-}
-
-function ownClientsMap(set: Set<string> | undefined) {
-  return set;
 }
 
 export function VendorLedgerReport() {
