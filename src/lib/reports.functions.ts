@@ -180,7 +180,7 @@ export const getClientLedger = createServerFn({ method: "POST" })
         sort: receipt.created_at,
         kind: "receipt",
         reference: receipt.receipt_number,
-        detail: null,
+        detail: receipt.sale_id ? null : "Advance",
         debit: 0n,
         credit: toPaise(receipt.amount_inr),
         sale_id: receipt.sale_id,
