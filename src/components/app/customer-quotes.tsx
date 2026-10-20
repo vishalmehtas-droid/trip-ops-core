@@ -9,6 +9,7 @@ import { Field, DetailRow, formatDate } from "./master-data";
 import { EmptyState, ErrorState, LoadingState } from "./states";
 import { CustomerQuoteLines } from "./customer-quote-lines";
 import { CustomerQuotePricing } from "./customer-quote-pricing";
+import { CustomerFacingDetails, QuoteViewStats, ShareQuoteButton } from "./customer-quote-share";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -219,6 +220,9 @@ export function CustomerQuotes({
                     <span className="ml-2 whitespace-nowrap text-xs text-muted-foreground">
                       Rev {quote.revision_no}
                     </span>
+                    <div>
+                      <QuoteViewStats quote={quote} />
+                    </div>
                   </td>
                   <td className="p-3">
                     <StatusBadge status={quote.status} />
@@ -538,6 +542,7 @@ function CustomerQuoteBody({
         <h2 className="font-mono text-lg font-semibold">{quote.quote_number}</h2>
         <span className="text-sm text-muted-foreground">Rev {quote.revision_no}</span>
         <StatusBadge status={quote.status} />
+        <QuoteViewStats quote={quote} />
       </div>
       <dl className="space-y-1">
         <DetailRow label="Client" value={quote.client?.name ?? "—"} />
@@ -601,6 +606,7 @@ function CustomerQuoteBody({
             ) : null}
           </div>
         )}
+        <ShareQuoteButton quote={quote} canManage={canManage} onChanged={onChanged} />
         {editable ? (
           <Button
             size="sm"
@@ -652,6 +658,12 @@ function CustomerQuoteBody({
           ) : null}
         </div>
       </div>
+      <CustomerFacingDetails
+        key={`content-${quote.id}-${quote.status}`}
+        quote={quote}
+        editable={editable}
+        onChanged={onChanged}
+      />
       <CustomerQuoteLines
         onViewSupplierQuotes={onViewSupplierQuotes}
         defaultPersons={defaultPersons}

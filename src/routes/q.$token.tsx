@@ -171,8 +171,7 @@ function QuoteView({ quote }: { quote: SharedQuote }) {
         </section>
         <TextBlock title="Terms & conditions" text={quote.terms} />
         <p className="mt-8 border-t border-border pt-4 text-xs text-muted-foreground">
-          Triptastic Holidays · Prices are in Indian Rupees and subject to availability at the
-          time of booking.
+          Triptastic Holidays
         </p>
       </div>
     </main>
