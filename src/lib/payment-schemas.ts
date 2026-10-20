@@ -71,6 +71,7 @@ const listType = z
 export const paymentValuesSchema = z.object({
   vendor_id: z.string().uuid("Select a vendor"),
   sale_id: optionalUuid,
+  account_id: z.string().uuid("Select an account"),
   payment_type: moneyType,
   payment_date: optionalDate,
   amount_inr: moneyString,
@@ -121,6 +122,7 @@ export const saleIdSchema = z.object({ sale_id: z.string().uuid() });
 // ---- Customer receipts ----------------------------------------------------
 
 export const receiptValuesSchema = z.object({
+  account_id: z.string().uuid("Select an account"),
   payment_type: moneyType,
   receipt_date: optionalDate,
   amount_inr: moneyString,
@@ -129,10 +131,17 @@ export const receiptValuesSchema = z.object({
   notes: blankToNull(2000, "Notes"),
 });
 
-export const receiptCreateSchema = z.object({
-  sale_id: z.string().uuid("Select a booking"),
-  values: receiptValuesSchema,
-});
+export const receiptCreateSchema = z
+  .object({
+    sale_id: optionalUuid,
+    /** Advance from a client with no booking yet. */
+    client_id: optionalUuid,
+    values: receiptValuesSchema,
+  })
+  .refine((v) => v.sale_id || v.client_id, {
+    path: ["sale_id"],
+    message: "Select a booking or a client",
+  });
 
 export const receiptUpdateSchema = z.object({
   id: z.string().uuid(),
@@ -142,6 +151,7 @@ export const receiptUpdateSchema = z.object({
 export const receiptListSchema = z
   .object({
     sale_id: optionalUuid,
+    client_id: optionalUuid,
     payment_type: listType,
     status: listStatus,
     from: optionalDate,

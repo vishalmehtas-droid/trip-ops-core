@@ -21,7 +21,7 @@ import { assertSaleNotCancelled, assertVendorSelectable } from "./sales-items.he
  */
 
 const PAYMENT_SELECT =
-  "id, payment_number, vendor_id, sale_id, payment_type, payment_date, amount_inr::text, method, reference, notes, status, cancel_reason, created_by, created_at, updated_at, vendor:vendors(id, name, is_active), sale:sales(id, booking_number, status, client:clients(name)), allocations:vendor_payment_allocations(id, purchase_id, amount_inr::text, purchase:purchases(id, purchase_number, status, sale_id, vendor_invoice_number, amount_inr::text, sale:sales(booking_number)))";
+  "id, payment_number, vendor_id, sale_id, payment_type, payment_date, amount_inr::text, method, reference, notes, status, cancel_reason, created_by, created_at, updated_at, account_id, cleared, account:accounts(id, name), vendor:vendors(id, name, is_active), sale:sales(id, booking_number, status, client:clients(name)), allocations:vendor_payment_allocations(id, purchase_id, amount_inr::text, purchase:purchases(id, purchase_number, status, sale_id, vendor_invoice_number, amount_inr::text, sale:sales(booking_number)))";
 
 type AllocationRaw = {
   id: string;
@@ -54,6 +54,9 @@ type PaymentRaw = {
   created_by: string;
   created_at: string;
   updated_at: string;
+  account_id: string;
+  cleared: boolean;
+  account: { id: string; name: string } | null;
   vendor: { id: string; name: string; is_active: boolean } | null;
   sale: {
     id: string;
@@ -183,7 +186,10 @@ export const saveVendorPayment = createServerFn({ method: "POST" })
   .middleware([requireActiveUser])
   .inputValidator((input: unknown) => paymentSaveSchema.parse(input))
   .handler(async ({ data, context }) => {
-    requirePermission(context, "payments.manage");
+    // Operations may enter new payments from the daily entry screen.
+    if (data.id || (!context.isAdmin && !context.permissions.includes("payments.enter"))) {
+      requirePermission(context, "payments.manage");
+    }
     const { values } = data;
     if (data.id) {
       const { data: existing, error } = await context.supabase

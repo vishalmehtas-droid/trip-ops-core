@@ -441,6 +441,7 @@ export function PurchaseFormDialog({
             values: {
               vendor_id: values.vendor_id,
               sale_id: form.sale_id,
+              account_id: pay.account_id,
               payment_type: vendorPaymentType(toPaise(amount), toPaise(purchaseInr)),
               payment_date: pay.date,
               amount_inr: amount,

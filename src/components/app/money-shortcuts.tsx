@@ -36,16 +36,18 @@ import { saveVendorPayment } from "@/lib/payments.functions";
 import type { PurchaseRow } from "@/lib/purchases.functions";
 import { createReceipt, getBookingReceivable, listReceipts } from "@/lib/receipts.functions";
 import { formatMoney } from "@/lib/sale-costing-schemas";
+import { AccountSelect } from "@/components/app/account-select";
 
 export type QuickMoneyForm = {
   amount_inr: string;
   date: string;
   method: PaymentMethod | "";
   reference: string;
+  account_id: string;
 };
 
 export function emptyQuickMoney(amount = ""): QuickMoneyForm {
-  return { amount_inr: amount, date: todayIso(), method: "", reference: "" };
+  return { amount_inr: amount, date: todayIso(), method: "", reference: "", account_id: "" };
 }
 
 /** Validates the compact form; `max` caps the amount in paise. */
@@ -58,6 +60,7 @@ export function quickMoneyErrors(form: QuickMoneyForm, max: bigint | null) {
   }
   if (!/^\d{4}-\d{2}-\d{2}$/.test(form.date)) errors["date"] = "Enter a valid date";
   if (!form.method) errors["method"] = "Select a method";
+  if (!form.account_id) errors["account_id"] = "Select an account";
   if (form.reference.trim().length > 200) errors["reference"] = "Reference is too long";
   return errors;
 }
@@ -78,6 +81,18 @@ export function QuickMoneyFields({
 }) {
   return (
     <div className="grid gap-4 sm:grid-cols-2">
+      <Field
+        label="Account"
+        htmlFor={`${idPrefix}-account`}
+        required
+        error={errors["account_id"]}
+      >
+        <AccountSelect
+          id={`${idPrefix}-account`}
+          value={form.account_id}
+          onChange={(value) => onChange({ ...form, account_id: value })}
+        />
+      </Field>
       <Field
         label="Amount (INR)"
         htmlFor={`${idPrefix}-amount`}
@@ -181,6 +196,7 @@ export function PayPurchaseDialog({
           values: {
             vendor_id: purchase!.vendor_id,
             sale_id: purchase!.sale_id,
+            account_id: form.account_id,
             payment_type: type,
             payment_date: form.date,
             amount_inr: form.amount_inr.trim(),
@@ -306,6 +322,7 @@ export function QuickReceiptDialog({
         data: {
           sale_id: saleId,
           values: {
+            account_id: form.account_id,
             payment_type: type,
             receipt_date: form.date,
             amount_inr: form.amount_inr.trim(),

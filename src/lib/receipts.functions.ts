@@ -19,12 +19,18 @@ import { assertSaleNotCancelled } from "./sales-items.helpers";
 /** Receipt numbers, creators and the customer-payable cap are enforced by DB triggers. */
 
 const RECEIPT_SELECT =
-  "id, receipt_number, sale_id, payment_type, receipt_date, amount_inr::text, method, reference, notes, status, cancel_reason, created_by, created_at, updated_at, sale:sales(id, booking_number, status, client:clients(id, name))";
+  "id, receipt_number, sale_id, payment_type, receipt_date, amount_inr::text, method, reference, notes, status, cancel_reason, created_by, created_at, updated_at, account_id, cleared, client_id, client:clients(id, name), account:accounts(id, name), sale:sales(id, booking_number, status, client:clients(id, name)), allocations:customer_receipt_allocations(sale_id, amount_inr::text, sale:sales(booking_number))";
 
 export type ReceiptRow = {
   id: string;
   receipt_number: string;
-  sale_id: string;
+  sale_id: string | null;
+  client_id: string;
+  account_id: string;
+  cleared: boolean;
+  client: { id: string; name: string } | null;
+  account: { id: string; name: string } | null;
+  allocations: { sale_id: string; amount_inr: string; sale: { booking_number: string } | null }[];
   payment_type: MoneyType;
   receipt_date: string;
   amount_inr: string;
@@ -56,6 +62,21 @@ export type BookingReceivable = {
   payment_status: ReceiptPaymentStatus;
 };
 
+/** Client advances linked to bookings, from recorded receipts only. */
+async function linkedAdvances(
+  supabase: { from: (t: "customer_receipt_allocations") => any }, // eslint-disable-line @typescript-eslint/no-explicit-any
+  saleId: string | null,
+): Promise<{ sale_id: string; amount_inr: string }[]> {
+  let q = supabase
+    .from("customer_receipt_allocations")
+    .select("sale_id, amount_inr::text, receipt:customer_receipts!inner(status)")
+    .eq("receipt.status", "recorded");
+  if (saleId) q = q.eq("sale_id", saleId);
+  const { data, error } = await q;
+  if (error) throw new Error(error.message);
+  return (data ?? []) as { sale_id: string; amount_inr: string }[];
+}
+
 function paymentStatus(payable: bigint, received: bigint): ReceiptPaymentStatus {
   if (received <= 0n) return "unpaid";
   if (received >= payable) return "paid";
@@ -73,6 +94,7 @@ export const listReceipts = createServerFn({ method: "POST" })
       .order("receipt_date", { ascending: false })
       .order("created_at", { ascending: false });
     if (data.sale_id) query = query.eq("sale_id", data.sale_id);
+    if (data.client_id) query = query.eq("client_id", data.client_id);
     if (data.payment_type) query = query.eq("payment_type", data.payment_type);
     if (data.status) query = query.eq("status", data.status);
     if (data.from) query = query.gte("receipt_date", data.from);
@@ -101,13 +123,18 @@ export const createReceipt = createServerFn({ method: "POST" })
   .middleware([requireActiveUser])
   .inputValidator((input: unknown) => receiptCreateSchema.parse(input))
   .handler(async ({ data, context }) => {
-    requirePermission(context, "receipts.manage");
-    await assertSaleNotCancelled(context.supabase, data.sale_id);
+    if (!context.isAdmin && !context.permissions.includes("receipts.enter_own")) {
+      requirePermission(context, "receipts.manage");
+    }
+    if (data.sale_id) await assertSaleNotCancelled(context.supabase, data.sale_id);
     const { values } = data;
     const { data: row, error } = await context.supabase
       .from("customer_receipts")
       .insert({
         sale_id: data.sale_id,
+        // The database fills the client from the booking when one is linked.
+        ...(data.sale_id ? {} : { client_id: data.client_id }),
+        account_id: values.account_id,
         payment_type: values.payment_type,
         ...(values.receipt_date ? { receipt_date: values.receipt_date } : {}),
         amount_inr: values.amount_inr as unknown as number,
@@ -134,11 +161,12 @@ export const updateReceipt = createServerFn({ method: "POST" })
     if (readError) throw new Error(readError.message);
     if (!existing) throw new Error("Receipt not found");
     if (existing.status === "cancelled") throw new Error("A cancelled receipt can't be changed");
-    await assertSaleNotCancelled(context.supabase, existing.sale_id);
+    if (existing.sale_id) await assertSaleNotCancelled(context.supabase, existing.sale_id);
     const { values } = data;
     const { error } = await context.supabase
       .from("customer_receipts")
       .update({
+        account_id: values.account_id,
         payment_type: values.payment_type,
         ...(values.receipt_date ? { receipt_date: values.receipt_date } : {}),
         amount_inr: values.amount_inr as unknown as number,
@@ -178,7 +206,7 @@ export const getReceivables = createServerFn({ method: "POST" })
   .handler(async ({ context }) => {
     requirePermission(context, "receipts.read");
     requirePermission(context, "sales.read");
-    const [sales, receipts] = await Promise.all([
+    const [sales, receipts, links] = await Promise.all([
       context.supabase
         .from("sales")
         .select(
@@ -187,10 +215,19 @@ export const getReceivables = createServerFn({ method: "POST" })
       context.supabase
         .from("customer_receipts")
         .select("sale_id, payment_type, amount_inr::text")
-        .eq("status", "recorded"),
+        .eq("status", "recorded")
+        .not("sale_id", "is", null),
+      linkedAdvances(context.supabase, null),
     ]);
     if (sales.error) throw new Error(sales.error.message);
     if (receipts.error) throw new Error(receipts.error.message);
+    for (const l of links) {
+      (receipts.data as unknown as { sale_id: string; payment_type: string; amount_inr: string }[]).push({
+        sale_id: l.sale_id,
+        payment_type: "advance",
+        amount_inr: l.amount_inr,
+      });
+    }
 
     const received = new Map<string, { total: bigint; advance: bigint }>();
     for (const r of (receipts.data ?? []) as unknown as {
@@ -239,7 +276,7 @@ export const getBookingReceivable = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => saleIdSchema.parse(input))
   .handler(async ({ data, context }) => {
     requirePermission(context, "receipts.read");
-    const [pricing, receipts] = await Promise.all([
+    const [pricing, receipts, links] = await Promise.all([
       context.supabase
         .from("sale_pricing")
         .select("customer_payable::text")
@@ -250,9 +287,16 @@ export const getBookingReceivable = createServerFn({ method: "POST" })
         .select("payment_type, amount_inr::text")
         .eq("sale_id", data.sale_id)
         .eq("status", "recorded"),
+      linkedAdvances(context.supabase, data.sale_id),
     ]);
     if (pricing.error) throw new Error(pricing.error.message);
     if (receipts.error) throw new Error(receipts.error.message);
+    for (const l of links) {
+      (receipts.data as unknown as { payment_type: string; amount_inr: string }[]).push({
+        payment_type: "advance",
+        amount_inr: l.amount_inr,
+      });
+    }
     const payable = toPaise(
       (pricing.data as unknown as { customer_payable: string } | null)?.customer_payable ?? "0",
     );

@@ -113,6 +113,13 @@
       "when": 1792506778971,
       "tag": "0015_csv_import_clients_vendors",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1792507683816,
+      "tag": "0016_accounts_master_daily_money_log",
+      "breakpoints": true
     }
   ]
 }

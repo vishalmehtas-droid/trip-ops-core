@@ -14,6 +14,60 @@ export type Database = {
   }
   public: {
     Tables: {
+      accounts: {
+        Row: {
+          account_type: string
+          created_at: string
+          created_by: string | null
+          id: string
+          is_active: boolean
+          last4: string | null
+          name: string
+          opening_balance: number
+          opening_balance_date: string
+          updated_at: string
+        }
+        Insert: {
+          account_type: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          last4?: string | null
+          name: string
+          opening_balance?: number
+          opening_balance_date?: string
+          updated_at?: string
+        }
+        Update: {
+          account_type?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          last4?: string | null
+          name?: string
+          opening_balance?: number
+          opening_balance_date?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "accounts_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "accounts_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "user_directory"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       app_settings: {
         Row: {
           created_at: string
@@ -452,10 +506,56 @@ export type Database = {
           },
         ]
       }
-      customer_receipts: {
+      customer_receipt_allocations: {
         Row: {
           amount_inr: number
+          created_at: string
+          id: string
+          receipt_id: string
+          sale_id: string
+          updated_at: string
+        }
+        Insert: {
+          amount_inr: number
+          created_at?: string
+          id?: string
+          receipt_id: string
+          sale_id: string
+          updated_at?: string
+        }
+        Update: {
+          amount_inr?: number
+          created_at?: string
+          id?: string
+          receipt_id?: string
+          sale_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_receipt_allocations_receipt_id_fkey"
+            columns: ["receipt_id"]
+            isOneToOne: false
+            referencedRelation: "customer_receipts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_receipt_allocations_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customer_receipts: {
+        Row: {
+          account_id: string
+          amount_inr: number
           cancel_reason: string | null
+          cleared: boolean
+          cleared_on: string | null
+          client_id: string | null
           created_at: string
           created_by: string
           id: string
@@ -465,13 +565,17 @@ export type Database = {
           receipt_date: string
           receipt_number: string
           reference: string | null
-          sale_id: string
+          sale_id: string | null
           status: string
           updated_at: string
         }
         Insert: {
+          account_id?: string
           amount_inr: number
           cancel_reason?: string | null
+          cleared?: boolean
+          cleared_on?: string | null
+          client_id?: string | null
           created_at?: string
           created_by?: string
           id?: string
@@ -481,13 +585,17 @@ export type Database = {
           receipt_date?: string
           receipt_number?: string
           reference?: string | null
-          sale_id: string
+          sale_id?: string | null
           status?: string
           updated_at?: string
         }
         Update: {
+          account_id?: string
           amount_inr?: number
           cancel_reason?: string | null
+          cleared?: boolean
+          cleared_on?: string | null
+          client_id?: string | null
           created_at?: string
           created_by?: string
           id?: string
@@ -497,11 +605,25 @@ export type Database = {
           receipt_date?: string
           receipt_number?: string
           reference?: string | null
-          sale_id?: string
+          sale_id?: string | null
           status?: string
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "customer_receipts_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_receipts_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "customer_receipts_created_by_fkey"
             columns: ["created_by"]
@@ -753,6 +875,98 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "user_directory"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      other_transactions: {
+        Row: {
+          account_id: string
+          amount_inr: number
+          cancel_reason: string | null
+          category: string | null
+          cleared: boolean
+          cleared_on: string | null
+          created_at: string
+          created_by: string
+          entry_number: string
+          id: string
+          notes: string | null
+          party: string | null
+          reference: string | null
+          status: string
+          to_account_id: string | null
+          txn_date: string
+          txn_type: string
+          updated_at: string
+        }
+        Insert: {
+          account_id: string
+          amount_inr: number
+          cancel_reason?: string | null
+          category?: string | null
+          cleared?: boolean
+          cleared_on?: string | null
+          created_at?: string
+          created_by?: string
+          entry_number?: string
+          id?: string
+          notes?: string | null
+          party?: string | null
+          reference?: string | null
+          status?: string
+          to_account_id?: string | null
+          txn_date?: string
+          txn_type: string
+          updated_at?: string
+        }
+        Update: {
+          account_id?: string
+          amount_inr?: number
+          cancel_reason?: string | null
+          category?: string | null
+          cleared?: boolean
+          cleared_on?: string | null
+          created_at?: string
+          created_by?: string
+          entry_number?: string
+          id?: string
+          notes?: string | null
+          party?: string | null
+          reference?: string | null
+          status?: string
+          to_account_id?: string | null
+          txn_date?: string
+          txn_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "other_transactions_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "other_transactions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "other_transactions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "user_directory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "other_transactions_to_account_id_fkey"
+            columns: ["to_account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
             referencedColumns: ["id"]
           },
         ]
@@ -1613,8 +1827,11 @@ export type Database = {
       }
       vendor_payments: {
         Row: {
+          account_id: string
           amount_inr: number
           cancel_reason: string | null
+          cleared: boolean
+          cleared_on: string | null
           created_at: string
           created_by: string
           id: string
@@ -1630,8 +1847,11 @@ export type Database = {
           vendor_id: string
         }
         Insert: {
+          account_id?: string
           amount_inr: number
           cancel_reason?: string | null
+          cleared?: boolean
+          cleared_on?: string | null
           created_at?: string
           created_by?: string
           id?: string
@@ -1647,8 +1867,11 @@ export type Database = {
           vendor_id: string
         }
         Update: {
+          account_id?: string
           amount_inr?: number
           cancel_reason?: string | null
+          cleared?: boolean
+          cleared_on?: string | null
           created_at?: string
           created_by?: string
           id?: string
@@ -1664,6 +1887,13 @@ export type Database = {
           vendor_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "vendor_payments_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "vendor_payments_created_by_fkey"
             columns: ["created_by"]
@@ -1819,6 +2049,20 @@ export type Database = {
       import_clients: { Args: { _rows: Json }; Returns: number }
       import_vendors: { Args: { _rows: Json }; Returns: number }
       issue_invoice: { Args: { _sale_id: string }; Returns: string }
+      link_receipt_allocations: {
+        Args: { _allocations: Json; _receipt_id: string }
+        Returns: undefined
+      }
+      list_selectable_accounts: {
+        Args: never
+        Returns: {
+          account_type: string
+          id: string
+          last4: string
+          name: string
+        }[]
+      }
+      my_last_account: { Args: never; Returns: string }
       save_vendor_payment: {
         Args: { _allocations: Json; _id: string; _values: Json }
         Returns: Json

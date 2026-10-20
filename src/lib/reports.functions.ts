@@ -128,9 +128,9 @@ export const getClientLedger = createServerFn({ method: "POST" })
     const { data: receiptRows, error: receiptsError } = await supabase
       .from("customer_receipts")
       .select(
-        "id, receipt_number, receipt_date, amount_inr::text, sale_id, created_at, sale:sales!inner(client_id)",
+        "id, receipt_number, receipt_date, amount_inr::text, sale_id, created_at",
       )
-      .eq("sale.client_id", data.client_id)
+      .eq("client_id", data.client_id)
       .eq("status", "recorded");
     if (receiptsError) throw new Error(receiptsError.message);
 
@@ -147,7 +147,7 @@ export const getClientLedger = createServerFn({ method: "POST" })
       receipt_number: string;
       receipt_date: string;
       amount_inr: string;
-      sale_id: string;
+      sale_id: string | null;
       created_at: string;
     };
 
@@ -180,7 +180,7 @@ export const getClientLedger = createServerFn({ method: "POST" })
         sort: receipt.created_at,
         kind: "receipt",
         reference: receipt.receipt_number,
-        detail: null,
+        detail: receipt.sale_id ? null : "Advance",
         debit: 0n,
         credit: toPaise(receipt.amount_inr),
         sale_id: receipt.sale_id,
