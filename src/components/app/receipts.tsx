@@ -1,4 +1,5 @@
 import { AccountSelect } from "@/components/app/account-select";
+import { LinkReceiptDialog } from "@/components/app/receipt-link";
 import { useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -141,9 +142,12 @@ export function ReceiptsTable({
               </TableCell>
               {showBooking ? (
                 <TableCell>
-                  <div className="font-mono text-xs">{row.sale?.booking_number ?? "—"}</div>
+                  <div className="font-mono text-xs">
+                    {row.sale?.booking_number ??
+                      (row.allocations.length ? "Advance (linked)" : "Advance")}
+                  </div>
                   <div className="text-xs text-muted-foreground">
-                    {row.sale?.client?.name ?? "—"}
+                    {row.sale?.client?.name ?? row.client?.name ?? "—"}
                   </div>
                 </TableCell>
               ) : null}
@@ -155,7 +159,14 @@ export function ReceiptsTable({
               <TableCell className="text-xs">{PAYMENT_METHOD_LABELS[row.method]}</TableCell>
               <TableCell className="text-xs">{row.reference ?? "—"}</TableCell>
               <TableCell>
-                <MoneyStatusBadge status={row.status} />
+                <div className="flex flex-wrap gap-1">
+                  <MoneyStatusBadge status={row.status} />
+                  {row.status === "recorded" && receiptUnallocated(row) > 0n ? (
+                    <Badge variant="outline" className="border-warning/40 text-[10px] uppercase">
+                      Unallocated
+                    </Badge>
+                  ) : null}
+                </div>
               </TableCell>
             </TableRow>
           ))}
@@ -437,6 +448,7 @@ export function ReceiptSheet({
   const queryClient = useQueryClient();
   const cancelFn = useServerFn(cancelReceipt);
   const [editOpen, setEditOpen] = useState(false);
+  const [linkOpen, setLinkOpen] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
   const [reason, setReason] = useState("");
   const [reasonError, setReasonError] = useState<string | undefined>();
@@ -487,9 +499,25 @@ export function ReceiptSheet({
                           {receipt.sale.booking_number} · {receipt.sale.client?.name ?? "—"}
                         </Link>
                       </Button>
-                    ) : null
+                    ) : (
+                      <span>
+                        Advance from {receipt.client?.name ?? "client"}
+                        {receipt.allocations.length
+                          ? ` · linked to ${receipt.allocations
+                              .map((a) => `${a.sale?.booking_number ?? "booking"} (${formatMoney(a.amount_inr)})`)
+                              .join(", ")}`
+                          : ""}
+                      </span>
+                    )
                   }
                 />
+                {!receipt.sale_id ? (
+                  <DetailRow
+                    label="Unallocated"
+                    value={formatMoney(fromPaise(receiptUnallocated(receipt)))}
+                  />
+                ) : null}
+                <DetailRow label="Account" value={receipt.account?.name ?? "—"} />
                 <DetailRow label="Type" value={MONEY_TYPE_LABELS[receipt.payment_type]} />
                 <DetailRow label="Date" value={formatDate(receipt.receipt_date)} />
                 <DetailRow label="Amount" value={formatMoney(receipt.amount_inr)} />
@@ -510,7 +538,12 @@ export function ReceiptSheet({
                 <DetailRow label="Last updated" value={formatDateTime(receipt.updated_at)} />
               </dl>
               {canManage ? (
-                <div className="mt-4 flex gap-2">
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {!receipt.sale_id ? (
+                    <Button size="sm" onClick={() => setLinkOpen(true)}>
+                      Link to booking
+                    </Button>
+                  ) : null}
                   {bookingOpen ? (
                     <Button size="sm" variant="outline" onClick={() => setEditOpen(true)}>
                       Edit
@@ -536,6 +569,12 @@ export function ReceiptSheet({
       </Sheet>
 
       <ReceiptFormDialog open={editOpen} onOpenChange={setEditOpen} receipt={receipt} />
+      <LinkReceiptDialog
+        receipt={linkOpen && receipt ? receipt : null}
+        onOpenChange={(open) => {
+          if (!open) setLinkOpen(false);
+        }}
+      />
 
       <Dialog open={cancelOpen} onOpenChange={setCancelOpen}>
         <DialogContent className="sm:max-w-md">
@@ -643,4 +682,10 @@ export function BookingReceipts({ saleId, bookingOpen }: { saleId: string; booki
       <ReceiptSheet receipt={current} onOpenChange={(open) => !open && setSelected(null)} />
     </section>
   );
+}
+
+/** Unlinked part of a client advance in paise (0 for booking receipts). */
+export function receiptUnallocated(row: ReceiptRow): bigint {
+  if (row.sale_id) return 0n;
+  return toPaise(row.amount_inr) - row.allocations.reduce((s, a) => s + toPaise(a.amount_inr), 0n);
 }
