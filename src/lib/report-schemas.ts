@@ -17,6 +17,21 @@ export const vendorLedgerSchema = z.object({
   to: optionalDate,
 });
 
+export const dateRangeSchema = z.object({
+  from: optionalDate,
+  to: optionalDate,
+});
+
+export const profitabilitySchema = dateRangeSchema.extend({
+  salesperson_id: z.string().uuid().optional(),
+  destination_id: z.string().uuid().optional(),
+});
+
+/** Period reports (cashflow, profitability, GST) are Admin/Accounts only. */
+export function canAccessReport(roles: string[], isAdmin: boolean): boolean {
+  return isAdmin || roles.includes("accounts");
+}
+
 export type LedgerKind = "client" | "vendor";
 
 /**

@@ -10,3 +10,4 @@
 - [x] Mobile quote dialogs and panels scroll with visible save actions; verify without database tests or UI click-through.
 - [x] Money shortcuts: purchase + payment in one step, compact Pay this purchase / New receipt dialogs, Mark paid in full.
 - [x] Shareable customer quote: customer-facing text, share link/dialog, public /q page, view tracking.
+- [x] Reports Part 2: cashflow, profitability and GST summary reports (Admin/Accounts, FY default range, CSV/Print).

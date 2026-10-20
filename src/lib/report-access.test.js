@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { canAccessLedger } from "./report-schemas";
+import { canAccessLedger, canAccessReport } from "./report-schemas";
 
 describe("ledger report access", () => {
   test("admin and accounts can view both ledgers", () => {
@@ -18,5 +18,18 @@ describe("ledger report access", () => {
   test("viewer has no ledger access", () => {
     expect(canAccessLedger("client", ["viewer"], false)).toBe(false);
     expect(canAccessLedger("vendor", ["viewer"], false)).toBe(false);
+  });
+});
+
+describe("period report access", () => {
+  test("admin and accounts can view period reports", () => {
+    expect(canAccessReport(["admin"], true)).toBe(true);
+    expect(canAccessReport(["accounts"], false)).toBe(true);
+  });
+
+  test("sales, operations and viewer cannot view period reports", () => {
+    expect(canAccessReport(["sales"], false)).toBe(false);
+    expect(canAccessReport(["operations"], false)).toBe(false);
+    expect(canAccessReport(["viewer"], false)).toBe(false);
   });
 });
