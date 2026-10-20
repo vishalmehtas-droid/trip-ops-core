@@ -99,6 +99,13 @@
       "when": 1792504541658,
       "tag": "0013_customer_quote_revision_copy_content",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1792506007919,
+      "tag": "0014_customer_tax_invoices",
+      "breakpoints": true
     }
   ]
 }

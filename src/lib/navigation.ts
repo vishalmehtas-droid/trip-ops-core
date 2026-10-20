@@ -8,6 +8,7 @@ import {
   Globe2,
   Landmark,
   Receipt,
+  FileText,
   ScrollText,
   Settings,
   ShieldCheck,
@@ -77,6 +78,13 @@ export const NAV_GROUPS: NavGroup[] = [
         icon: Receipt,
         phase: null,
         permission: "receipts.read",
+      },
+      {
+        label: "Invoices",
+        to: "/invoices",
+        icon: FileText,
+        phase: null,
+        roles: ["admin", "accounts", "sales"],
       },
       {
         label: "Payments",
