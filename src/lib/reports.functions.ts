@@ -270,14 +270,5 @@ export const getVendorLedger = createServerFn({ method: "POST" })
       });
     }
     // Balance is "what we owe the vendor": purchases raise it, payments lower it.
-    const result = toResult((vendor as { name: string }).name, entries);
-    return {
-      ...result,
-      rows: result.rows.map((row) => ({ ...row, balance: invert(row.balance) })),
-      closing_balance: invert(result.closing_balance),
-    };
+    return toResult((vendor as { name: string }).name, entries, -1n);
   });
-
-function invert(value: string): string {
-  return value.startsWith("-") ? value.slice(1) : `-${value}`;
-}
