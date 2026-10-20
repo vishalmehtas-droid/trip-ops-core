@@ -79,6 +79,7 @@ type ClientRow = {
   email: string | null;
   address: string | null;
   gst_number: string | null;
+  state: string | null;
   notes: string | null;
   source: string | null;
   referred_by: string | null;
@@ -94,6 +95,7 @@ type FormState = {
   email: string;
   address: string;
   gst_number: string;
+  state: string;
   notes: string;
   source: string;
   referred_by: string;
@@ -107,6 +109,7 @@ const EMPTY_FORM: FormState = {
   email: "",
   address: "",
   gst_number: "",
+  state: "",
   notes: "",
   source: "",
   referred_by: "",
@@ -207,6 +210,7 @@ function ClientsPage() {
       email: row.email ?? "",
       address: row.address ?? "",
       gst_number: row.gst_number ?? "",
+      state: row.state ?? "",
       notes: row.notes ?? "",
       source: row.source ?? "",
       referred_by: row.referred_by ?? "",
@@ -405,6 +409,14 @@ function ClientsPage() {
                 onChange={(event) => setForm({ ...form, gst_number: event.target.value })}
               />
             </Field>
+            <Field label="State (place of supply)" htmlFor="client-state" error={errors["state"]}>
+              <Input
+                id="client-state"
+                placeholder="e.g. Maharashtra"
+                value={form.state}
+                onChange={(event) => setForm({ ...form, state: event.target.value })}
+              />
+            </Field>
             <ClientSourceFields
               idPrefix="client"
               source={form.source}
@@ -484,6 +496,7 @@ function ClientsPage() {
               <DetailRow label="Phone" value={viewing.phone} />
               <DetailRow label="Email" value={viewing.email} />
               <DetailRow label="GST number" value={viewing.gst_number} />
+              <DetailRow label="State" value={viewing.state} />
               <DetailRow label="Source" value={viewing.source} />
               {viewing.source === "Referral" ? (
                 <DetailRow label="Referred by" value={viewing.referred_by} />

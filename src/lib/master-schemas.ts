@@ -63,6 +63,7 @@ export const clientInputSchema = z
     email: optionalEmail,
     address: optionalText(600),
     gst_number: optionalText(40),
+    state: optionalText(80),
     notes: optionalText(2000),
     source: optionalSource,
     referred_by: optionalText(120),
