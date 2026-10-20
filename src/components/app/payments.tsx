@@ -176,7 +176,14 @@ export function PaymentsTable({
               <TableCell className="text-xs">{PAYMENT_METHOD_LABELS[row.method]}</TableCell>
               <TableCell className="text-xs">{row.reference ?? "—"}</TableCell>
               <TableCell>
-                <MoneyStatusBadge status={row.status} />
+                <div className="flex flex-wrap gap-1">
+                  <MoneyStatusBadge status={row.status} />
+                  {row.status === "recorded" && toPaise(row.unallocated) > 0n ? (
+                    <Badge variant="outline" className="border-warning/40 text-[10px] uppercase">
+                      Unallocated
+                    </Badge>
+                  ) : null}
+                </div>
               </TableCell>
             </TableRow>
           ))}
