@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useEffect, useRef, useState } from "react";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
 import { Loader2, Save } from "lucide-react";
 import { toast } from "sonner";
@@ -38,11 +39,13 @@ type Pricing = NonNullable<Awaited<ReturnType<typeof getCustomerQuote>>["pricing
 
 export function CustomerQuotePricing({
   quoteId,
+  clientId,
   pricing,
   editable,
   onChanged,
 }: {
   quoteId: string;
+  clientId: string;
   pricing: Pricing | null;
   editable: boolean;
   onChanged: () => Promise<void>;
@@ -62,6 +65,31 @@ export function CustomerQuotePricing({
     setForm((current) => ({ ...current, ...patch }));
     setDirty(true);
   };
+  const markupDefault = useQuery({
+    queryKey: ["markup-default", clientId],
+    queryFn: async () => {
+      const [settings, client] = await Promise.all([
+        supabase.from("app_settings").select("default_markup_percent").maybeSingle(),
+        supabase.from("clients").select("markup_percent_override").eq("id", clientId).maybeSingle(),
+      ]);
+      const special = client.data?.markup_percent_override;
+      if (special !== null && special !== undefined) {
+        return { percent: String(special), label: `Client special ${special}%` };
+      }
+      const fallback = settings.data?.default_markup_percent;
+      if (fallback === null || fallback === undefined) return null;
+      return { percent: String(fallback), label: `Default ${fallback}%` };
+    },
+  });
+  const prefilled = useRef(false);
+  const noMarkupEntered =
+    !!pricing && pricing.markup_type === "none" && Number(pricing.markup_value) === 0;
+  useEffect(() => {
+    const suggestion = markupDefault.data;
+    if (prefilled.current || !suggestion || !editable || !noMarkupEntered || dirty) return;
+    prefilled.current = true;
+    update({ markup_type: "percentage", markup_value: suggestion.percent });
+  }, [markupDefault.data, editable, noMarkupEntered, dirty]);
   const save = useMutation({
     mutationFn: () =>
       saveFn({
@@ -173,6 +201,9 @@ export function CustomerQuotePricing({
             value={form.markup_type === "none" ? "0" : form.markup_value}
             onChange={(event) => update({ markup_value: event.target.value })}
           />
+          {markupDefault.data ? (
+            <p className="text-[11px] text-muted-foreground">{markupDefault.data.label}</p>
+          ) : null}
         </Field>
         <Field
           label="Discount INR"

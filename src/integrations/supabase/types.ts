@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_settings: {
+        Row: {
+          created_at: string
+          default_markup_percent: number
+          id: boolean
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          default_markup_percent?: number
+          id?: boolean
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          default_markup_percent?: number
+          id?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       audit_log: {
         Row: {
           action: string
@@ -55,6 +76,7 @@ export type Database = {
           gst_number: string | null
           id: string
           is_active: boolean
+          markup_percent_override: number | null
           name: string
           notes: string | null
           phone: string | null
@@ -69,6 +91,7 @@ export type Database = {
           gst_number?: string | null
           id?: string
           is_active?: boolean
+          markup_percent_override?: number | null
           name: string
           notes?: string | null
           phone?: string | null
@@ -83,6 +106,7 @@ export type Database = {
           gst_number?: string | null
           id?: string
           is_active?: boolean
+          markup_percent_override?: number | null
           name?: string
           notes?: string | null
           phone?: string | null

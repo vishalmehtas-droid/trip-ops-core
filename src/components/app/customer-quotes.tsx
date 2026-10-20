@@ -664,6 +664,7 @@ function CustomerQuoteBody({
       <CustomerQuotePricing
         key={`${quote.id}-${quote.status}-${JSON.stringify(pricing)}`}
         quoteId={quote.id}
+        clientId={quote.client_id}
         pricing={pricing}
         editable={editable}
         onChanged={onChanged}

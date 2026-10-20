@@ -78,6 +78,13 @@
       "when": 1792395230448,
       "tag": "0010_customer_quote_draft_to_accepted",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1792482337703,
+      "tag": "0011_markup_defaults",
+      "breakpoints": true
     }
   ]
 }

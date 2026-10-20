@@ -82,6 +82,7 @@ type ClientRow = {
   notes: string | null;
   source: string | null;
   referred_by: string | null;
+  markup_percent_override: number | string | null;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -96,6 +97,7 @@ type FormState = {
   notes: string;
   source: string;
   referred_by: string;
+  markup_percent_override: string;
   is_active: boolean;
 };
 
@@ -108,6 +110,7 @@ const EMPTY_FORM: FormState = {
   notes: "",
   source: "",
   referred_by: "",
+  markup_percent_override: "",
   is_active: true,
 };
 
@@ -207,6 +210,8 @@ function ClientsPage() {
       notes: row.notes ?? "",
       source: row.source ?? "",
       referred_by: row.referred_by ?? "",
+      markup_percent_override:
+        row.markup_percent_override === null ? "" : String(row.markup_percent_override),
       is_active: row.is_active,
     });
     setErrors({});
@@ -407,6 +412,22 @@ function ClientsPage() {
               errors={errors}
               onChange={(source, referred_by) => setForm({ ...form, source, referred_by })}
             />
+            <Field
+              label="Special markup % (leave blank to use the default)"
+              htmlFor="client-markup"
+              error={errors["markup_percent_override"]}
+            >
+              <Input
+                id="client-markup"
+                type="number"
+                min="0"
+                step="0.01"
+                value={form.markup_percent_override}
+                onChange={(event) =>
+                  setForm({ ...form, markup_percent_override: event.target.value })
+                }
+              />
+            </Field>
             <Field label="Address" htmlFor="client-address" error={errors["address"]}>
               <Textarea
                 id="client-address"
@@ -468,6 +489,14 @@ function ClientsPage() {
                 <DetailRow label="Referred by" value={viewing.referred_by} />
               ) : null}
               <DetailRow label="Address" value={viewing.address} />
+              <DetailRow
+                label="Special markup %"
+                value={
+                  viewing.markup_percent_override === null
+                    ? null
+                    : `${viewing.markup_percent_override}%`
+                }
+              />
               <DetailRow label="Notes" value={viewing.notes} />
               <DetailRow label="Created" value={formatDateTime(viewing.created_at)} />
               <DetailRow label="Last updated" value={formatDateTime(viewing.updated_at)} />
