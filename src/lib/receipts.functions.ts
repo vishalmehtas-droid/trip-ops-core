@@ -93,7 +93,7 @@ export const listReceipts = createServerFn({ method: "POST" })
       .select(RECEIPT_SELECT)
       .order("receipt_date", { ascending: false })
       .order("created_at", { ascending: false });
-XX, data.from);
+    if (data.from) query = query.gte("receipt_date", data.from);
     if (data.to) query = query.lte("receipt_date", data.to);
     const { data: rows, error } = await query;
     if (error) throw new Error(error.message);
