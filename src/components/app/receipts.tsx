@@ -167,6 +167,7 @@ export function ReceiptsTable({
 
 type ReceiptForm = {
   sale_id: string;
+  account_id: string;
   payment_type: MoneyType;
   receipt_date: string;
   amount_inr: string;
