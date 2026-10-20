@@ -93,6 +93,10 @@ export const listReceipts = createServerFn({ method: "POST" })
       .select(RECEIPT_SELECT)
       .order("receipt_date", { ascending: false })
       .order("created_at", { ascending: false });
+    if (data.sale_id) query = query.eq("sale_id", data.sale_id);
+    if (data.client_id) query = query.eq("client_id", data.client_id);
+    if (data.payment_type) query = query.eq("payment_type", data.payment_type);
+    if (data.status) query = query.eq("status", data.status);
     if (data.from) query = query.gte("receipt_date", data.from);
     if (data.to) query = query.lte("receipt_date", data.to);
     const { data: rows, error } = await query;
