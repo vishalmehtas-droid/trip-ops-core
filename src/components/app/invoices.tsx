@@ -28,7 +28,13 @@ export function InvoiceStatusBadge({ status }: { status: "issued" | "cancelled" 
 }
 
 /** Booking page action: issue an invoice or open the active one. */
-export function BookingInvoiceAction({ saleId, cancelled }: { saleId: string; cancelled: boolean }) {
+export function BookingInvoiceAction({
+  saleId,
+  cancelled,
+}: {
+  saleId: string;
+  cancelled: boolean;
+}) {
   const { hasAnyRole } = useAuth();
   const canRead = hasAnyRole(["admin", "accounts", "sales"]);
   const canIssue = hasAnyRole(["admin", "accounts"]);
@@ -47,7 +53,11 @@ export function BookingInvoiceAction({ saleId, cancelled }: { saleId: string; ca
     enabled: canIssue,
     queryFn: async () => {
       const [pricing, company] = await Promise.all([
-        supabase.from("sale_pricing").select("customer_payable").eq("sale_id", saleId).maybeSingle(),
+        supabase
+          .from("sale_pricing")
+          .select("customer_payable")
+          .eq("sale_id", saleId)
+          .maybeSingle(),
         supabase.from("company_settings").select("legal_name, gstin, address, state").maybeSingle(),
       ]);
       const c = company.data;
@@ -66,7 +76,8 @@ export function BookingInvoiceAction({ saleId, cancelled }: { saleId: string; ca
       void queryClient.invalidateQueries({ queryKey: ["audit-log"] });
       void navigate({ to: "/invoices/$invoiceId", params: { invoiceId: id } });
     },
-    onError: (error: Error) => toast.error("Could not issue the invoice", { description: error.message }),
+    onError: (error: Error) =>
+      toast.error("Could not issue the invoice", { description: error.message }),
   });
 
   if (!canRead) return null;
@@ -85,7 +96,8 @@ export function BookingInvoiceAction({ saleId, cancelled }: { saleId: string; ca
 
   let reason: string | null = null;
   if (cancelled) reason = "Cancelled bookings cannot be invoiced.";
-  else if (readiness.data && !readiness.data.hasPayable) reason = "Set the booking's customer payable first.";
+  else if (readiness.data && !readiness.data.hasPayable)
+    reason = "Set the booking's customer payable first.";
   else if (readiness.data && !readiness.data.companyReady)
     reason = "Complete company settings (legal name, GSTIN, address, state) first.";
 
@@ -97,7 +109,11 @@ export function BookingInvoiceAction({ saleId, cancelled }: { saleId: string; ca
         disabled={Boolean(reason) || !readiness.data || invoices.isLoading || mutation.isPending}
         onClick={() => mutation.mutate()}
       >
-        {mutation.isPending ? <Loader2 className="size-3.5 animate-spin" /> : <FileText className="size-3.5" />}
+        {mutation.isPending ? (
+          <Loader2 className="size-3.5 animate-spin" />
+        ) : (
+          <FileText className="size-3.5" />
+        )}
         Issue invoice
       </Button>
       {reason ? <span className="text-[11px] text-muted-foreground">{reason}</span> : null}
@@ -128,7 +144,10 @@ export function InvoiceDocument({
 }) {
   const intra = s.tax_mode === "cgst_sgst";
   const half = (Number(s.gst_rate) / 2).toString();
-  const travel = [s.travel_start ? formatDate(s.travel_start) : null, s.travel_end ? formatDate(s.travel_end) : null]
+  const travel = [
+    s.travel_start ? formatDate(s.travel_start) : null,
+    s.travel_end ? formatDate(s.travel_end) : null,
+  ]
     .filter(Boolean)
     .join(" – ");
   const hasTcs = toPaise(s.tcs_amount) > 0n;
@@ -139,9 +158,13 @@ export function InvoiceDocument({
         <div className="flex items-start gap-3">
           {logoUrl ? <img src={logoUrl} alt="" className="h-14 w-auto object-contain" /> : null}
           <div>
-            <div className="text-base font-bold">{s.company.trade_name ?? s.company.legal_name}</div>
+            <div className="text-base font-bold">
+              {s.company.trade_name ?? s.company.legal_name}
+            </div>
             {s.company.trade_name ? <div className="text-xs">{s.company.legal_name}</div> : null}
-            <div className="whitespace-pre-line text-xs text-muted-foreground">{s.company.address}</div>
+            <div className="whitespace-pre-line text-xs text-muted-foreground">
+              {s.company.address}
+            </div>
             <div className="text-xs text-muted-foreground">
               {[s.company.state, s.company.phone, s.company.email].filter(Boolean).join(" · ")}
             </div>
@@ -160,16 +183,23 @@ export function InvoiceDocument({
 
       <section className="grid grid-cols-2 gap-6">
         <div>
-          <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Bill to</div>
+          <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+            Bill to
+          </div>
           <div className="font-semibold">{s.client.name}</div>
-          {s.client.address ? <div className="whitespace-pre-line text-xs">{s.client.address}</div> : null}
+          {s.client.address ? (
+            <div className="whitespace-pre-line text-xs">{s.client.address}</div>
+          ) : null}
           {s.client.gstin ? <div className="text-xs">GSTIN: {s.client.gstin}</div> : null}
           <div className="text-xs">
-            Place of supply: {s.place_of_supply ?? <span className="text-destructive">not set</span>}
+            Place of supply:{" "}
+            {s.place_of_supply ?? <span className="text-destructive">not set</span>}
           </div>
         </div>
         <div className="text-xs">
-          <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Booking</div>
+          <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+            Booking
+          </div>
           <div>Booking: {s.booking_number}</div>
           {s.destination ? <div>Destination: {s.destination}</div> : null}
           {travel ? <div>Travel: {travel}</div> : null}
@@ -204,7 +234,12 @@ export function InvoiceDocument({
         ) : (
           <Line label={`IGST @ ${Number(s.gst_rate)}%`} value={s.igst} />
         )}
-        {hasTcs ? <Line label={`TCS${s.tcs_rate ? ` @ ${Number(s.tcs_rate)}%` : ""}`} value={s.tcs_amount} /> : null}
+        {hasTcs ? (
+          <Line
+            label={`TCS${s.tcs_rate ? ` @ ${Number(s.tcs_rate)}%` : ""}`}
+            value={s.tcs_amount}
+          />
+        ) : null}
         <div className="border-t border-border pt-1">
           <Line label="Total payable" value={s.total_payable} strong />
         </div>
@@ -223,8 +258,12 @@ export function InvoiceDocument({
             Payment details
           </div>
           {s.company.bank_name ? <div>Bank: {s.company.bank_name}</div> : null}
-          {s.company.bank_account_name ? <div>Account name: {s.company.bank_account_name}</div> : null}
-          {s.company.bank_account_number ? <div>Account no.: {s.company.bank_account_number}</div> : null}
+          {s.company.bank_account_name ? (
+            <div>Account name: {s.company.bank_account_name}</div>
+          ) : null}
+          {s.company.bank_account_number ? (
+            <div>Account no.: {s.company.bank_account_number}</div>
+          ) : null}
           {s.company.bank_ifsc ? <div>IFSC: {s.company.bank_ifsc}</div> : null}
           {s.company.upi_id ? <div>UPI: {s.company.upi_id}</div> : null}
         </section>
@@ -237,7 +276,15 @@ export function InvoiceDocument({
   );
 }
 
-function Line({ label, value, strong }: { label: string; value: string; strong?: boolean | undefined }) {
+function Line({
+  label,
+  value,
+  strong,
+}: {
+  label: string;
+  value: string;
+  strong?: boolean | undefined;
+}) {
   return (
     <div className={`flex justify-between ${strong ? "font-semibold" : ""}`}>
       <span>{label}</span>

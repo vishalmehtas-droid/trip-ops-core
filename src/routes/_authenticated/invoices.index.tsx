@@ -6,7 +6,14 @@ import { InvoiceStatusBadge } from "@/components/app/invoices";
 import { formatDate } from "@/components/app/master-data";
 import { PageHeader } from "@/components/app/page-header";
 import { EmptyState, ErrorState, TableSkeleton, UnauthorizedState } from "@/components/app/states";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { useAuth } from "@/hooks/use-auth";
 import { listInvoices } from "@/lib/invoices.functions";
 import { formatMoney } from "@/lib/sale-costing-schemas";
@@ -75,7 +82,9 @@ function InvoicesPage() {
                 <TableRow
                   key={row.id}
                   className="cursor-pointer"
-                  onClick={() => void navigate({ to: "/invoices/$invoiceId", params: { invoiceId: row.id } })}
+                  onClick={() =>
+                    void navigate({ to: "/invoices/$invoiceId", params: { invoiceId: row.id } })
+                  }
                 >
                   <TableCell className="font-mono text-xs">{row.invoice_number}</TableCell>
                   <TableCell>{formatDate(row.invoice_date)}</TableCell>
@@ -90,7 +99,9 @@ function InvoicesPage() {
                       {row.booking_number}
                     </Link>
                   </TableCell>
-                  <TableCell className="text-right tabular-nums">{formatMoney(row.total_payable)}</TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {formatMoney(row.total_payable)}
+                  </TableCell>
                   <TableCell>
                     <InvoiceStatusBadge status={row.status} />
                   </TableCell>

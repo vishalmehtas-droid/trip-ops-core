@@ -60,10 +60,12 @@ function InvoicePage() {
       await queryClient.invalidateQueries({ queryKey: ["invoices"] });
       void queryClient.invalidateQueries({ queryKey: ["audit-log"] });
     },
-    onError: (error: Error) => toast.error("Could not cancel the invoice", { description: error.message }),
+    onError: (error: Error) =>
+      toast.error("Could not cancel the invoice", { description: error.message }),
   });
 
-  if (!canRead) return <UnauthorizedState description="Invoices are available to Admin, Accounts and Sales." />;
+  if (!canRead)
+    return <UnauthorizedState description="Invoices are available to Admin, Accounts and Sales." />;
   if (query.isLoading) return <LoadingState />;
   if (query.isError) return <ErrorState description={(query.error as Error).message} />;
   const inv = query.data;
@@ -103,7 +105,8 @@ function InvoicePage() {
         />
         {inv.status === "cancelled" ? (
           <p className="mt-2 text-xs text-destructive">
-            Cancelled: {inv.cancel_reason}. The number is kept; issue a new invoice from the booking.
+            Cancelled: {inv.cancel_reason}. The number is kept; issue a new invoice from the
+            booking.
           </p>
         ) : null}
       </div>

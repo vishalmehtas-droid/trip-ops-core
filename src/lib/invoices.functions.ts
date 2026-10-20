@@ -134,8 +134,11 @@ export const issueInvoice = createServerFn({ method: "POST" })
   .middleware([requireActiveUser])
   .inputValidator((input: unknown) => z.object({ saleId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
-    if (!canIssueInvoices(context.roles)) throw new Error("Forbidden: only Admin or Accounts can issue invoices");
-    const { data: id, error } = await context.supabase.rpc("issue_invoice", { _sale_id: data.saleId });
+    if (!canIssueInvoices(context.roles))
+      throw new Error("Forbidden: only Admin or Accounts can issue invoices");
+    const { data: id, error } = await context.supabase.rpc("issue_invoice", {
+      _sale_id: data.saleId,
+    });
     if (error) throw new Error(error.message);
     return { id: id as string };
   });
@@ -143,10 +146,16 @@ export const issueInvoice = createServerFn({ method: "POST" })
 export const cancelInvoice = createServerFn({ method: "POST" })
   .middleware([requireActiveUser])
   .inputValidator((input: unknown) =>
-    z.object({ id: z.string().uuid(), reason: z.string().trim().min(3, "Enter a reason").max(500) }).parse(input),
+    z
+      .object({
+        id: z.string().uuid(),
+        reason: z.string().trim().min(3, "Enter a reason").max(500),
+      })
+      .parse(input),
   )
   .handler(async ({ data, context }) => {
-    if (!canCancelInvoices(context.roles)) throw new Error("Forbidden: only Admin can cancel invoices");
+    if (!canCancelInvoices(context.roles))
+      throw new Error("Forbidden: only Admin can cancel invoices");
     const { error } = await context.supabase.rpc("cancel_invoice", {
       _invoice_id: data.id,
       _reason: data.reason,
