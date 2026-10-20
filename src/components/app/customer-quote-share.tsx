@@ -154,7 +154,9 @@ export function CustomerFacingDetails({
         </dl>
       )}
       {!editable && quote.status !== "draft" ? (
-        <p className="mt-2 text-xs text-muted-foreground">Editable only while the quote is Draft.</p>
+        <p className="mt-2 text-xs text-muted-foreground">
+          Editable only while the quote is Draft.
+        </p>
       ) : null}
       <Dialog open={open && editable} onOpenChange={setOpen}>
         <DialogContent className="quote-dialog sm:max-w-2xl">
@@ -251,10 +253,7 @@ export function ShareQuoteButton({
         Share
       </Button>
       {disabledReason ? <p className="text-xs text-muted-foreground">{disabledReason}</p> : null}
-      <AlertDialog
-        open={confirmDraft}
-        onOpenChange={(o) => !share.isPending && setConfirmDraft(o)}
-      >
+      <AlertDialog open={confirmDraft} onOpenChange={(o) => !share.isPending && setConfirmDraft(o)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Share this Draft quote?</AlertDialogTitle>

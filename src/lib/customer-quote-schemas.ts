@@ -144,6 +144,11 @@ export const customerQuoteContentUpdateSchema = z.object({
 });
 export const customerQuoteShareSchema = z.object({ id: uuid, enabled: z.boolean() });
 export const sharedQuoteTokenSchema = z.object({
-  token: z.string().trim().min(32).max(128).regex(/^[A-Za-z0-9]+$/),
+  token: z
+    .string()
+    .trim()
+    .min(32)
+    .max(128)
+    .regex(/^[A-Za-z0-9]+$/),
   track: z.boolean().default(true),
 });
