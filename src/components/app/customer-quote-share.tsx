@@ -93,6 +93,7 @@ export function CustomerFacingDetails({
     terms: quote.terms ?? "",
   });
   const [open, setOpen] = useState(false);
+  const [confirmDiscard, setConfirmDiscard] = useState(false);
   const [form, setForm] = useState<ContentForm>(toForm);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const updateFn = useServerFn(updateCustomerQuoteContent);
@@ -114,6 +115,12 @@ export function CustomerFacingDetails({
     }
     setErrors({});
     save.mutate();
+  }
+  const dirty = CONTENT_LABELS.some(({ key }) => form[key] !== (quote[key] ?? ""));
+  function requestClose() {
+    if (save.isPending) return;
+    if (dirty) setConfirmDiscard(true);
+    else setOpen(false);
   }
   const filled = CONTENT_LABELS.filter(({ key }) => quote[key]);
   return (
@@ -158,7 +165,7 @@ export function CustomerFacingDetails({
           Editable only while the quote is Draft.
         </p>
       ) : null}
-      <Dialog open={open && editable} onOpenChange={setOpen}>
+      <Dialog open={open && editable} onOpenChange={(o) => (o ? setOpen(true) : requestClose())}>
         <DialogContent className="quote-dialog sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>Customer-facing details</DialogTitle>
@@ -190,7 +197,7 @@ export function CustomerFacingDetails({
             </p>
           </div>
           <DialogFooter>
-            <Button variant="outline" disabled={save.isPending} onClick={() => setOpen(false)}>
+            <Button variant="outline" disabled={save.isPending} onClick={requestClose}>
               Cancel
             </Button>
             <Button disabled={save.isPending} onClick={submit}>
