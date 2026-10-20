@@ -72,7 +72,6 @@ export const accountInputSchema = z.object({
     .transform((v) => (v ? v : null)),
   /** For credit cards this is the amount owed, entered positive. */
   opening_balance: nonNegativeMoney,
-  opening_balance_negative: z.boolean().optional().default(false),
   opening_balance_date: isoDate,
   is_active: z.boolean(),
 });
