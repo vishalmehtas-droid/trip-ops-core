@@ -353,18 +353,27 @@ export const getCashflow = createServerFn({ method: "POST" })
     if (data.to) paymentsQuery = paymentsQuery.lte("payment_date", data.to);
 
     // Outstanding totals are as-of-now figures, independent of the range.
-    const [receiptsResult, paymentsResult, openSalesResult, allReceiptsResult, purchasesResult, allPaymentsResult] =
-      await Promise.all([
-        receiptsQuery,
-        paymentsQuery,
-        supabase
-          .from("sales")
-          .select("id, pricing:sale_pricing(customer_payable::text)")
-          .neq("status", "cancelled"),
-        supabase.from("customer_receipts").select("sale_id, amount_inr::text").eq("status", "recorded"),
-        supabase.from("purchases").select("amount_inr::text").neq("status", "cancelled"),
-        supabase.from("vendor_payments").select("amount_inr::text").eq("status", "recorded"),
-      ]);
+    const [
+      receiptsResult,
+      paymentsResult,
+      openSalesResult,
+      allReceiptsResult,
+      purchasesResult,
+      allPaymentsResult,
+    ] = await Promise.all([
+      receiptsQuery,
+      paymentsQuery,
+      supabase
+        .from("sales")
+        .select("id, pricing:sale_pricing(customer_payable::text)")
+        .neq("status", "cancelled"),
+      supabase
+        .from("customer_receipts")
+        .select("sale_id, amount_inr::text")
+        .eq("status", "recorded"),
+      supabase.from("purchases").select("amount_inr::text").neq("status", "cancelled"),
+      supabase.from("vendor_payments").select("amount_inr::text").eq("status", "recorded"),
+    ]);
     for (const result of [
       receiptsResult,
       paymentsResult,
@@ -386,10 +395,16 @@ export const getCashflow = createServerFn({ method: "POST" })
       }
       return entry;
     };
-    for (const row of (receiptsResult.data ?? []) as { receipt_date: string; amount_inr: string }[]) {
+    for (const row of (receiptsResult.data ?? []) as {
+      receipt_date: string;
+      amount_inr: string;
+    }[]) {
       bucket(row.receipt_date).moneyIn += toPaise(row.amount_inr);
     }
-    for (const row of (paymentsResult.data ?? []) as { payment_date: string; amount_inr: string }[]) {
+    for (const row of (paymentsResult.data ?? []) as {
+      payment_date: string;
+      amount_inr: string;
+    }[]) {
       bucket(row.payment_date).moneyOut += toPaise(row.amount_inr);
     }
 
@@ -490,12 +505,21 @@ export const getProfitability = createServerFn({ method: "POST" })
         supabase.from("destinations").select("id, name"),
         supabase.from("profiles").select("id, name"),
       ]);
-    for (const result of [salesResult, purchasesResult, clientsResult, destinationsResult, profilesResult]) {
+    for (const result of [
+      salesResult,
+      purchasesResult,
+      clientsResult,
+      destinationsResult,
+      profilesResult,
+    ]) {
       if (result.error) throw new Error(result.error.message);
     }
 
     const clientNames = new Map(
-      ((clientsResult.data ?? []) as { id: string; name: string }[]).map((row) => [row.id, row.name]),
+      ((clientsResult.data ?? []) as { id: string; name: string }[]).map((row) => [
+        row.id,
+        row.name,
+      ]),
     );
     const destinationNames = new Map(
       ((destinationsResult.data ?? []) as { id: string; name: string }[]).map((row) => [
@@ -504,12 +528,18 @@ export const getProfitability = createServerFn({ method: "POST" })
       ]),
     );
     const profileNames = new Map(
-      ((profilesResult.data ?? []) as { id: string; name: string }[]).map((row) => [row.id, row.name]),
+      ((profilesResult.data ?? []) as { id: string; name: string }[]).map((row) => [
+        row.id,
+        row.name,
+      ]),
     );
 
     const purchaseTotals = new Map<string, bigint>();
     for (const row of (purchasesResult.data ?? []) as { sale_id: string; amount_inr: string }[]) {
-      purchaseTotals.set(row.sale_id, (purchaseTotals.get(row.sale_id) ?? 0n) + toPaise(row.amount_inr));
+      purchaseTotals.set(
+        row.sale_id,
+        (purchaseTotals.get(row.sale_id) ?? 0n) + toPaise(row.amount_inr),
+      );
     }
 
     type SaleRow = {
@@ -556,7 +586,9 @@ export const getProfitability = createServerFn({ method: "POST" })
         booking_number: sale.booking_number,
         booking_date: sale.booking_date,
         client: clientNames.get(sale.client_id) ?? "—",
-        destination: sale.destination_id ? (destinationNames.get(sale.destination_id) ?? null) : null,
+        destination: sale.destination_id
+          ? (destinationNames.get(sale.destination_id) ?? null)
+          : null,
         salesperson: profileNames.get(sale.created_by) ?? "—",
         selling: fromPaise(selling),
         expected_cost: fromPaise(expected),
@@ -634,7 +666,14 @@ export const getGstSummary = createServerFn({ method: "POST" })
       invoiced: bigint;
     };
     const months = new Map<string, Bucket>();
-    const totals: Bucket = { taxable: 0n, gst5: 0n, gst18: 0n, gstOther: 0n, tcs: 0n, invoiced: 0n };
+    const totals: Bucket = {
+      taxable: 0n,
+      gst5: 0n,
+      gst18: 0n,
+      gstOther: 0n,
+      tcs: 0n,
+      invoiced: 0n,
+    };
     for (const sale of (salesRows ?? []) as unknown as SaleRow[]) {
       const pricing = Array.isArray(sale.pricing) ? sale.pricing[0] : sale.pricing;
       if (!pricing) continue;

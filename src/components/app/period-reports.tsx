@@ -185,8 +185,14 @@ export function CashflowReport() {
       ) : (
         <>
           <div className="grid gap-3 sm:grid-cols-2">
-            <SummaryStat label="Receivable (customers owe us)" value={formatMoney(report.data.receivable)} />
-            <SummaryStat label="Payable (we owe vendors)" value={formatMoney(report.data.payable)} />
+            <SummaryStat
+              label="Receivable (customers owe us)"
+              value={formatMoney(report.data.receivable)}
+            />
+            <SummaryStat
+              label="Payable (we owe vendors)"
+              value={formatMoney(report.data.payable)}
+            />
           </div>
           {report.data.months.length === 0 ? (
             <EmptyState title="No transactions in this period" />
@@ -486,30 +492,26 @@ export function GstSummaryReport() {
       "TCS collected (INR)",
       "Total invoiced (INR)",
     ];
-    downloadCsv(
-      "gst-summary.csv",
-      header,
+    downloadCsv("gst-summary.csv", header, [
+      ...data.months.map((month) => [
+        month.label,
+        month.taxable,
+        month.gst_5,
+        month.gst_18,
+        ...(data.has_other_gst ? [month.gst_other] : []),
+        month.tcs,
+        month.total_invoiced,
+      ]),
       [
-        ...data.months.map((month) => [
-          month.label,
-          month.taxable,
-          month.gst_5,
-          month.gst_18,
-          ...(data.has_other_gst ? [month.gst_other] : []),
-          month.tcs,
-          month.total_invoiced,
-        ]),
-        [
-          "Totals",
-          data.totals.taxable,
-          data.totals.gst_5,
-          data.totals.gst_18,
-          ...(data.has_other_gst ? [data.totals.gst_other] : []),
-          data.totals.tcs,
-          data.totals.total_invoiced,
-        ],
+        "Totals",
+        data.totals.taxable,
+        data.totals.gst_5,
+        data.totals.gst_18,
+        ...(data.has_other_gst ? [data.totals.gst_other] : []),
+        data.totals.tcs,
+        data.totals.total_invoiced,
       ],
-    );
+    ]);
   };
 
   const otherGst = report.data?.has_other_gst ?? false;
