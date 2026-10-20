@@ -5,6 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
+import { AccountSelect } from "@/components/app/account-select";
 import { DetailRow, Field, formatDate, formatDateTime } from "@/components/app/master-data";
 import { useBookingOptions, VendorTermsNote } from "@/components/app/purchases";
 import { useQuickAdd } from "@/components/app/quick-add";
@@ -188,6 +189,7 @@ export function PaymentsTable({
 type PaymentForm = {
   vendor_id: string;
   sale_id: string;
+  account_id: string;
   payment_type: MoneyType;
   payment_date: string;
   amount_inr: string;
@@ -200,6 +202,7 @@ function emptyPaymentForm(saleId = "", vendorId = ""): PaymentForm {
   return {
     vendor_id: vendorId,
     sale_id: saleId,
+    account_id: "",
     payment_type: "part",
     payment_date: todayIso(),
     amount_inr: "",
@@ -261,6 +264,7 @@ export function PaymentFormDialog({
         setForm({
           vendor_id: payment.vendor_id,
           sale_id: payment.sale_id ?? "",
+          account_id: payment.account_id,
           payment_type: payment.payment_type,
           payment_date: payment.payment_date,
           amount_inr: payment.amount_inr,
@@ -422,6 +426,20 @@ export function PaymentFormDialog({
                   vendor={(vendors.data ?? []).find((row) => row.id === form.vendor_id)}
                 />
               </div>
+              <Field
+                label="Paid from account"
+                htmlFor="payment-account"
+                required
+                error={errors["account_id"]}
+              >
+                <AccountSelect
+                  id="payment-account"
+                  value={form.account_id}
+                  onChange={(value) => setForm((current) => ({ ...current, account_id: value }))}
+                  currentName={payment?.account?.name}
+                  autoDefault={!payment}
+                />
+              </Field>
               <Field label="Booking (optional)" htmlFor="payment-booking" error={errors["sale_id"]}>
                 <RecordCombobox
                   id="payment-booking"
@@ -706,6 +724,7 @@ export function PaymentSheet({
                 <DetailRow label="Allocated" value={formatMoney(payment.allocated)} />
                 <DetailRow label="Unallocated" value={formatMoney(payment.unallocated)} />
                 <DetailRow label="Method" value={PAYMENT_METHOD_LABELS[payment.method]} />
+                <DetailRow label="Account" value={payment.account?.name ?? "—"} />
                 <DetailRow label="Reference" value={payment.reference} />
                 <DetailRow
                   label="Notes"
