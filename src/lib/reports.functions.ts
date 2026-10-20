@@ -43,7 +43,7 @@ type Entry = {
   sale_id: string | null;
 };
 
-function toResult(partyName: string, entries: Entry[]): LedgerResult {
+function toResult(partyName: string, entries: Entry[], sign: 1n | -1n): LedgerResult {
   entries.sort((a, b) =>
     a.date === b.date ? a.sort.localeCompare(b.sort) : a.date.localeCompare(b.date),
   );
@@ -51,7 +51,7 @@ function toResult(partyName: string, entries: Entry[]): LedgerResult {
   let totalDebit = 0n;
   let totalCredit = 0n;
   const rows: LedgerRow[] = entries.map((entry) => {
-    balance += entry.debit - entry.credit;
+    balance += (entry.debit - entry.credit) * sign;
     totalDebit += entry.debit;
     totalCredit += entry.credit;
     return {
@@ -179,7 +179,7 @@ export const getClientLedger = createServerFn({ method: "POST" })
         sale_id: receipt.sale_id,
       });
     }
-    return toResult((client as { name: string }).name, entries);
+    return toResult((client as { name: string }).name, entries, 1n);
   });
 
 export const getVendorLedger = createServerFn({ method: "POST" })
