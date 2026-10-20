@@ -23,17 +23,17 @@ import {
 import { formatMoney } from "@/lib/sale-costing-schemas";
 
 /** Current Indian financial year (April to March) as YYYY-MM-DD bounds. */
-function currentFinancialYear(): { from: string; to: string } {
+export function currentFinancialYear(): { from: string; to: string } {
   const now = new Date();
   const startYear = now.getMonth() >= 3 ? now.getFullYear() : now.getFullYear() - 1;
   return { from: `${startYear}-04-01`, to: `${startYear + 1}-03-31` };
 }
 
-function csvCell(value: string): string {
+export function csvCell(value: string): string {
   return /[",\n]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value;
 }
 
-function downloadCsv(filename: string, header: string[], rows: string[][]) {
+export function downloadCsv(filename: string, header: string[], rows: string[][]) {
   const lines = [header, ...rows].map((cells) => cells.map(csvCell).join(","));
   const blob = new Blob(["﻿" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" });
   const url = URL.createObjectURL(blob);
@@ -55,7 +55,7 @@ function useNameOptions(table: "profiles" | "destinations") {
   });
 }
 
-function ReportShell({
+export function ReportShell({
   title,
   description,
   hasData,
