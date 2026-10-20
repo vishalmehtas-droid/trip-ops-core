@@ -8,8 +8,26 @@ export const IMPORT_COLUMNS: Record<ImportKind, readonly string[]> = {
 };
 
 export const IMPORT_SAMPLE: Record<ImportKind, string[]> = {
-  clients: ["Asha Rao", "+91 98200 12345", "asha@example.com", "Mumbai", "Maharashtra", "27ABCDE1234F1Z5", "Referral", "Rahul Shah", "Prefers beach holidays"],
-  vendors: ["Blue Lagoon DMC", "+971 4 555 0100", "ops@bluelagoon.example", "Dubai", "", "50% advance, balance 7 days before travel", "UAE land packages"],
+  clients: [
+    "Asha Rao",
+    "+91 98200 12345",
+    "asha@example.com",
+    "Mumbai",
+    "Maharashtra",
+    "27ABCDE1234F1Z5",
+    "Referral",
+    "Rahul Shah",
+    "Prefers beach holidays",
+  ],
+  vendors: [
+    "Blue Lagoon DMC",
+    "+971 4 555 0100",
+    "ops@bluelagoon.example",
+    "Dubai",
+    "",
+    "50% advance, balance 7 days before travel",
+    "UAE land packages",
+  ],
 };
 
 export const MAX_IMPORT_ROWS = 500;
@@ -55,14 +73,23 @@ export function parseCsv(text: string): string[][] {
 
 export type ImportRecord = Record<string, string>;
 export type RowStatus = "new" | "duplicate" | "error";
-export type CheckedRow = { line: number; values: ImportRecord; status: RowStatus; reason: string | null };
+export type CheckedRow = {
+  line: number;
+  values: ImportRecord;
+  status: RowStatus;
+  reason: string | null;
+};
 export type ExistingRecord = { name: string; phone: string | null; email: string | null };
 
-export function toRecords(kind: ImportKind, rows: string[][]): { records: ImportRecord[]; error: string | null } {
+export function toRecords(
+  kind: ImportKind,
+  rows: string[][],
+): { records: ImportRecord[]; error: string | null } {
   const [header, ...body] = rows;
   if (!header) return { records: [], error: "The file is empty." };
   const keys = header.map((h) => h.trim().toLowerCase().replace(/\s+/g, "_"));
-  if (!keys.includes("name")) return { records: [], error: "The header row must include a name column." };
+  if (!keys.includes("name"))
+    return { records: [], error: "The header row must include a name column." };
   const cols = IMPORT_COLUMNS[kind];
   const records = body.map((cells) => {
     const rec: ImportRecord = {};
@@ -94,21 +121,35 @@ function validate(kind: ImportKind, rec: ImportRecord): string | null {
       rec["source"] = match;
     }
     const parsed = clientInputSchema.safeParse({
-      name: rec["name"], phone: rec["phone"], email: rec["email"], state: rec["state"],
-      gst_number: gstin, source, referred_by: rec["referred_by"], notes: rec["notes"],
+      name: rec["name"],
+      phone: rec["phone"],
+      email: rec["email"],
+      state: rec["state"],
+      gst_number: gstin,
+      source,
+      referred_by: rec["referred_by"],
+      notes: rec["notes"],
     });
     if (!parsed.success) return parsed.error.issues[0]?.message ?? "Invalid row";
   } else {
     const parsed = vendorInputSchema.safeParse({
-      name: rec["name"], phone: rec["phone"], email: rec["email"], gst_number: gstin,
-      payment_terms: rec["payment_terms"], notes: rec["notes"],
+      name: rec["name"],
+      phone: rec["phone"],
+      email: rec["email"],
+      gst_number: gstin,
+      payment_terms: rec["payment_terms"],
+      notes: rec["notes"],
     });
     if (!parsed.success) return parsed.error.issues[0]?.message ?? "Invalid row";
   }
   return null;
 }
 
-export function checkRows(kind: ImportKind, records: ImportRecord[], existing: ExistingRecord[]): CheckedRow[] {
+export function checkRows(
+  kind: ImportKind,
+  records: ImportRecord[],
+  existing: ExistingRecord[],
+): CheckedRow[] {
   const names = new Set(existing.map((e) => normName(e.name)));
   const phones = new Set(existing.map((e) => normPhone(e.phone)).filter(Boolean));
   const emails = new Set(existing.map((e) => normEmail(e.email)).filter(Boolean));

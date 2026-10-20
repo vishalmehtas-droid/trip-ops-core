@@ -11,12 +11,19 @@ export const IMPORT_ROLES: Record<ImportKind, ("admin" | "sales" | "operations")
 
 const inputSchema = z.object({
   kind: z.enum(["clients", "vendors"]),
-  records: z.array(z.record(z.string(), z.string().max(4000))).max(MAX_IMPORT_ROWS, "Up to 500 rows"),
+  records: z
+    .array(z.record(z.string(), z.string().max(4000)))
+    .max(MAX_IMPORT_ROWS, "Up to 500 rows"),
 });
 
 export type ImportOutcome = {
   imported: number;
-  rejected: { line: number; values: Record<string, string>; outcome: "skipped" | "failed"; reason: string }[];
+  rejected: {
+    line: number;
+    values: Record<string, string>;
+    outcome: "skipped" | "failed";
+    reason: string;
+  }[];
 };
 
 /** Create-only import: re-validates every row with the form rules, then inserts all new rows in one transaction. */
@@ -34,7 +41,9 @@ export const importCsvRecords = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
 
     const cols = IMPORT_COLUMNS[data.kind];
-    const records = data.records.map((r) => Object.fromEntries(cols.map((c) => [c, (r[c] ?? "").trim()])));
+    const records = data.records.map((r) =>
+      Object.fromEntries(cols.map((c) => [c, (r[c] ?? "").trim()])),
+    );
     const checked = checkRows(data.kind, records, existing ?? []);
     const fresh = checked.filter((r) => r.status === "new");
     const rejected: ImportOutcome["rejected"] = checked

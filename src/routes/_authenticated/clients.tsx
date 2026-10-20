@@ -7,6 +7,7 @@ import { toast } from "sonner";
 
 import { ClientSourceFields } from "@/components/app/client-source-fields";
 import { PageHeader } from "@/components/app/page-header";
+import { CsvImportActions } from "@/components/app/csv-import";
 import {
   DetailRow,
   Field,
@@ -256,16 +257,17 @@ function ClientsPage() {
             Masters
           </Badge>
         }
-        {...(canManage
-          ? {
-              actions: (
-                <Button size="sm" onClick={openCreate}>
-                  <Plus className="size-4" />
-                  New client
-                </Button>
-              ),
-            }
-          : {})}
+        actions={
+          <div className="flex flex-wrap items-center gap-2">
+            <CsvImportActions kind="clients" queryKey={["clients"]} />
+            {canManage ? (
+              <Button size="sm" onClick={openCreate}>
+                <Plus className="size-4" />
+                New client
+              </Button>
+            ) : null}
+          </div>
+        }
       />
 
       <MasterToolbar search={search} onSearchChange={setSearch} placeholder="Search clients">

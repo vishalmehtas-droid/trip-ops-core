@@ -6,6 +6,7 @@ import { Loader2, Pencil, Plus } from "lucide-react";
 import { toast } from "sonner";
 
 import { PageHeader } from "@/components/app/page-header";
+import { CsvImportActions } from "@/components/app/csv-import";
 import {
   DetailRow,
   Field,
@@ -246,16 +247,17 @@ function VendorsPage() {
             Masters
           </Badge>
         }
-        {...(canManage
-          ? {
-              actions: (
-                <Button size="sm" onClick={openCreate}>
-                  <Plus className="size-4" />
-                  New vendor
-                </Button>
-              ),
-            }
-          : {})}
+        actions={
+          <div className="flex flex-wrap items-center gap-2">
+            <CsvImportActions kind="vendors" queryKey={["vendors"]} />
+            {canManage ? (
+              <Button size="sm" onClick={openCreate}>
+                <Plus className="size-4" />
+                New vendor
+              </Button>
+            ) : null}
+          </div>
+        }
       />
 
       <MasterToolbar search={search} onSearchChange={setSearch} placeholder="Search vendors">

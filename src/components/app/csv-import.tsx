@@ -6,9 +6,22 @@ import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -36,7 +49,13 @@ function download(name: string, content: string) {
 
 const STATUS_LABEL = { new: "New", duplicate: "Duplicate", error: "Error" } as const;
 
-export function CsvImportActions({ kind, queryKey }: { kind: ImportKind; queryKey: readonly unknown[] }) {
+export function CsvImportActions({
+  kind,
+  queryKey,
+}: {
+  kind: ImportKind;
+  queryKey: readonly unknown[];
+}) {
   const { hasAnyRole } = useAuth();
   const [open, setOpen] = useState(false);
   if (!hasAnyRole(IMPORT_ROLES[kind])) return null;
@@ -55,7 +74,9 @@ export function CsvImportActions({ kind, queryKey }: { kind: ImportKind; queryKe
         <Upload className="size-3.5" />
         Import CSV
       </Button>
-      {open ? <ImportDialog kind={kind} queryKey={queryKey} onClose={() => setOpen(false)} /> : null}
+      {open ? (
+        <ImportDialog kind={kind} queryKey={queryKey} onClose={() => setOpen(false)} />
+      ) : null}
     </>
   );
 }
@@ -98,7 +119,8 @@ function ImportDialog({
     const { records, error } = toRecords(kind, parseCsv(text));
     if (error) return setFileError(error);
     if (records.length === 0) return setFileError("No data rows found.");
-    if (records.length > MAX_IMPORT_ROWS) return setFileError(`Up to ${MAX_IMPORT_ROWS} rows per file.`);
+    if (records.length > MAX_IMPORT_ROWS)
+      return setFileError(`Up to ${MAX_IMPORT_ROWS} rows per file.`);
     const { data, error: readError } = await supabase.from(kind).select("name, phone, email");
     if (readError) return setFileError(readError.message);
     setRows(checkRows(kind, records, data ?? []));
@@ -113,7 +135,9 @@ function ImportDialog({
       await queryClient.invalidateQueries({ queryKey });
       void queryClient.invalidateQueries({ queryKey: ["audit-log"] });
     } catch (error) {
-      toast.error("Import failed — nothing was imported", { description: (error as Error).message });
+      toast.error("Import failed — nothing was imported", {
+        description: (error as Error).message,
+      });
     } finally {
       setBusy(false);
     }
@@ -132,9 +156,15 @@ function ImportDialog({
         {result ? (
           <div className="space-y-3 text-sm">
             <div className="flex gap-6">
-              <span>Imported: <strong>{result.imported}</strong></span>
-              <span>Skipped: <strong>{skipped}</strong></span>
-              <span>Failed: <strong>{failed}</strong></span>
+              <span>
+                Imported: <strong>{result.imported}</strong>
+              </span>
+              <span>
+                Skipped: <strong>{skipped}</strong>
+              </span>
+              <span>
+                Failed: <strong>{failed}</strong>
+              </span>
             </div>
             {result.rejected.length ? (
               <Button
@@ -146,7 +176,10 @@ function ImportDialog({
                     toCsv([
                       ["line", "outcome", "reason", ...cols],
                       ...result.rejected.map((r) => [
-                        String(r.line), r.outcome, r.reason, ...cols.map((c) => r.values[c] ?? ""),
+                        String(r.line),
+                        r.outcome,
+                        r.reason,
+                        ...cols.map((c) => r.values[c] ?? ""),
                       ]),
                     ]),
                   )
@@ -159,20 +192,31 @@ function ImportDialog({
           </div>
         ) : (
           <div className="space-y-3">
-            <Input type="file" accept=".csv,text/csv" onChange={(e) => {
-              const f = e.target.files?.[0];
-              if (f) void onFile(f);
-            }} />
+            <Input
+              type="file"
+              accept=".csv,text/csv"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) void onFile(f);
+              }}
+            />
             <p className="text-[11px] text-muted-foreground">
-              Up to {MAX_IMPORT_ROWS} rows and 1 MB. Only new records are created; existing records are never changed.
+              Up to {MAX_IMPORT_ROWS} rows and 1 MB. Only new records are created; existing records
+              are never changed.
             </p>
             {fileError ? <p className="text-xs font-medium text-destructive">{fileError}</p> : null}
             {rows ? (
               <>
                 <div className="flex gap-4 text-xs">
-                  <span>New: <strong>{counts.new}</strong></span>
-                  <span>Duplicate (skipped): <strong>{counts.duplicate}</strong></span>
-                  <span>Error: <strong>{counts.error}</strong></span>
+                  <span>
+                    New: <strong>{counts.new}</strong>
+                  </span>
+                  <span>
+                    Duplicate (skipped): <strong>{counts.duplicate}</strong>
+                  </span>
+                  <span>
+                    Error: <strong>{counts.error}</strong>
+                  </span>
                 </div>
                 <div className="max-h-[50vh] overflow-auto rounded border border-border">
                   <Table>
@@ -180,7 +224,9 @@ function ImportDialog({
                       <TableRow>
                         <TableHead>Line</TableHead>
                         <TableHead>Status</TableHead>
-                        {cols.map((c) => <TableHead key={c}>{c}</TableHead>)}
+                        {cols.map((c) => (
+                          <TableHead key={c}>{c}</TableHead>
+                        ))}
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -194,10 +240,16 @@ function ImportDialog({
                             >
                               {STATUS_LABEL[r.status]}
                             </Badge>
-                            {r.reason ? <div className="mt-0.5 text-[11px] text-muted-foreground">{r.reason}</div> : null}
+                            {r.reason ? (
+                              <div className="mt-0.5 text-[11px] text-muted-foreground">
+                                {r.reason}
+                              </div>
+                            ) : null}
                           </TableCell>
                           {cols.map((c) => (
-                            <TableCell key={c} className="max-w-[180px] truncate text-xs">{r.values[c]}</TableCell>
+                            <TableCell key={c} className="max-w-[180px] truncate text-xs">
+                              {r.values[c]}
+                            </TableCell>
                           ))}
                         </TableRow>
                       ))}
@@ -214,7 +266,9 @@ function ImportDialog({
             <Button onClick={onClose}>Done</Button>
           ) : (
             <>
-              <Button variant="outline" onClick={onClose} disabled={busy}>Cancel</Button>
+              <Button variant="outline" onClick={onClose} disabled={busy}>
+                Cancel
+              </Button>
               <Button disabled={!rows || counts.new === 0 || busy} onClick={() => void doImport()}>
                 {busy ? <Loader2 className="size-4 animate-spin" /> : null}
                 Import {counts.new} new records
