@@ -66,6 +66,12 @@ export const clientInputSchema = z
     notes: optionalText(2000),
     source: optionalSource,
     referred_by: optionalText(120),
+    markup_percent_override: z
+      .union([z.string(), z.number()])
+      .nullish()
+      .transform((v) => (v === null || v === undefined || String(v).trim() === "" ? null : String(v).trim()))
+      .refine((v) => v === null || /^\d{1,4}(\.\d{1,2})?$/.test(v), "Enter a percentage with at most 2 decimals")
+      .refine((v) => v === null || Number(v) <= 1000, "Too large"),
     is_active: z.boolean().default(true),
   })
   // "Referred by" only applies to referrals.
