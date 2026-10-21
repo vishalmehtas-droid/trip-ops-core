@@ -300,8 +300,10 @@ export const getDayEntries = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const ctx = context as Ctx;
     const full = ctx.isAdmin || ctx.permissions.includes("accounts.read");
-    const canPaid = full || ctx.permissions.includes("payments.enter");
-    const canReceived = full || ctx.permissions.includes("receipts.enter_own");
+    // Same rules as the entry tabs in finance-daily.tsx.
+    const has = (p: string) => ctx.permissions.includes(p);
+    const canPaid = full || has("payments.enter") || has("payments.manage");
+    const canReceived = full || has("receipts.enter_own") || has("receipts.manage");
     if (!canPaid && !canReceived) throw new Error("Forbidden: no access to daily entries");
     const tasks: Promise<MoneyEntry[]>[] = [];
     if (canPaid) {

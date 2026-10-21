@@ -221,6 +221,11 @@ export function DailyEntry() {
         {entries.data?.balances ? (
           <div>
             <h2 className="mb-2 text-sm font-semibold">Account balances</h2>
+            {entries.data.balances.length === 0 ? (
+              <p className="text-xs text-muted-foreground">
+                No active accounts yet. Add one under Finance → Accounts.
+              </p>
+            ) : null}
             <div className="grid gap-2 sm:grid-cols-2">
               {entries.data.balances.map((a) => (
                 <div key={a.id}>

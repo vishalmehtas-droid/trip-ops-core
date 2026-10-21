@@ -42,6 +42,7 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
     items: group.items.filter(
       (item) =>
         (!item.permission || hasPermission(item.permission)) &&
+        (!item.anyPermission || item.anyPermission.some((p) => hasPermission(p))) &&
         (!item.roles || item.roles.some((role) => roles.includes(role))),
     ),
   })).filter((group) => group.items.length > 0);

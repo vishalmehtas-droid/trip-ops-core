@@ -358,6 +358,7 @@ export const getCashflow = createServerFn({ method: "POST" })
       paymentsResult,
       openSalesResult,
       allReceiptsResult,
+      linkedAdvancesResult,
       purchasesResult,
       allPaymentsResult,
     ] = await Promise.all([
@@ -371,6 +372,11 @@ export const getCashflow = createServerFn({ method: "POST" })
         .from("customer_receipts")
         .select("sale_id, amount_inr::text")
         .eq("status", "recorded"),
+      // Client advances later linked to bookings also reduce what the customer owes.
+      supabase
+        .from("customer_receipt_allocations")
+        .select("sale_id, amount_inr::text, receipt:customer_receipts!inner(status)")
+        .eq("receipt.status", "recorded"),
       supabase.from("purchases").select("amount_inr::text").neq("status", "cancelled"),
       supabase.from("vendor_payments").select("amount_inr::text").eq("status", "recorded"),
     ]);
@@ -379,6 +385,7 @@ export const getCashflow = createServerFn({ method: "POST" })
       paymentsResult,
       openSalesResult,
       allReceiptsResult,
+      linkedAdvancesResult,
       purchasesResult,
       allPaymentsResult,
     ]) {
@@ -423,7 +430,8 @@ export const getCashflow = createServerFn({ method: "POST" })
       };
     });
 
-    // Receivable: customer payable on non-cancelled bookings minus their recorded receipts.
+    // Receivable: customer payable on non-cancelled bookings minus their recorded receipts
+    // and the recorded advances linked to them.
     const openSaleIds = new Set(
       ((openSalesResult.data ?? []) as { id: string }[]).map((row) => row.id),
     );
@@ -436,6 +444,12 @@ export const getCashflow = createServerFn({ method: "POST" })
       receivable += toPaise(pricing?.customer_payable ?? "0");
     }
     for (const row of (allReceiptsResult.data ?? []) as { sale_id: string; amount_inr: string }[]) {
+      if (openSaleIds.has(row.sale_id)) receivable -= toPaise(row.amount_inr);
+    }
+    for (const row of (linkedAdvancesResult.data ?? []) as {
+      sale_id: string;
+      amount_inr: string;
+    }[]) {
       if (openSaleIds.has(row.sale_id)) receivable -= toPaise(row.amount_inr);
     }
 

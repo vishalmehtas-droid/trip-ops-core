@@ -1,4 +1,5 @@
 import {
+  Banknote,
   BookOpenCheck,
   Building2,
   CircleDollarSign,
@@ -6,7 +7,9 @@ import {
   FileBarChart,
   Gauge,
   Globe2,
+  HandCoins,
   Landmark,
+  NotebookPen,
   Receipt,
   FileText,
   ScrollText,
@@ -29,6 +32,8 @@ export type NavItem = {
   phase: number | null;
   /** When set, the item is only listed for users holding this permission. */
   permission?: string;
+  /** When set, the item is only listed for users holding at least one of these permissions. */
+  anyPermission?: string[];
   /** When set, the item is only listed for users holding one of these roles. */
   roles?: AppRole[];
 };
@@ -73,6 +78,19 @@ export const NAV_GROUPS: NavGroup[] = [
     label: "Finance",
     items: [
       {
+        label: "Daily entry",
+        to: "/daily-entry",
+        icon: NotebookPen,
+        phase: null,
+        anyPermission: [
+          "accounts.manage",
+          "payments.manage",
+          "payments.enter",
+          "receipts.manage",
+          "receipts.enter_own",
+        ],
+      },
+      {
         label: "Receipts",
         to: "/receipts",
         icon: Receipt,
@@ -92,6 +110,20 @@ export const NAV_GROUPS: NavGroup[] = [
         icon: Wallet,
         phase: null,
         permission: "payments.read",
+      },
+      {
+        label: "Advances",
+        to: "/advances",
+        icon: HandCoins,
+        phase: null,
+        permission: "accounts.read",
+      },
+      {
+        label: "Accounts",
+        to: "/accounts",
+        icon: Banknote,
+        phase: null,
+        permission: "accounts.read",
       },
     ],
   },
