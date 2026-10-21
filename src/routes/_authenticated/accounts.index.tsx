@@ -154,6 +154,11 @@ function AccountsPage() {
                               Statement
                             </Link>
                           </Button>
+                          <Button asChild size="sm" variant="outline">
+                            <Link to="/accounts/$accountId/reconcile" params={{ accountId: a.id }}>
+                              Reconcile
+                            </Link>
+                          </Button>
                           <Button
                             size="sm"
                             variant="outline"

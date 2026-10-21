@@ -11,6 +11,14 @@ import { SummaryStat, todayIso } from "@/components/app/payments";
 import { RecordCombobox, type RecordOption } from "@/components/app/sales-ui";
 import { EmptyState, ErrorState, TableSkeleton } from "@/components/app/states";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -25,13 +33,19 @@ import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { DEFAULT_CATEGORIES, otherTxnInputSchema } from "@/lib/account-schemas";
 import {
+  cancelOtherTransaction,
   createOtherTransaction,
   getDayEntries,
   listCategories,
   type MoneyEntry,
 } from "@/lib/accounts.functions";
 import { isMoneyString, toPaise } from "@/lib/money";
-import { PAYMENT_METHODS, PAYMENT_METHOD_LABELS, type PaymentMethod } from "@/lib/payment-schemas";
+import {
+  PAYMENT_METHODS,
+  PAYMENT_METHOD_LABELS,
+  cancelSchema,
+  type PaymentMethod,
+} from "@/lib/payment-schemas";
 import { listOpenPurchases, saveVendorPayment } from "@/lib/payments.functions";
 import { quoteFieldErrors } from "@/lib/quotation-display";
 import { createReceipt } from "@/lib/receipts.functions";
@@ -132,6 +146,7 @@ export function DailyEntry() {
   ];
   const [tab, setTab] = useState<Tab>(tabs[0] ?? "paid");
   const [day, setDay] = useState(todayIso());
+  const [cancelling, setCancelling] = useState<MoneyEntry | null>(null);
 
   const dayFn = useServerFn(getDayEntries);
   const entries = useQuery({
@@ -213,6 +228,16 @@ export function DailyEntry() {
                   {e.kind === "other" && e.to_account_id
                     ? formatMoney(e.amount.replace("-", ""))
                     : formatMoney(e.amount)}
+                  {e.kind === "other" && full ? (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="mt-1 h-7 px-2 text-xs font-normal text-destructive"
+                      onClick={() => setCancelling(e)}
+                    >
+                      Cancel
+                    </Button>
+                  ) : null}
                 </div>
               </li>
             ))}
@@ -236,7 +261,80 @@ export function DailyEntry() {
           </div>
         ) : null}
       </div>
+      <CancelOtherDialog entry={cancelling} onOpenChange={(open) => !open && setCancelling(null)} />
     </div>
+  );
+}
+
+/** Cancel an expense, income or transfer: it stays on record but no longer counts. */
+function CancelOtherDialog({
+  entry,
+  onOpenChange,
+}: {
+  entry: MoneyEntry | null;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const queryClient = useQueryClient();
+  const cancelFn = useServerFn(cancelOtherTransaction);
+  const [reason, setReason] = useState("");
+  const [error, setError] = useState<string | undefined>();
+  const [openFor, setOpenFor] = useState<string | null>(null);
+  if ((entry?.id ?? null) !== openFor) {
+    setOpenFor(entry?.id ?? null);
+    setReason("");
+    setError(undefined);
+  }
+
+  const cancel = useMutation({
+    mutationFn: () => cancelFn({ data: { id: entry!.id, reason } }),
+    onSuccess: async () => {
+      for (const k of ["money-log", "accounts", "account-statement", "reconcile"]) {
+        await queryClient.invalidateQueries({ queryKey: [k] });
+      }
+      toast.success(`${entry?.number} cancelled`);
+      onOpenChange(false);
+    },
+    onError: (e: Error) => toast.error("Request rejected", { description: e.message }),
+  });
+
+  function confirm() {
+    const parsed = cancelSchema.safeParse({ id: entry?.id, reason });
+    if (!parsed.success) {
+      setError(quoteFieldErrors(parsed.error.issues)["reason"] ?? "A reason is required");
+      return;
+    }
+    setError(undefined);
+    cancel.mutate();
+  }
+
+  return (
+    <Dialog open={entry !== null} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Cancel {entry?.number}?</DialogTitle>
+          <DialogDescription>
+            The entry stays on record but no longer counts in balances. This can't be undone.
+          </DialogDescription>
+        </DialogHeader>
+        <Field label="Reason" htmlFor="other-cancel-reason" required error={error}>
+          <Textarea
+            id="other-cancel-reason"
+            rows={3}
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+          />
+        </Field>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Keep entry
+          </Button>
+          <Button variant="destructive" onClick={confirm} disabled={cancel.isPending}>
+            {cancel.isPending ? <Loader2 className="size-4 animate-spin" /> : null}
+            Cancel entry
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 

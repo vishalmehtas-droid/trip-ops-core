@@ -39,6 +39,7 @@ import { Route as AuthenticatedReportsProfitabilityRouteImport } from './routes/
 import { Route as AuthenticatedReportsVendorLedgerRouteImport } from './routes/_authenticated/reports.vendor-ledger'
 import { Route as AuthenticatedSalesIndexRouteImport } from './routes/_authenticated/sales.index'
 import { Route as AuthenticatedSalesSaleIdRouteImport } from './routes/_authenticated/sales.$saleId'
+import { Route as AuthenticatedAccountsAccountIdReconcileRouteImport } from './routes/_authenticated/accounts.$accountId_.reconcile'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -200,6 +201,12 @@ const AuthenticatedSalesSaleIdRoute =
     path: '/sales/$saleId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAccountsAccountIdReconcileRoute =
+  AuthenticatedAccountsAccountIdReconcileRouteImport.update({
+    id: '/accounts/$accountId_/reconcile',
+    path: '/accounts/$accountId/reconcile',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -231,6 +238,7 @@ export interface FileRoutesByFullPath {
   '/invoices/': typeof AuthenticatedInvoicesIndexRoute
   '/leads/': typeof AuthenticatedLeadsIndexRoute
   '/sales/': typeof AuthenticatedSalesIndexRoute
+  '/accounts/$accountId/reconcile': typeof AuthenticatedAccountsAccountIdReconcileRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -262,6 +270,7 @@ export interface FileRoutesByTo {
   '/invoices': typeof AuthenticatedInvoicesIndexRoute
   '/leads': typeof AuthenticatedLeadsIndexRoute
   '/sales': typeof AuthenticatedSalesIndexRoute
+  '/accounts/$accountId/reconcile': typeof AuthenticatedAccountsAccountIdReconcileRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -295,6 +304,7 @@ export interface FileRoutesById {
   '/_authenticated/invoices/': typeof AuthenticatedInvoicesIndexRoute
   '/_authenticated/leads/': typeof AuthenticatedLeadsIndexRoute
   '/_authenticated/sales/': typeof AuthenticatedSalesIndexRoute
+  '/_authenticated/accounts/$accountId_/reconcile': typeof AuthenticatedAccountsAccountIdReconcileRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -328,6 +338,7 @@ export interface FileRouteTypes {
     | '/invoices/'
     | '/leads/'
     | '/sales/'
+    | '/accounts/$accountId/reconcile'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -359,6 +370,7 @@ export interface FileRouteTypes {
     | '/invoices'
     | '/leads'
     | '/sales'
+    | '/accounts/$accountId/reconcile'
   id:
     | '__root__'
     | '/'
@@ -391,6 +403,7 @@ export interface FileRouteTypes {
     | '/_authenticated/invoices/'
     | '/_authenticated/leads/'
     | '/_authenticated/sales/'
+    | '/_authenticated/accounts/$accountId_/reconcile'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -613,6 +626,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSalesSaleIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/accounts/$accountId_/reconcile': {
+      id: '/_authenticated/accounts/$accountId_/reconcile'
+      path: '/accounts/$accountId/reconcile'
+      fullPath: '/accounts/$accountId/reconcile'
+      preLoaderRoute: typeof AuthenticatedAccountsAccountIdReconcileRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
@@ -642,6 +662,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedInvoicesIndexRoute: typeof AuthenticatedInvoicesIndexRoute
   AuthenticatedLeadsIndexRoute: typeof AuthenticatedLeadsIndexRoute
   AuthenticatedSalesIndexRoute: typeof AuthenticatedSalesIndexRoute
+  AuthenticatedAccountsAccountIdReconcileRoute: typeof AuthenticatedAccountsAccountIdReconcileRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -671,6 +692,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedInvoicesIndexRoute: AuthenticatedInvoicesIndexRoute,
   AuthenticatedLeadsIndexRoute: AuthenticatedLeadsIndexRoute,
   AuthenticatedSalesIndexRoute: AuthenticatedSalesIndexRoute,
+  AuthenticatedAccountsAccountIdReconcileRoute:
+    AuthenticatedAccountsAccountIdReconcileRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

@@ -9,6 +9,7 @@ import {
   dayEntriesSchema,
   otherTxnInputSchema,
   receiptLinkSchema,
+  reconcileSchema,
   statementSchema,
   UNASSIGNED_ACCOUNT_ID,
   type AccountType,
@@ -52,17 +53,18 @@ export type MoneyEntry = {
   sale_id: string | null;
   booking_number: string | null;
   cleared: boolean;
+  cleared_on: string | null;
   created_by: string;
   method: string | null;
   reference: string | null;
 };
 
 const PAY_COLS =
-  "id, payment_number, payment_date, created_at, amount_inr::text, account_id, sale_id, method, reference, notes, cleared, created_by, vendor:vendors(name), sale:sales(booking_number), allocations:vendor_payment_allocations(purchase:purchases(purchase_number, sale_id, sale:sales(booking_number)))";
+  "id, payment_number, payment_date, created_at, amount_inr::text, account_id, sale_id, method, reference, notes, cleared, cleared_on, created_by, vendor:vendors(name), sale:sales(booking_number), allocations:vendor_payment_allocations(purchase:purchases(purchase_number, sale_id, sale:sales(booking_number)))";
 const REC_COLS =
-  "id, receipt_number, receipt_date, created_at, amount_inr::text, account_id, sale_id, method, reference, notes, cleared, created_by, client:clients(name), sale:sales(booking_number), allocations:customer_receipt_allocations(sale_id, sale:sales(booking_number))";
+  "id, receipt_number, receipt_date, created_at, amount_inr::text, account_id, sale_id, method, reference, notes, cleared, cleared_on, created_by, client:clients(name), sale:sales(booking_number), allocations:customer_receipt_allocations(sale_id, sale:sales(booking_number))";
 const OT_COLS =
-  "id, entry_number, txn_type, txn_date, created_at, amount_inr::text, account_id, to_account_id, category, party, notes, reference, cleared, created_by";
+  "id, entry_number, txn_type, txn_date, created_at, amount_inr::text, account_id, to_account_id, category, party, notes, reference, cleared, cleared_on, created_by";
 
 function payEntry(r: any): MoneyEntry {
   // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -83,6 +85,7 @@ function payEntry(r: any): MoneyEntry {
     sale_id: saleId,
     booking_number: booking,
     cleared: r.cleared,
+    cleared_on: r.cleared_on ?? null,
     created_by: r.created_by,
     method: r.method,
     reference: r.reference,
@@ -106,6 +109,7 @@ function recEntry(r: any): MoneyEntry {
     sale_id: r.sale_id ?? firstAlloc?.sale_id ?? null,
     booking_number: r.sale?.booking_number ?? firstAlloc?.sale?.booking_number ?? null,
     cleared: r.cleared,
+    cleared_on: r.cleared_on ?? null,
     created_by: r.created_by,
     method: r.method,
     reference: r.reference,
@@ -135,6 +139,7 @@ function otEntry(r: any): MoneyEntry {
     sale_id: null,
     booking_number: null,
     cleared: r.cleared,
+    cleared_on: r.cleared_on ?? null,
     created_by: r.created_by,
     method: null,
     reference: r.reference,
@@ -223,48 +228,53 @@ export const saveAccount = createServerFn({ method: "POST" })
     return created;
   });
 
+/** One account plus all its recorded entries in date order (amounts signed for this account). */
+async function loadAccountEntries(supabase: Ctx["supabase"], accountId: string) {
+  const { data: account, error } = await supabase
+    .from("accounts")
+    .select("id, name, account_type, last4, opening_balance::text, opening_balance_date, is_active")
+    .eq("id", accountId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!account) throw new Error("Account not found");
+  const [pays, recs, outs, ins] = await Promise.all([
+    supabase.from("vendor_payments").select(PAY_COLS).eq("status", "recorded").eq("account_id", accountId),
+    supabase.from("customer_receipts").select(REC_COLS).eq("status", "recorded").eq("account_id", accountId),
+    supabase.from("other_transactions").select(OT_COLS).eq("status", "recorded").eq("account_id", accountId),
+    supabase.from("other_transactions").select(OT_COLS).eq("status", "recorded").eq("to_account_id", accountId),
+  ]);
+  for (const r of [pays, recs, outs, ins]) if (r.error) throw new Error(r.error.message);
+  const names = new Map<string, string>();
+  const { data: accs } = await supabase.from("accounts").select("id, name");
+  for (const a of (accs ?? []) as { id: string; name: string }[]) names.set(a.id, a.name);
+
+  const entries: MoneyEntry[] = [
+    ...(pays.data ?? []).map(payEntry),
+    ...(recs.data ?? []).map(recEntry),
+    ...(outs.data ?? []).map((r: any) => {
+      // eslint-disable-line @typescript-eslint/no-explicit-any
+      const e = otEntry(r);
+      if (r.txn_type === "transfer") e.label = `Transfer to ${names.get(r.to_account_id) ?? "account"}`;
+      return e;
+    }),
+    ...(ins.data ?? []).map((r: any) => {
+      // eslint-disable-line @typescript-eslint/no-explicit-any
+      const e = otEntry(r);
+      e.amount = fromPaise(toPaise(r.amount_inr));
+      e.label = `Transfer from ${names.get(r.account_id) ?? "account"}`;
+      return e;
+    }),
+  ];
+  sortEntries(entries);
+  return { account, entries };
+}
+
 export const getAccountStatement = createServerFn({ method: "POST" })
   .middleware([requireActiveUser])
   .inputValidator((input: unknown) => statementSchema.parse(input))
   .handler(async ({ data, context }) => {
     requirePermission(context, "accounts.read");
-    const { supabase } = context;
-    const { data: account, error } = await supabase
-      .from("accounts")
-      .select("id, name, account_type, last4, opening_balance::text, opening_balance_date, is_active")
-      .eq("id", data.account_id)
-      .maybeSingle();
-    if (error) throw new Error(error.message);
-    if (!account) throw new Error("Account not found");
-    const [pays, recs, outs, ins] = await Promise.all([
-      supabase.from("vendor_payments").select(PAY_COLS).eq("status", "recorded").eq("account_id", data.account_id),
-      supabase.from("customer_receipts").select(REC_COLS).eq("status", "recorded").eq("account_id", data.account_id),
-      supabase.from("other_transactions").select(OT_COLS).eq("status", "recorded").eq("account_id", data.account_id),
-      supabase.from("other_transactions").select(OT_COLS).eq("status", "recorded").eq("to_account_id", data.account_id),
-    ]);
-    for (const r of [pays, recs, outs, ins]) if (r.error) throw new Error(r.error.message);
-    const names = new Map<string, string>();
-    const { data: accs } = await supabase.from("accounts").select("id, name");
-    for (const a of (accs ?? []) as { id: string; name: string }[]) names.set(a.id, a.name);
-
-    const all: MoneyEntry[] = [
-      ...(pays.data ?? []).map(payEntry),
-      ...(recs.data ?? []).map(recEntry),
-      ...(outs.data ?? []).map((r: any) => {
-        // eslint-disable-line @typescript-eslint/no-explicit-any
-        const e = otEntry(r);
-        if (r.txn_type === "transfer") e.label = `Transfer to ${names.get(r.to_account_id) ?? "account"}`;
-        return e;
-      }),
-      ...(ins.data ?? []).map((r: any) => {
-        // eslint-disable-line @typescript-eslint/no-explicit-any
-        const e = otEntry(r);
-        e.amount = fromPaise(toPaise(r.amount_inr));
-        e.label = `Transfer from ${names.get(r.account_id) ?? "account"}`;
-        return e;
-      }),
-    ];
-    sortEntries(all);
+    const { account, entries: all } = await loadAccountEntries(context.supabase, data.account_id);
     let opening = toPaise(account.opening_balance);
     const rows: (MoneyEntry & { balance: string })[] = [];
     let running = 0n;
@@ -289,6 +299,41 @@ export const getAccountStatement = createServerFn({ method: "POST" })
       money_in: fromPaise(moneyIn),
       money_out: fromPaise(moneyOut),
       closing: fromPaise(rows.length ? running : opening),
+      rows,
+    };
+  });
+
+/**
+ * Bank reconciliation as of a statement date: every entry up to that date with its
+ * Cleared tick. Cleared balance = opening balance + ticked entries; it should equal
+ * the bank statement's closing balance once everything on the statement is ticked.
+ */
+export const getReconciliation = createServerFn({ method: "POST" })
+  .middleware([requireActiveUser])
+  .inputValidator((input: unknown) => reconcileSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    requirePermission(context, "accounts.read");
+    const { account, entries } = await loadAccountEntries(context.supabase, data.account_id);
+    const opening = toPaise(account.opening_balance);
+    let cleared = opening;
+    let book = opening;
+    let unclearedIn = 0n;
+    let unclearedOut = 0n;
+    const rows = entries.filter((e) => e.date <= data.as_of);
+    for (const e of rows) {
+      const amt = toPaise(e.amount);
+      book += amt;
+      if (e.cleared) cleared += amt;
+      else if (amt >= 0n) unclearedIn += amt;
+      else unclearedOut -= amt;
+    }
+    return {
+      account,
+      opening: fromPaise(opening),
+      cleared_balance: fromPaise(cleared),
+      book_balance: fromPaise(book),
+      uncleared_in: fromPaise(unclearedIn),
+      uncleared_out: fromPaise(unclearedOut),
       rows,
     };
   });
@@ -418,7 +463,7 @@ export const setEntryCleared = createServerFn({ method: "POST" })
           : "other_transactions";
     const { error } = await context.supabase
       .from(table)
-      .update({ cleared: data.cleared, cleared_on: null })
+      .update({ cleared: data.cleared, cleared_on: data.cleared ? data.cleared_on : null })
       .eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true as const };

@@ -115,6 +115,11 @@ function AccountStatementPage() {
           ? {
               actions: (
                 <div className="no-print flex items-center gap-2">
+                  <Button asChild size="sm">
+                    <Link to="/accounts/$accountId/reconcile" params={{ accountId }}>
+                      Reconcile
+                    </Link>
+                  </Button>
                   <Button size="sm" variant="outline" onClick={exportCsv}>
                     <Download className="size-3.5" />
                     CSV

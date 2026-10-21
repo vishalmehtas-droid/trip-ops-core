@@ -113,6 +113,13 @@ export const clearedSchema = z.object({
   kind: z.enum(["payment", "receipt", "other"]),
   id: z.string().uuid(),
   cleared: z.boolean(),
+  /** Bank statement date the entry cleared on; the database uses today when blank. */
+  cleared_on: optionalDate,
+});
+
+export const reconcileSchema = z.object({
+  account_id: z.string().uuid(),
+  as_of: isoDate,
 });
 
 export const advancesSchema = z
