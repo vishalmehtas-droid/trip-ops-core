@@ -79,6 +79,7 @@ type VendorRow = {
   email: string | null;
   gst_number: string | null;
   address: string | null;
+  city: string | null;
   payment_terms: string | null;
   advance_rule: string | null;
   notes: string | null;
@@ -93,6 +94,7 @@ type FormState = {
   email: string;
   gst_number: string;
   address: string;
+  city: string;
   payment_terms: string;
   advance_rule: string;
   notes: string;
@@ -105,6 +107,7 @@ const EMPTY_FORM: FormState = {
   email: "",
   gst_number: "",
   address: "",
+  city: "",
   payment_terms: "",
   advance_rule: "",
   notes: "",
@@ -149,7 +152,7 @@ function VendorsPage() {
       if (status === "active" && !row.is_active) return false;
       if (status === "inactive" && row.is_active) return false;
       if (!term) return true;
-      return [row.name, row.phone, row.email, row.gst_number]
+      return [row.name, row.phone, row.email, row.gst_number, row.city]
         .filter(Boolean)
         .some((value) => value!.toLowerCase().includes(term));
     });
@@ -204,6 +207,7 @@ function VendorsPage() {
       email: row.email ?? "",
       gst_number: row.gst_number ?? "",
       address: row.address ?? "",
+      city: row.city ?? "",
       payment_terms: row.payment_terms ?? "",
       advance_rule: row.advance_rule ?? "",
       notes: row.notes ?? "",
@@ -318,6 +322,9 @@ function VendorsPage() {
                 <TableRow key={row.id}>
                   <TableCell className="font-medium">
                     <div>{row.name}</div>
+                    {row.city ? (
+                      <div className="text-xs font-normal text-muted-foreground">{row.city}</div>
+                    ) : null}
                     {row.payment_terms || row.advance_rule ? (
                       <div className="mt-0.5 max-w-64 truncate text-xs font-normal text-muted-foreground">
                         {[row.payment_terms, row.advance_rule].filter(Boolean).join(" · ")}
@@ -394,13 +401,22 @@ function VendorsPage() {
                 />
               </Field>
             </div>
-            <Field label="GST number" htmlFor="vendor-gst" error={errors["gst_number"]}>
-              <Input
-                id="vendor-gst"
-                value={form.gst_number}
-                onChange={(event) => setForm({ ...form, gst_number: event.target.value })}
-              />
-            </Field>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="City" htmlFor="vendor-city" error={errors["city"]}>
+                <Input
+                  id="vendor-city"
+                  value={form.city}
+                  onChange={(event) => setForm({ ...form, city: event.target.value })}
+                />
+              </Field>
+              <Field label="GST number" htmlFor="vendor-gst" error={errors["gst_number"]}>
+                <Input
+                  id="vendor-gst"
+                  value={form.gst_number}
+                  onChange={(event) => setForm({ ...form, gst_number: event.target.value })}
+                />
+              </Field>
+            </div>
             <Field label="Address" htmlFor="vendor-address" error={errors["address"]}>
               <Textarea
                 id="vendor-address"
@@ -482,6 +498,7 @@ function VendorsPage() {
               <DetailRow label="Status" value={<StatusBadge active={viewing.is_active} />} />
               <DetailRow label="Phone" value={viewing.phone} />
               <DetailRow label="Email" value={viewing.email} />
+              <DetailRow label="City" value={viewing.city} />
               <DetailRow label="GST number" value={viewing.gst_number} />
               <DetailRow label="Address" value={viewing.address} />
               <DetailRow label="Payment terms" value={viewing.payment_terms} />

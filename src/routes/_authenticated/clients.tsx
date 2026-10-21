@@ -57,6 +57,7 @@ import {
 } from "@/components/ui/table";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
+import { IMPORT_ROLES } from "@/lib/csv-import.functions";
 import { clientInputSchema } from "@/lib/master-schemas";
 import { createClient, setClientActive, updateClient } from "@/lib/master.functions";
 
@@ -80,6 +81,7 @@ type ClientRow = {
   email: string | null;
   address: string | null;
   gst_number: string | null;
+  city: string | null;
   state: string | null;
   notes: string | null;
   source: string | null;
@@ -96,6 +98,7 @@ type FormState = {
   email: string;
   address: string;
   gst_number: string;
+  city: string;
   state: string;
   notes: string;
   source: string;
@@ -110,6 +113,7 @@ const EMPTY_FORM: FormState = {
   email: "",
   address: "",
   gst_number: "",
+  city: "",
   state: "",
   notes: "",
   source: "",
@@ -119,9 +123,11 @@ const EMPTY_FORM: FormState = {
 };
 
 function ClientsPage() {
-  const { hasPermission } = useAuth();
+  const { hasPermission, hasAnyRole } = useAuth();
   const canRead = hasPermission("clients.read");
   const canManage = hasPermission("clients.manage");
+  // Roles that may import clients can also add one at a time, but not edit.
+  const canCreate = canManage || hasAnyRole(IMPORT_ROLES.clients);
   const queryClient = useQueryClient();
 
   const [search, setSearch] = useState("");
@@ -156,7 +162,7 @@ function ClientsPage() {
       if (status === "active" && !row.is_active) return false;
       if (status === "inactive" && row.is_active) return false;
       if (!term) return true;
-      return [row.name, row.phone, row.email, row.gst_number]
+      return [row.name, row.phone, row.email, row.gst_number, row.city]
         .filter(Boolean)
         .some((value) => value!.toLowerCase().includes(term));
     });
@@ -211,6 +217,7 @@ function ClientsPage() {
       email: row.email ?? "",
       address: row.address ?? "",
       gst_number: row.gst_number ?? "",
+      city: row.city ?? "",
       state: row.state ?? "",
       notes: row.notes ?? "",
       source: row.source ?? "",
@@ -260,7 +267,7 @@ function ClientsPage() {
         actions={
           <div className="flex flex-wrap items-center gap-2">
             <CsvImportActions kind="clients" queryKey={["clients"]} />
-            {canManage ? (
+            {canCreate ? (
               <Button size="sm" onClick={openCreate}>
                 <Plus className="size-4" />
                 New client
@@ -295,7 +302,7 @@ function ClientsPage() {
               ? "Add your first client to start building the master data."
               : "Adjust the search term or status filter."
           }
-          {...(canManage && clientsQuery.data.length === 0
+          {...(canCreate && clientsQuery.data.length === 0
             ? {
                 action: (
                   <Button size="sm" onClick={openCreate}>
@@ -326,7 +333,12 @@ function ClientsPage() {
             <TableBody>
               {rows.map((row) => (
                 <TableRow key={row.id}>
-                  <TableCell className="font-medium">{row.name}</TableCell>
+                  <TableCell className="font-medium">
+                    <div>{row.name}</div>
+                    {row.city ? (
+                      <div className="text-xs font-normal text-muted-foreground">{row.city}</div>
+                    ) : null}
+                  </TableCell>
                   <TableCell className="text-muted-foreground">{row.phone ?? "—"}</TableCell>
                   <TableCell className="text-muted-foreground">{row.email ?? "—"}</TableCell>
                   <TableCell className="text-muted-foreground">{row.gst_number ?? "—"}</TableCell>
@@ -411,14 +423,24 @@ function ClientsPage() {
                 onChange={(event) => setForm({ ...form, gst_number: event.target.value })}
               />
             </Field>
-            <Field label="State (place of supply)" htmlFor="client-state" error={errors["state"]}>
-              <Input
-                id="client-state"
-                placeholder="e.g. Maharashtra"
-                value={form.state}
-                onChange={(event) => setForm({ ...form, state: event.target.value })}
-              />
-            </Field>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="City" htmlFor="client-city" error={errors["city"]}>
+                <Input
+                  id="client-city"
+                  placeholder="e.g. Mumbai"
+                  value={form.city}
+                  onChange={(event) => setForm({ ...form, city: event.target.value })}
+                />
+              </Field>
+              <Field label="State (place of supply)" htmlFor="client-state" error={errors["state"]}>
+                <Input
+                  id="client-state"
+                  placeholder="e.g. Maharashtra"
+                  value={form.state}
+                  onChange={(event) => setForm({ ...form, state: event.target.value })}
+                />
+              </Field>
+            </div>
             <ClientSourceFields
               idPrefix="client"
               source={form.source}
@@ -436,6 +458,7 @@ function ClientsPage() {
                 type="number"
                 min="0"
                 step="0.01"
+                disabled={!canManage}
                 value={form.markup_percent_override}
                 onChange={(event) =>
                   setForm({ ...form, markup_percent_override: event.target.value })
@@ -446,10 +469,16 @@ function ClientsPage() {
               <Textarea
                 id="client-address"
                 rows={2}
+                disabled={!canManage}
                 value={form.address}
                 onChange={(event) => setForm({ ...form, address: event.target.value })}
               />
             </Field>
+            {!canManage ? (
+              <p className="-mt-2 text-xs text-muted-foreground">
+                Admin or Sales can add the address and special markup later.
+              </p>
+            ) : null}
             <Field label="Notes" htmlFor="client-notes" error={errors["notes"]}>
               <Textarea
                 id="client-notes"
@@ -462,10 +491,13 @@ function ClientsPage() {
               <div>
                 <p className="text-xs font-semibold">Active</p>
                 <p className="text-xs text-muted-foreground">
-                  Inactive clients stay on record but are excluded from new work.
+                  {canManage
+                    ? "Inactive clients stay on record but are excluded from new work."
+                    : "New clients start active. Admin or Sales can deactivate them."}
                 </p>
               </div>
               <Switch
+                disabled={!canManage}
                 checked={form.is_active}
                 onCheckedChange={(checked) => setForm({ ...form, is_active: checked })}
                 aria-label="Active status"
@@ -498,6 +530,7 @@ function ClientsPage() {
               <DetailRow label="Phone" value={viewing.phone} />
               <DetailRow label="Email" value={viewing.email} />
               <DetailRow label="GST number" value={viewing.gst_number} />
+              <DetailRow label="City" value={viewing.city} />
               <DetailRow label="State" value={viewing.state} />
               <DetailRow label="Source" value={viewing.source} />
               {viewing.source === "Referral" ? (
