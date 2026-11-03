@@ -6,7 +6,16 @@ Status: planned, nothing built yet. Implement **one step at a time** and stop af
 
 The owner wants to operate trip-ops from Telegram: send a message (text, voice note or screenshot) with lead details and have it stored, then extend the same pattern to other modules. The ideas come from Hermes Agent (messaging gateway, scheduler, voice, vision, session search, memory, skills, approvals), but **Hermes itself is not used**. Everything is built inside this app, deployed with it on Lovable/Cloudflare.
 
-Single user for now (the owner). Design so more staff can be added later without rework.
+Single user: the owner only (decided 2026-11-03). Staff access is out of scope; keep the allowlist table so it could be added later, but build nothing for it.
+
+### Decisions recorded (2026-11-03)
+
+| Topic | Decision |
+|---|---|
+| Users | Owner only. No staff access. |
+| AI provider | Google Gemini or Claude API. Recommended: **Gemini as the single provider** (accepts voice audio, images and structured JSON in one API, and handles Hindi/Hinglish speech). Claude API stays a drop-in option for text and image extraction behind `ai.ts`; it has no audio input, so voice notes would still need Gemini (or another speech-to-text service) for transcription. |
+| Morning brief | **10:00 IST** daily (04:30 UTC). |
+| Languages | Hindi, English and Hinglish (mixed Hindi-English, typed in Roman or Devanagari script), for text and voice. Bot replies and cards are in English; stored data (names, notes) is kept as typed, with the voice transcript shown on the card. |
 
 ### Non-negotiable rules (apply to every step)
 
@@ -90,6 +99,7 @@ RLS: only the bot user and admins can read/write these tables. No anon access.
 
 - Provider is chosen in Step 0. Prefer one that supports **structured JSON output, audio and images**, so steps 2b reuse it. Keep the provider behind one small module `src/lib/telegram/ai.ts` with `extract(kind, input, context)`.
 - The prompt includes: today's date in **Asia/Kolkata**, the owner's shorthand (step 6), and for leads the list of active destination names.
+- Input may be Hindi, English or Hinglish (Roman or Devanagari). The prompt says so explicitly; Hindi number words and Indian amount shorthand ("dedh lakh", "1.5L", "50k", "pachas hazaar") must parse to exact amounts, and the card always shows the parsed value so the owner can check it.
 - The model returns JSON matching a zod schema per kind; parse strictly. If required fields are missing or ambiguous (e.g. "next Friday" with no month context, two destinations with similar names), the bot **asks one question** instead of guessing.
 - The model never receives IDs it could invent; server code resolves names to IDs.
 - Privacy: client names/phones/trip details are sent to the AI provider. Note this in the settings page or README once chosen. Do not log raw message text or tokens in production logs.
@@ -100,9 +110,9 @@ RLS: only the bot user and admins can read/write these tables. No anon access.
 
 - [ ] Create the bot with @BotFather, get the token, disable "join groups" (private use only).
 - [ ] Get the owner's Telegram numeric user id (e.g. from @userinfobot).
-- [ ] Choose the AI provider (needs JSON output; audio + vision for step 2b). Options: Lovable AI built-in models, Claude API, or another provider.
+- [x] AI provider: Gemini or Claude API (see Decisions). Confirm the final pick and create the API key.
 - [ ] Create the dedicated bot user in trip-ops and give it the step-2 permissions.
-- [ ] Decide the morning-brief time (default 08:00 IST).
+- [x] Morning-brief time: 10:00 IST.
 - [ ] Add the secrets in Lovable Cloud.
 
 ## Step 1 — Foundation (no business writes yet)
@@ -224,9 +234,19 @@ Done when: a remembered alias changes the next extraction, and a template produc
 
 ---
 
+## Step 7 — Quotes, bookings and alerts (added 2026-11-03)
+
+Same confirmation-card pattern for writes; alerts are read-only.
+
+- Supplier quote line from a message or a supplier's PDF/screenshot, against an `RQ-` requirement.
+- Customer quote from a requirement ("make quote for RQ-52 at 15% markup") using the existing customer-quote server functions; reply with the share link so the owner can forward it on WhatsApp.
+- "Rahul accepted" → convert the accepted quote to a booking via the existing conversion transaction; reply with the `BK-` number.
+- Send an existing invoice PDF or quote share link on request (read-only; issuing invoices stays in the app).
+- Alerts: customer opened a shared quote (from the existing view records), trip starting in 3 days with money still pending in or out, overdue receivables, uncleared entries awaiting reconciliation, weekly summary.
+
 ## Later (not planned in detail)
 
-- **Team use:** add more `telegram_links` rows; each staff member's actions run with a bot client scoped to **their** role (or one bot user per role) so the existing roles gate what each person can do.
+- **Team use (not wanted for now):** add more `telegram_links` rows; each staff member's actions run with a bot client scoped to **their** role (or one bot user per role) so the existing roles gate what each person can do.
 - **Trip-ops MCP server** exposing the same read tools (and confirmation-gated writes) to AI assistants such as Claude.
 
 ## Verification approach for every step
