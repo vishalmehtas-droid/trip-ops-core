@@ -13,7 +13,8 @@ Single user: the owner only (decided 2026-11-03). Staff access is out of scope; 
 | Topic | Decision |
 |---|---|
 | Users | Owner only. No staff access. |
-| AI provider | Google Gemini or Claude API. Recommended: **Gemini as the single provider** (accepts voice audio, images and structured JSON in one API, and handles Hindi/Hinglish speech). Claude API stays a drop-in option for text and image extraction behind `ai.ts`; it has no audio input, so voice notes would still need Gemini (or another speech-to-text service) for transcription. |
+| Hosting | **Stay on Lovable** (Cloudflare Workers runtime). The server only relays Telegram files (≤ 20 MB) to Gemini, which fits the Workers model. Google Cloud is the fallback if real limits are hit. |
+| AI provider | **Gemini via the Gemini API (Google AI Studio key), chosen 2026-11-03**, on a billed (paid-tier) project so client data is not used for model training. Originally considered: Gemini as the single provider (accepts voice audio, images and structured JSON in one API, and handles Hindi/Hinglish speech). Claude API stays a drop-in option for text and image extraction behind `ai.ts`; it has no audio input, so voice notes would still need Gemini (or another speech-to-text service) for transcription. |
 | Morning brief | **10:00 IST** daily (04:30 UTC). |
 | Languages | Hindi, English and Hinglish (mixed Hindi-English, typed in Roman or Devanagari script), for text and voice. Bot replies and cards are in English; stored data (names, notes) is kept as typed, with the voice transcript shown on the card. |
 
@@ -110,7 +111,8 @@ RLS: only the bot user and admins can read/write these tables. No anon access.
 
 - [ ] Create the bot with @BotFather, get the token, disable "join groups" (private use only).
 - [ ] Get the owner's Telegram numeric user id (e.g. from @userinfobot).
-- [x] AI provider: Gemini or Claude API (see Decisions). Confirm the final pick and create the API key.
+- [x] AI provider: Gemini (see Decisions).
+- [ ] Create the Gemini API key in Google AI Studio on a billed project; add it as `GEMINI_API_KEY` in Lovable Cloud secrets.
 - [ ] Create the dedicated bot user in trip-ops and give it the step-2 permissions.
 - [x] Morning-brief time: 10:00 IST.
 - [ ] Add the secrets in Lovable Cloud.
