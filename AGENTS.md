@@ -1,3 +1,8 @@
+> [!WARNING]
+> **Retired on 13 Nov 2026.** This project is no longer used. All work, data and the
+> staff app now live in [triptastic-explore-book](https://github.com/vishalmehtas-droid/triptastic-explore-book)
+> (thetriptastic.com/ops, Supabase project triptastic-holidays). Do not build here.
+
 <!-- LOVABLE:BEGIN -->
 > [!IMPORTANT]
 > This project is connected to [Lovable](https://lovable.dev). Avoid rewriting
